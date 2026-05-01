@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Modulos\Inventario\Models\CategoriaProducto;
+use App\Modulos\Inventario\Models\LoteInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
@@ -520,6 +521,153 @@ class InventarioModuleTest extends TestCase
         $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
         $this->assertStringContainsString('Producto;SKU;Categoria;Proveedor;Stock;Unidad;Alerta;Estado', $contenido);
         $this->assertStringContainsString($producto->nombre, $contenido);
+    }
+
+    public function test_expiry_date_is_required_for_inbound_movement_when_product_tracks_expiry(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto caducidad obligatoria',
+            'controla_caducidad' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->from(route('admin.inventario.productos.stock', $producto))
+            ->post(route('admin.inventario.productos.stock.movimientos.store', $producto), [
+                'tipo' => 'entrada',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 6,
+                'motivo' => 'Entrada sin caducidad',
+            ])
+            ->assertRedirect(route('admin.inventario.productos.stock', $producto))
+            ->assertSessionHasErrors([
+                'caduca_el' => 'El campo fecha de caducidad es obligatorio para entradas de productos con caducidad.',
+            ]);
+    }
+
+    public function test_inbound_movement_creates_inventory_lot(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto lote entrada',
+            'controla_caducidad' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.inventario.productos.stock.movimientos.store', $producto), [
+                'tipo' => 'entrada',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 12,
+                'motivo' => 'Entrada con lote',
+                'codigo_lote' => 'LOTE-IPA-001',
+                'caduca_el' => now()->addMonth()->toDateString(),
+            ])
+            ->assertRedirect(route('admin.inventario.productos.stock', $producto));
+
+        $this->assertDatabaseHas('lotes_inventario', [
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'codigo_lote' => 'LOTE-IPA-001',
+            'cantidad_inicial' => 12,
+            'cantidad_disponible' => 12,
+        ]);
+    }
+
+    public function test_outbound_movement_consumes_earliest_expiring_lot_first(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto consumo FEFO',
+            'controla_caducidad' => true,
+        ]);
+
+        StockInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 10,
+            'cantidad_minima' => 0,
+        ]);
+
+        $loteAntiguo = LoteInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'codigo_lote' => 'LOTE-FEFO-1',
+            'cantidad_inicial' => 5,
+            'cantidad_disponible' => 5,
+            'recibido_el' => now()->subDays(10)->toDateString(),
+            'caduca_el' => now()->addDays(5)->toDateString(),
+            'activo' => true,
+        ]);
+
+        $loteNuevo = LoteInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'codigo_lote' => 'LOTE-FEFO-2',
+            'cantidad_inicial' => 5,
+            'cantidad_disponible' => 5,
+            'recibido_el' => now()->subDays(5)->toDateString(),
+            'caduca_el' => now()->addDays(20)->toDateString(),
+            'activo' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.inventario.productos.stock.movimientos.store', $producto), [
+                'tipo' => 'salida',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 6,
+                'motivo' => 'Salida FEFO',
+            ])
+            ->assertRedirect(route('admin.inventario.productos.stock', $producto));
+
+        $this->assertSame('0.000', $loteAntiguo->refresh()->cantidad_disponible);
+        $this->assertSame('4.000', $loteNuevo->refresh()->cantidad_disponible);
+    }
+
+    public function test_stock_alerts_screen_shows_expired_and_near_expiry_lots(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'COCINA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto alerta caducidad',
+            'controla_caducidad' => true,
+        ]);
+
+        LoteInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'codigo_lote' => 'LOTE-CADUCADO',
+            'cantidad_inicial' => 2,
+            'cantidad_disponible' => 2,
+            'recibido_el' => now()->subMonth()->toDateString(),
+            'caduca_el' => now()->subDay()->toDateString(),
+            'activo' => true,
+        ]);
+
+        LoteInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'codigo_lote' => 'LOTE-PROXIMO',
+            'cantidad_inicial' => 3,
+            'cantidad_disponible' => 3,
+            'recibido_el' => now()->subWeek()->toDateString(),
+            'caduca_el' => now()->addDays(7)->toDateString(),
+            'activo' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.alertas.index'))
+            ->assertOk()
+            ->assertSee('Lotes caducados')
+            ->assertSee('Lotes proximos a caducar')
+            ->assertSee('LOTE-CADUCADO')
+            ->assertSee('LOTE-PROXIMO');
     }
 
     /**

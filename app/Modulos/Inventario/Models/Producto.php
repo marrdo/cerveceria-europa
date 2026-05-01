@@ -74,6 +74,12 @@ class Producto extends Model
         return $this->hasMany(MovimientoInventario::class, 'producto_id')->latest('created_at');
     }
 
+    /** @return HasMany<LoteInventario> */
+    public function lotes(): HasMany
+    {
+        return $this->hasMany(LoteInventario::class, 'producto_id')->latest('recibido_el');
+    }
+
     /**
      * Devuelve el stock total del producto en todas las ubicaciones.
      */

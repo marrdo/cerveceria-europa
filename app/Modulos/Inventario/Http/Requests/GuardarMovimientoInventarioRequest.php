@@ -34,6 +34,7 @@ class GuardarMovimientoInventarioRequest extends FormRequest
             'coste_unitario' => ['nullable', 'numeric', 'min:0'],
             'motivo' => ['required', 'string', 'max:191'],
             'referencia' => ['nullable', 'string', 'max:191'],
+            'codigo_lote' => ['nullable', 'string', 'max:100'],
             'caduca_el' => ['nullable', 'date'],
             'notas' => ['nullable', 'string'],
         ];
@@ -50,6 +51,7 @@ class GuardarMovimientoInventarioRequest extends FormRequest
             'ubicacion_inventario_id.required_unless' => 'El campo ubicacion es obligatorio para entradas, salidas y ajustes.',
             'ubicacion_origen_id.required_if' => 'El campo ubicacion de origen es obligatorio para transferencias.',
             'ubicacion_destino_id.required_if' => 'El campo ubicacion de destino es obligatorio para transferencias.',
+            'caduca_el.date' => 'El campo fecha de caducidad debe ser una fecha valida.',
         ];
     }
 
@@ -60,17 +62,28 @@ class GuardarMovimientoInventarioRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if ($this->input('tipo') !== TipoMovimientoInventario::Transferencia->value) {
-                    return;
+                if ($this->input('tipo') === TipoMovimientoInventario::Transferencia->value) {
+                    $origenId = $this->input('ubicacion_origen_id');
+                    $destinoId = $this->input('ubicacion_destino_id');
+
+                    if ($origenId !== null && $destinoId !== null && $origenId === $destinoId) {
+                        $validator->errors()->add(
+                            'ubicacion_destino_id',
+                            'El campo ubicacion de destino debe ser distinto de la ubicacion de origen.',
+                        );
+                    }
                 }
 
-                $origenId = $this->input('ubicacion_origen_id');
-                $destinoId = $this->input('ubicacion_destino_id');
+                $producto = $this->route('producto');
 
-                if ($origenId !== null && $destinoId !== null && $origenId === $destinoId) {
+                if (
+                    $producto?->controla_caducidad
+                    && $this->input('tipo') === TipoMovimientoInventario::Entrada->value
+                    && blank($this->input('caduca_el'))
+                ) {
                     $validator->errors()->add(
-                        'ubicacion_destino_id',
-                        'El campo ubicacion de destino debe ser distinto de la ubicacion de origen.',
+                        'caduca_el',
+                        'El campo fecha de caducidad es obligatorio para entradas de productos con caducidad.',
                     );
                 }
             },

@@ -5,6 +5,7 @@ namespace App\Modulos\Inventario\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modulos\Inventario\Enums\EstadoStockProducto;
 use App\Modulos\Inventario\Enums\TipoMovimientoInventario;
+use App\Modulos\Inventario\Models\LoteInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
@@ -28,6 +29,13 @@ class InformeInventarioController extends Controller
         return view('modulos.inventario.informes.alertas', [
             'productosBajoStock' => $productos->where('estado_stock_calculado', EstadoStockProducto::Bajo),
             'productosSinStock' => $productos->where('estado_stock_calculado', EstadoStockProducto::SinStock),
+            'lotesCaducados' => $this->consultaLotesConCaducidad()
+                ->whereDate('caduca_el', '<', now()->toDateString())
+                ->get(),
+            'lotesProximosCaducar' => $this->consultaLotesConCaducidad()
+                ->whereDate('caduca_el', '>=', now()->toDateString())
+                ->whereDate('caduca_el', '<=', now()->addDays(30)->toDateString())
+                ->get(),
         ]);
     }
 
@@ -148,6 +156,22 @@ class InformeInventarioController extends Controller
                 EstadoStockProducto::SinStock,
             ], true))
             ->values();
+    }
+
+    /**
+     * Consulta lotes disponibles con fecha de caducidad.
+     *
+     * @return Builder<LoteInventario>
+     */
+    private function consultaLotesConCaducidad(): Builder
+    {
+        return LoteInventario::query()
+            ->with(['producto.unidad', 'ubicacion'])
+            ->where('activo', true)
+            ->where('cantidad_disponible', '>', 0)
+            ->whereNotNull('caduca_el')
+            ->orderBy('caduca_el')
+            ->orderBy('created_at');
     }
 
     /**

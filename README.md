@@ -162,12 +162,12 @@ Implementado:
 
 ### FASE 1.3 - Lotes y caducidad
 
-Estado: pendiente y condicionada.
+Estado: implementada.
 
 Objetivo:
 Controlar caducidad y rotacion solo si el bar lo necesita realmente para cocina, barriles o productos perecederos.
 
-Tareas previstas:
+Tareas:
 
 - Tabla `lotes_inventario`.
 - Asociar entradas de inventario a lotes.
@@ -178,7 +178,20 @@ Tareas previstas:
 - Alertas de lotes proximos a caducar.
 
 Decision:
-No se implementa en la fase inicial para no sobrecomplicar el uso real del bar antes de validar necesidades.
+Se implementa una base funcional porque el bar trabaja con cerveza, cocina y productos perecederos. El formulario manual de movimientos sigue siendo una herramienta interna; la recepcion comoda de pedidos se hara en el modulo `Compras`.
+
+Implementado:
+
+- Nueva tabla `lotes_inventario`.
+- Relacion opcional entre movimiento y lote mediante `lote_inventario_id`.
+- Entrada manual crea lote automaticamente.
+- Productos con `controla_caducidad` exigen fecha de caducidad en entradas.
+- Salidas consumen lotes por FEFO cuando hay caducidad.
+- Productos sin caducidad pueden usar FIFO sin bloquear el stock antiguo.
+- Transferencias mueven lotes entre ubicaciones cuando existen lotes disponibles.
+- Pantalla de stock muestra lotes disponibles por producto.
+- Pantalla de alertas muestra lotes caducados y proximos a caducar.
+- Tests funcionales de validacion, creacion de lotes, consumo FEFO y alertas.
 
 ### FASE 2.0 - Compras base
 
@@ -232,6 +245,9 @@ Pedido a proveedor
 
 Regla:
 `Compras` no actualiza `stock_inventario` directamente. Debe usar `RegistrarMovimientoInventarioAction`.
+
+Nota operativa:
+El encargado no deberia recibir un pedido grande entrando producto por producto desde el formulario manual de stock. La pantalla correcta sera `Recepciones`, donde podra repartir una misma linea entre varias ubicaciones, por ejemplo mitad en `Almacen` y mitad en `Camara fria`. El lector de codigo de barras se integrara aqui como un input de busqueda por `codigo_barras`, SKU o nombre.
 
 ### FASE 2.2 - Incidencias y cierre de pedidos
 

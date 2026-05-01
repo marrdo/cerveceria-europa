@@ -65,6 +65,49 @@
                     @endforelse
                 </div>
             </section>
+
+            <section class="admin-card p-4 lg:p-6">
+                <h3 class="mb-4 text-base font-semibold text-foreground">Lotes y caducidad</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/50">
+                                <th class="px-3 py-2 text-left font-medium text-foreground">Lote</th>
+                                <th class="px-3 py-2 text-left font-medium text-foreground">Ubicacion</th>
+                                <th class="px-3 py-2 text-left font-medium text-foreground">Disponible</th>
+                                <th class="px-3 py-2 text-left font-medium text-foreground">Caduca</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($producto->lotes->where('cantidad_disponible', '>', 0) as $lote)
+                                @php
+                                    $caducidadVariant = match (true) {
+                                        $lote->caduca_el?->isPast() => 'danger',
+                                        $lote->caduca_el?->lte(now()->addDays(30)) => 'warning',
+                                        default => 'default',
+                                    };
+                                @endphp
+                                <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
+                                    <td class="px-3 py-2 text-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
+                                    <td class="px-3 py-2 text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</td>
+                                    <td class="px-3 py-2 text-foreground">{{ $producto->formatearCantidad($lote->cantidad_disponible) }} {{ $producto->codigoUnidad() }}</td>
+                                    <td class="px-3 py-2">
+                                        @if ($lote->caduca_el)
+                                            <x-admin.status-badge :variant="$caducidadVariant">{{ $lote->caduca_el->format('d/m/Y') }}</x-admin.status-badge>
+                                        @else
+                                            <span class="text-muted-foreground">Sin caducidad</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-3 py-6 text-center text-sm text-muted-foreground">Todavia no hay lotes disponibles.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
 
         <form method="POST" action="{{ route('admin.inventario.productos.stock.movimientos.store', $producto) }}" class="admin-card space-y-4 p-4 lg:p-6">
@@ -141,6 +184,19 @@
                 <x-input-label for="referencia" value="Referencia documento" />
                 <x-text-input id="referencia" name="referencia" class="mt-1 block h-10 w-full" maxlength="191" />
                 <x-input-error :messages="$errors->get('referencia')" class="mt-2" />
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2">
+                <div>
+                    <x-input-label for="codigo_lote" value="Codigo lote" />
+                    <x-text-input id="codigo_lote" name="codigo_lote" class="mt-1 block h-10 w-full" maxlength="100" />
+                    <x-input-error :messages="$errors->get('codigo_lote')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="caduca_el" value="Fecha caducidad" />
+                    <x-text-input id="caduca_el" name="caduca_el" type="date" class="mt-1 block h-10 w-full" />
+                    <x-input-error :messages="$errors->get('caduca_el')" class="mt-2" />
+                </div>
             </div>
 
             <x-primary-button class="w-full justify-center">Registrar</x-primary-button>

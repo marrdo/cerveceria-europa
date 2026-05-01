@@ -20,6 +20,7 @@ class MovimientoInventario extends Model
         'ubicacion_inventario_id',
         'ubicacion_origen_id',
         'ubicacion_destino_id',
+        'lote_inventario_id',
         'tipo',
         'cantidad',
         'stock_antes',
@@ -72,6 +73,12 @@ class MovimientoInventario extends Model
     public function ubicacionDestino(): BelongsTo
     {
         return $this->belongsTo(UbicacionInventario::class, 'ubicacion_destino_id')->withTrashed();
+    }
+
+    /** @return BelongsTo<LoteInventario, $this> */
+    public function lote(): BelongsTo
+    {
+        return $this->belongsTo(LoteInventario::class, 'lote_inventario_id')->withTrashed();
     }
 
     /** @return BelongsTo<Usuario, $this> */

@@ -121,7 +121,7 @@ class ProductoController extends Controller
     public function stock(Producto $producto): View
     {
         return view('modulos.inventario.productos.stock', [
-            'producto' => $producto->load(['categoria', 'unidad', 'stock.ubicacion', 'movimientos.ubicacion', 'movimientos.proveedor']),
+            'producto' => $producto->load(['categoria', 'unidad', 'stock.ubicacion', 'lotes.ubicacion', 'movimientos.ubicacion', 'movimientos.proveedor']),
             'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
             'proveedores' => Proveedor::query()->where('activo', true)->orderBy('nombre')->get(),
             'tiposMovimiento' => TipoMovimientoInventario::cases(),
