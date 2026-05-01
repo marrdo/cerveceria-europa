@@ -72,10 +72,11 @@
                 <tr class="border-b border-border bg-muted/50">
                     <th class="px-4 py-3 text-left font-medium text-foreground">Fecha</th>
                     <th class="px-4 py-3 text-left font-medium text-foreground">Producto</th>
+                    <th class="hidden px-4 py-3 text-left font-medium text-foreground xl:table-cell">Usuario</th>
                     <th class="px-4 py-3 text-left font-medium text-foreground">Tipo</th>
                     <th class="px-4 py-3 text-left font-medium text-foreground">Cantidad</th>
                     <th class="hidden px-4 py-3 text-left font-medium text-foreground lg:table-cell">Ubicacion</th>
-                    <th class="hidden px-4 py-3 text-left font-medium text-foreground xl:table-cell">Proveedor</th>
+                    <th class="hidden px-4 py-3 text-left font-medium text-foreground 2xl:table-cell">Proveedor</th>
                     <th class="px-4 py-3 text-left font-medium text-foreground">Motivo</th>
                 </tr>
             </thead>
@@ -100,6 +101,12 @@
                             <div class="font-medium text-foreground">{{ $movimiento->producto?->nombre ?? 'Producto eliminado' }}</div>
                             <div class="text-xs text-muted-foreground">{{ $movimiento->producto?->sku ?? 'Sin SKU' }}</div>
                         </td>
+                        <td class="hidden px-4 py-3 xl:table-cell">
+                            <div class="font-medium text-foreground">{{ $movimiento->creador?->nombre ?? 'Sin usuario' }}</div>
+                            @if ($movimiento->creador?->email)
+                                <div class="text-xs text-muted-foreground">{{ $movimiento->creador->email }}</div>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">
                             <x-admin.status-badge :variant="$variant">{{ $movimiento->tipo->etiqueta() }}</x-admin.status-badge>
                         </td>
@@ -108,7 +115,7 @@
                             {{ $movimiento->producto?->codigoUnidad() }}
                         </td>
                         <td class="hidden px-4 py-3 text-muted-foreground lg:table-cell">{{ $ubicacionTexto }}</td>
-                        <td class="hidden px-4 py-3 text-muted-foreground xl:table-cell">{{ $movimiento->proveedor?->nombre ?? 'Sin proveedor' }}</td>
+                        <td class="hidden px-4 py-3 text-muted-foreground 2xl:table-cell">{{ $movimiento->proveedor?->nombre ?? 'Sin proveedor' }}</td>
                         <td class="px-4 py-3">
                             <div class="text-foreground">{{ $movimiento->motivo ?: 'Sin motivo' }}</div>
                             @if ($movimiento->referencia)
@@ -118,7 +125,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-8 text-center text-sm text-muted-foreground">No hay movimientos con estos filtros.</td>
+                        <td colspan="8" class="px-4 py-8 text-center text-sm text-muted-foreground">No hay movimientos con estos filtros.</td>
                     </tr>
                 @endforelse
             </tbody>

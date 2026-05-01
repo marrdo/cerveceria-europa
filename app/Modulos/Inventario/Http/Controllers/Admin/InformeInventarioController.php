@@ -83,9 +83,10 @@ class InformeInventarioController extends Controller
         $movimientos = $this->consultaMovimientos($this->filtrosMovimientos($request))->get();
 
         return $this->csv('movimientos_inventario.csv', [
-            ['Fecha', 'Producto', 'Tipo', 'Cantidad', 'Unidad', 'Ubicacion', 'Origen', 'Destino', 'Proveedor', 'Motivo', 'Referencia', 'Stock antes', 'Stock despues'],
+            ['Fecha', 'Usuario', 'Producto', 'Tipo', 'Cantidad', 'Unidad', 'Ubicacion', 'Origen', 'Destino', 'Proveedor', 'Motivo', 'Referencia', 'Stock antes', 'Stock despues'],
             ...$movimientos->map(fn (MovimientoInventario $movimiento): array => [
                 $movimiento->created_at?->format('d/m/Y H:i'),
+                $movimiento->creador?->nombre ?? 'Sin usuario',
                 $movimiento->producto?->nombre,
                 $movimiento->tipo->etiqueta(),
                 $movimiento->producto?->formatearCantidad($movimiento->cantidad) ?? (string) $movimiento->cantidad,
@@ -175,7 +176,7 @@ class InformeInventarioController extends Controller
     private function consultaMovimientos(array $filtros): Builder
     {
         return MovimientoInventario::query()
-            ->with(['producto.unidad', 'proveedor', 'ubicacion', 'ubicacionOrigen', 'ubicacionDestino'])
+            ->with(['producto.unidad', 'proveedor', 'ubicacion', 'ubicacionOrigen', 'ubicacionDestino', 'creador'])
             ->when($filtros['fecha_desde'] !== '', fn (Builder $query) => $query->whereDate('created_at', '>=', $filtros['fecha_desde']))
             ->when($filtros['fecha_hasta'] !== '', fn (Builder $query) => $query->whereDate('created_at', '<=', $filtros['fecha_hasta']))
             ->when($filtros['producto_id'] !== '', fn (Builder $query) => $query->where('producto_id', $filtros['producto_id']))

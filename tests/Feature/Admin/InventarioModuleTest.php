@@ -425,6 +425,33 @@ class InventarioModuleTest extends TestCase
             ->assertDontSee('Movimiento excluido fase 1.2');
     }
 
+    public function test_movements_report_shows_the_user_who_registered_the_movement(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create([
+            'nombre' => 'Encargado Movimientos',
+            'email' => 'encargado.movimientos@cerveceria-europa.local',
+        ]);
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba(['nombre' => 'Producto con usuario movimiento']);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.inventario.productos.stock.movimientos.store', $producto), [
+                'tipo' => 'entrada',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 4,
+                'motivo' => 'Entrada con usuario registrado',
+            ])
+            ->assertRedirect(route('admin.inventario.productos.stock', $producto));
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.movimientos.index'))
+            ->assertOk()
+            ->assertSee('Entrada con usuario registrado')
+            ->assertSee('Encargado Movimientos')
+            ->assertSee('encargado.movimientos@cerveceria-europa.local');
+    }
+
     public function test_products_can_be_exported_as_utf8_csv(): void
     {
         $this->seed(InventarioSeeder::class);
@@ -470,7 +497,7 @@ class InventarioModuleTest extends TestCase
         $contenido = $response->streamedContent();
 
         $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
-        $this->assertStringContainsString('Fecha;Producto;Tipo;Cantidad;Unidad', $contenido);
+        $this->assertStringContainsString('Fecha;Usuario;Producto;Tipo;Cantidad;Unidad', $contenido);
         $this->assertStringContainsString('Movimiento CSV fase 1.2', $contenido);
     }
 
