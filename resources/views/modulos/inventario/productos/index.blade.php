@@ -13,6 +13,57 @@
                 <div class="mb-4 rounded-md border border-success/30 bg-success/10 p-4 text-sm text-success">{{ session('status') }}</div>
             @endif
 
+            <form method="GET" action="{{ route('admin.inventario.productos.index') }}" class="admin-card mb-4 grid gap-3 p-4 lg:grid-cols-6">
+                <div class="lg:col-span-2">
+                    <x-input-label for="busqueda" value="Busqueda" />
+                    <x-text-input id="busqueda" name="busqueda" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" placeholder="Nombre, SKU o codigo" maxlength="191" />
+                </div>
+
+                <div>
+                    <x-input-label for="categoria_producto_id" value="Categoria" />
+                    <select id="categoria_producto_id" name="categoria_producto_id" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todas</option>
+                        @foreach ($categorias as $categoria)
+                            <option value="{{ $categoria->id }}" @selected($filtros['categoria_producto_id'] === $categoria->id)>{{ $categoria->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <x-input-label for="proveedor_id" value="Proveedor" />
+                    <select id="proveedor_id" name="proveedor_id" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todos</option>
+                        @foreach ($proveedores as $proveedor)
+                            <option value="{{ $proveedor->id }}" @selected($filtros['proveedor_id'] === $proveedor->id)>{{ $proveedor->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <x-input-label for="estado_stock" value="Estado stock" />
+                    <select id="estado_stock" name="estado_stock" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todos</option>
+                        @foreach ($estadosStock as $estadoStock)
+                            <option value="{{ $estadoStock->value }}" @selected($filtros['estado_stock'] === $estadoStock->value)>{{ $estadoStock->etiqueta() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <x-input-label for="activo" value="Estado" />
+                    <select id="activo" name="activo" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todos</option>
+                        <option value="1" @selected($filtros['activo'] === '1')>Activos</option>
+                        <option value="0" @selected($filtros['activo'] === '0')>Inactivos</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end gap-2 lg:col-span-6">
+                    <button type="submit" class="admin-btn-primary">Filtrar</button>
+                    <a href="{{ route('admin.inventario.productos.index') }}" class="admin-btn-outline">Limpiar</a>
+                </div>
+            </form>
+
             <div class="overflow-x-auto rounded-lg border border-border bg-card">
                 <table class="w-full text-sm">
                     <thead>

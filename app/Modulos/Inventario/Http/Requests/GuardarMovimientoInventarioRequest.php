@@ -5,6 +5,7 @@ namespace App\Modulos\Inventario\Http\Requests;
 use App\Modulos\Inventario\Enums\TipoMovimientoInventario;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class GuardarMovimientoInventarioRequest extends FormRequest
 {
@@ -35,6 +36,44 @@ class GuardarMovimientoInventarioRequest extends FormRequest
             'referencia' => ['nullable', 'string', 'max:191'],
             'caduca_el' => ['nullable', 'date'],
             'notas' => ['nullable', 'string'],
+        ];
+    }
+
+    /**
+     * Mensajes especificos para que el usuario entienda que campo debe corregir.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'ubicacion_inventario_id.required_unless' => 'El campo ubicacion es obligatorio para entradas, salidas y ajustes.',
+            'ubicacion_origen_id.required_if' => 'El campo ubicacion de origen es obligatorio para transferencias.',
+            'ubicacion_destino_id.required_if' => 'El campo ubicacion de destino es obligatorio para transferencias.',
+        ];
+    }
+
+    /**
+     * Validaciones cruzadas del formulario de movimiento.
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($this->input('tipo') !== TipoMovimientoInventario::Transferencia->value) {
+                    return;
+                }
+
+                $origenId = $this->input('ubicacion_origen_id');
+                $destinoId = $this->input('ubicacion_destino_id');
+
+                if ($origenId !== null && $destinoId !== null && $origenId === $destinoId) {
+                    $validator->errors()->add(
+                        'ubicacion_destino_id',
+                        'El campo ubicacion de destino debe ser distinto de la ubicacion de origen.',
+                    );
+                }
+            },
         ];
     }
 }

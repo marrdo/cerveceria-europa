@@ -13,6 +13,34 @@
                 <div class="mb-4 rounded-md border border-success/30 bg-success/10 p-4 text-sm text-success">{{ session('status') }}</div>
             @endif
 
+            <form method="GET" action="{{ route($rutaBase.'.index') }}" class="admin-card mb-4 grid gap-3 p-4 md:grid-cols-4">
+                <div>
+                    <x-input-label for="busqueda" value="Nombre" />
+                    <x-text-input id="busqueda" name="busqueda" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" maxlength="191" />
+                </div>
+
+                @if ($permiteFiltroContacto)
+                    <div>
+                        <x-input-label for="contacto" value="Codigo / contacto" />
+                        <x-text-input id="contacto" name="contacto" class="mt-1 block h-10 w-full" :value="$filtros['contacto']" maxlength="191" />
+                    </div>
+                @endif
+
+                <div>
+                    <x-input-label for="activo" value="Estado" />
+                    <select id="activo" name="activo" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todos</option>
+                        <option value="1" @selected($filtros['activo'] === '1')>Activos</option>
+                        <option value="0" @selected($filtros['activo'] === '0')>Inactivos</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="admin-btn-primary">Filtrar</button>
+                    <a href="{{ route($rutaBase.'.index') }}" class="admin-btn-outline">Limpiar</a>
+                </div>
+            </form>
+
             <div class="overflow-x-auto rounded-lg border border-border bg-card">
                 <table class="w-full text-sm">
                     <thead>

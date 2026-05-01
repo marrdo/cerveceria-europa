@@ -9,6 +9,7 @@ use App\Support\Validacion\ReglasValidacion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -26,10 +27,45 @@ abstract class CatalogoInventarioController extends Controller
      */
     public function index(): View
     {
+        $filtros = [
+            'busqueda' => trim((string) request()->query('busqueda', '')),
+            'contacto' => trim((string) request()->query('contacto', '')),
+            'activo' => (string) request()->query('activo', ''),
+        ];
+
+        $tabla = (new $this->modelo())->getTable();
+        $columnasContacto = collect(['codigo', 'email', 'telefono', 'persona_contacto', 'cif_nif'])
+            ->filter(fn (string $columna): bool => Schema::hasColumn($tabla, $columna))
+            ->values()
+            ->all();
+
+        $items = $this->modelo::query()
+            ->when($filtros['busqueda'] !== '', function ($query) use ($filtros): void {
+                $busqueda = $filtros['busqueda'];
+
+                $query->where('nombre', 'like', "%{$busqueda}%");
+            })
+            ->when($filtros['contacto'] !== '' && $columnasContacto !== [], function ($query) use ($filtros, $columnasContacto): void {
+                $contacto = $filtros['contacto'];
+
+                $query->where(function ($subquery) use ($contacto, $columnasContacto): void {
+                    foreach ($columnasContacto as $indice => $columna) {
+                        $metodo = $indice === 0 ? 'where' : 'orWhere';
+                        $subquery->{$metodo}($columna, 'like', "%{$contacto}%");
+                    }
+                });
+            })
+            ->when($filtros['activo'] !== '', fn ($query) => $query->where('activo', $filtros['activo'] === '1'))
+            ->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
+
         return view('modulos.inventario.catalogo.index', [
-            'items' => $this->modelo::query()->orderBy('nombre')->paginate(15),
+            'items' => $items,
             'titulo' => $this->titulo,
             'rutaBase' => $this->rutaBase,
+            'filtros' => $filtros,
+            'permiteFiltroContacto' => $columnasContacto !== [],
         ]);
     }
 

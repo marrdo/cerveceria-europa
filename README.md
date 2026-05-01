@@ -81,7 +81,7 @@ Incluye:
 
 ### FASE 1.1 - Endurecer inventario
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Hacer que el inventario inicial sea mas solido antes de conectarlo con compras.
@@ -104,7 +104,31 @@ Tareas:
   - proveedor,
   - estado de stock,
   - activo/inactivo.
+- Añadir filtros en proveedores.
+  - Nombre
+  - Codigo/Contacto
+  - Estado
+- Añadir filtros en ubicaciones.
+  - Nombre
+  - Codigo/Contacto
+  - Estado
+- Añadir filtros en Categorías.
+  - Nombre
+  - Codigo/Contacto
+  - Estado
+- Añadir filtros en Unidades.
+  - Nombre
+  - Codigo/Contacto
+  - Estado
 - Anadir tests funcionales de validacion y filtros.
+
+Implementado:
+
+- Validaciones especificas de movimientos con mensajes en espanol.
+- Transferencias con origen y destino obligatorios y distintos.
+- Filtros en productos por busqueda, categoria, proveedor, estado de stock y estado activo.
+- Filtros en catalogos por nombre, codigo/contacto cuando aplica y estado activo.
+- Tests funcionales de validacion de movimientos y filtros.
 
 ### FASE 1.2 - Alertas e informes de inventario
 
