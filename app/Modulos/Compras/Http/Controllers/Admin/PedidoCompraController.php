@@ -83,8 +83,8 @@ class PedidoCompraController extends Controller
     public function show(PedidoCompra $pedido): View
     {
         return view('modulos.compras.pedidos.show', [
-            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'eventos.usuario', 'creador']),
-            'estadosOperativos' => EstadoPedidoCompra::estadosOperativos(),
+            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'lineas.recepciones', 'recepciones.lineas.producto.unidad', 'recepciones.lineas.ubicacion', 'recepciones.receptor', 'eventos.usuario', 'creador']),
+            'estadosCambioManual' => EstadoPedidoCompra::estadosCambioManual(),
         ]);
     }
 
@@ -142,7 +142,7 @@ class PedidoCompraController extends Controller
 
         $estadoNuevo = EstadoPedidoCompra::tryFrom($datos['estado']);
 
-        if (! $estadoNuevo || $estadoNuevo === EstadoPedidoCompra::Borrador) {
+        if (! $estadoNuevo || ! in_array($estadoNuevo, EstadoPedidoCompra::estadosCambioManual(), true)) {
             return back()->withErrors(['estado' => 'El estado seleccionado no es valido.']);
         }
 

@@ -19,6 +19,17 @@
                 <div>
                     <x-input-label for="nombre" value="Nombre" />
                         <x-text-input id="nombre" name="nombre" class="mt-1 block h-10 w-full" :value="old('nombre', $item->nombre)" required maxlength="191" />
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        @if (str_contains($rutaBase, 'categorias'))
+                            Nombre del grupo donde se ordenaran los productos.
+                        @elseif (str_contains($rutaBase, 'unidades'))
+                            Nombre de la unidad usada para medir el stock.
+                        @elseif (str_contains($rutaBase, 'ubicaciones'))
+                            Nombre del lugar fisico donde se guarda mercancia.
+                        @else
+                            Nombre comercial del proveedor.
+                        @endif
+                    </p>
                     <x-input-error :messages="$errors->get('nombre')" class="mt-2" />
                 </div>
 
@@ -26,6 +37,13 @@
                     <div>
                         <x-input-label for="codigo" value="Codigo" />
                         <x-text-input id="codigo" name="codigo" class="mt-1 block h-10 w-full" :value="old('codigo', $item->codigo)" maxlength="50" />
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            @if (str_contains($rutaBase, 'unidades'))
+                                Abreviatura visible junto a cantidades, por ejemplo ud, caja, l o kg.
+                            @else
+                                Codigo corto para identificar rapido la ubicacion en listados y movimientos.
+                            @endif
+                        </p>
                         <x-input-error :messages="$errors->get('codigo')" class="mt-2" />
                     </div>
                 @endif
@@ -44,11 +62,13 @@
                                 title="{{ AtributosValidacion::TITULO_DOCUMENTO_IDENTIDAD_ESPANOL }}"
                                 autocomplete="off"
                             />
+                            <p class="mt-1 text-xs text-muted-foreground">Documento fiscal del proveedor. Se valida como DNI, NIE o CIF espanol.</p>
                             <x-input-error :messages="$errors->get('cif_nif')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="persona_contacto" value="Persona de contacto" />
                             <x-text-input id="persona_contacto" name="persona_contacto" class="mt-1 block h-10 w-full" :value="old('persona_contacto', $item->persona_contacto)" maxlength="191" autocomplete="name" />
+                            <p class="mt-1 text-xs text-muted-foreground">Persona a la que llamar o escribir cuando haya dudas con pedidos.</p>
                             <x-input-error :messages="$errors->get('persona_contacto')" class="mt-2" />
                         </div>
                         <div>
@@ -63,6 +83,7 @@
                                 title="{{ AtributosValidacion::TITULO_EMAIL }}"
                                 autocomplete="email"
                             />
+                            <p class="mt-1 text-xs text-muted-foreground">Correo para comunicaciones, pedidos o incidencias con el proveedor.</p>
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div>
@@ -79,6 +100,7 @@
                                 title="{{ AtributosValidacion::TITULO_TELEFONO_ESPANOL }}"
                                 autocomplete="tel"
                             />
+                            <p class="mt-1 text-xs text-muted-foreground">Telefono de contacto. Admite formato espanol con o sin prefijo +34.</p>
                             <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
                         </div>
                     </div>
@@ -87,20 +109,33 @@
                 <div>
                     <x-input-label for="descripcion" value="Descripcion / notas" />
                     <textarea id="descripcion" name="{{ str_contains($rutaBase, 'proveedores') ? 'notas' : 'descripcion' }}" rows="4" class="admin-input mt-1 block w-full shadow-sm">{{ old(str_contains($rutaBase, 'proveedores') ? 'notas' : 'descripcion', $item->notas ?? $item->descripcion) }}</textarea>
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        @if (str_contains($rutaBase, 'proveedores'))
+                            Informacion interna: horarios de reparto, condiciones, observaciones o incidencias habituales.
+                        @else
+                            Texto interno para aclarar como se usa este dato dentro del inventario.
+                        @endif
+                    </p>
                     <x-input-error :messages="$errors->get(str_contains($rutaBase, 'proveedores') ? 'notas' : 'descripcion')" class="mt-2" />
                 </div>
 
                 @if (str_contains($rutaBase, 'unidades'))
-                    <label class="flex items-center gap-2 text-sm text-foreground">
-                    <input type="checkbox" name="permite_decimal" value="1" class="rounded border-input bg-background text-primary focus:ring-ring" @checked(old('permite_decimal', $item->permite_decimal))>
-                        Permite cantidades decimales
-                    </label>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm text-foreground">
+                        <input type="checkbox" name="permite_decimal" value="1" class="rounded border-input bg-background text-primary focus:ring-ring" @checked(old('permite_decimal', $item->permite_decimal))>
+                            Permite cantidades decimales
+                        </label>
+                        <p class="mt-1 text-xs text-muted-foreground">Activalo para unidades como litros o kilos. Desactivalo para cajas, botellas o unidades cerradas.</p>
+                    </div>
                 @endif
 
-                <label class="flex items-center gap-2 text-sm text-foreground">
-                    <input type="checkbox" name="activo" value="1" class="rounded border-input bg-background text-primary focus:ring-ring" @checked(old('activo', $item->activo ?? true))>
-                    Activo
-                </label>
+                <div>
+                    <label class="flex items-center gap-2 text-sm text-foreground">
+                        <input type="checkbox" name="activo" value="1" class="rounded border-input bg-background text-primary focus:ring-ring" @checked(old('activo', $item->activo ?? true))>
+                        Activo
+                    </label>
+                    <p class="mt-1 text-xs text-muted-foreground">Si se desactiva, no aparecera como opcion principal en nuevos formularios, pero se conserva el historico.</p>
+                </div>
 
                 <div class="flex items-center justify-end gap-3">
                     <a href="{{ route($rutaBase.'.index') }}" class="admin-btn-outline">Cancelar</a>

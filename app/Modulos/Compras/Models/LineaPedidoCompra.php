@@ -6,6 +6,7 @@ use App\Modulos\Inventario\Models\Producto;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LineaPedidoCompra extends Model
 {
@@ -48,5 +49,25 @@ class LineaPedidoCompra extends Model
     public function producto(): BelongsTo
     {
         return $this->belongsTo(Producto::class, 'producto_id')->withTrashed();
+    }
+
+    /** @return HasMany<LineaRecepcionCompra> */
+    public function recepciones(): HasMany
+    {
+        return $this->hasMany(LineaRecepcionCompra::class, 'linea_pedido_compra_id');
+    }
+
+    public function cantidadRecibida(): float
+    {
+        if ($this->relationLoaded('recepciones')) {
+            return round((float) $this->recepciones->sum('cantidad'), 3);
+        }
+
+        return round((float) $this->recepciones()->sum('cantidad'), 3);
+    }
+
+    public function cantidadPendiente(): float
+    {
+        return max(0, round((float) $this->cantidad - $this->cantidadRecibida(), 3));
     }
 }

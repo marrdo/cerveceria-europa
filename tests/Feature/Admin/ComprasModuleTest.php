@@ -6,9 +6,13 @@ use App\Enums\RolUsuario;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
 use App\Modulos\Compras\Models\EventoPedidoCompra;
 use App\Modulos\Compras\Models\PedidoCompra;
+use App\Modulos\Compras\Models\RecepcionCompra;
 use App\Modulos\Inventario\Models\CategoriaProducto;
+use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
+use App\Modulos\Inventario\Models\StockInventario;
+use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
@@ -193,6 +197,47 @@ class ComprasModuleTest extends TestCase
         ]);
     }
 
+    public function test_purchase_order_cannot_be_manually_marked_as_received(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+
+        $this->actingAs($usuario)
+            ->from(route('admin.compras.pedidos.show', $pedido))
+            ->patch(route('admin.compras.pedidos.estado', $pedido), [
+                'estado' => EstadoPedidoCompra::Recibido->value,
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido))
+            ->assertSessionHasErrors(['estado']);
+
+        $this->assertSame(EstadoPedidoCompra::Pedido, $pedido->refresh()->estado);
+        $this->assertDatabaseMissing('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'estado_nuevo' => EstadoPedidoCompra::Recibido->value,
+        ]);
+    }
+
+    public function test_purchase_order_detail_shows_reception_button_when_pending_quantity_exists(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $pedido->update(['estado' => EstadoPedidoCompra::Recibido]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.pedidos.show', $pedido))
+            ->assertOk()
+            ->assertSee('Registrar recepcion')
+            ->assertDontSee('<option value="recibido"', false)
+            ->assertDontSee('<option value="recibido_parcial"', false);
+    }
+
     public function test_purchase_order_requires_at_least_one_complete_line(): void
     {
         $this->seed(InventarioSeeder::class);
@@ -219,9 +264,178 @@ class ComprasModuleTest extends TestCase
             ]);
     }
 
-    private function crearProductoPrueba(): Producto
+    public function test_purchase_order_reception_form_can_be_rendered_when_ordered(): void
     {
-        return Producto::query()->create([
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.pedidos.recepciones.create', $pedido))
+            ->assertOk()
+            ->assertSee('Lineas recibidas')
+            ->assertSee($producto->nombre);
+    }
+
+    public function test_purchase_reception_creates_inventory_entry_and_marks_order_as_received(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 1,
+                        'codigo_lote' => 'RC-TEST-001',
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertSame(EstadoPedidoCompra::Recibido, $pedido->refresh()->estado);
+        $this->assertDatabaseHas('recepciones_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'recibido_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseHas('stock_inventario', [
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 1,
+        ]);
+        $this->assertDatabaseHas('movimientos_inventario', [
+            'producto_id' => $producto->id,
+            'proveedor_id' => $proveedor->id,
+            'tipo' => 'entrada',
+            'cantidad' => 1,
+            'creado_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'recepcion',
+            'estado_nuevo' => EstadoPedidoCompra::Recibido->value,
+        ]);
+    }
+
+    public function test_purchase_reception_can_split_same_order_line_between_locations(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $almacen = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $camara = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 4);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $almacen->id,
+                        'cantidad' => 2,
+                    ],
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $camara->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertDatabaseHas('stock_inventario', [
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $almacen->id,
+            'cantidad' => 2,
+        ]);
+        $this->assertDatabaseHas('stock_inventario', [
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $camara->id,
+            'cantidad' => 2,
+        ]);
+        $this->assertSame(2, MovimientoInventario::query()->where('producto_id', $producto->id)->count());
+        $this->assertSame(EstadoPedidoCompra::Recibido, $pedido->refresh()->estado);
+    }
+
+    public function test_partial_purchase_reception_marks_order_as_partially_received(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertSame(EstadoPedidoCompra::RecibidoParcial, $pedido->refresh()->estado);
+        $this->assertSame(3.0, $linea->refresh()->cantidadPendiente());
+    }
+
+    public function test_purchase_reception_requires_expiry_for_products_that_track_expiry(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
+        $producto = $this->crearProductoPrueba(['controla_caducidad' => true]);
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.compras.pedidos.recepciones.create', $pedido))
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 1,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.recepciones.create', $pedido))
+            ->assertSessionHasErrors([
+                'lineas.0.caduca_el' => 'La fecha de caducidad es obligatoria para productos con caducidad.',
+            ]);
+    }
+
+    /**
+     * @param array<string, mixed> $sobrescribir
+     */
+    private function crearProductoPrueba(array $sobrescribir = []): Producto
+    {
+        return Producto::query()->create(array_merge([
             'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
             'unidad_inventario_id' => UnidadInventario::query()->where('codigo', 'ud')->firstOrFail()->id,
             'nombre' => 'Cerveza compra prueba',
@@ -232,18 +446,18 @@ class ComprasModuleTest extends TestCase
             'controla_stock' => true,
             'controla_caducidad' => false,
             'activo' => true,
-        ]);
+        ], $sobrescribir));
     }
 
-    private function crearPedidoBorrador(Usuario $usuario, Proveedor $proveedor, Producto $producto): PedidoCompra
+    private function crearPedidoBorrador(Usuario $usuario, Proveedor $proveedor, Producto $producto, float $cantidad = 1): PedidoCompra
     {
         $pedido = PedidoCompra::query()->create([
             'proveedor_id' => $proveedor->id,
             'numero' => 'PC-TEST-'.str()->random(6),
             'estado' => EstadoPedidoCompra::Borrador,
-            'subtotal' => 2,
-            'impuestos' => 0.42,
-            'total' => 2.42,
+            'subtotal' => round($cantidad * 2, 2),
+            'impuestos' => round($cantidad * 2 * 0.21, 2),
+            'total' => round(($cantidad * 2) + ($cantidad * 2 * 0.21), 2),
             'creado_por' => $usuario->id,
             'actualizado_por' => $usuario->id,
         ]);
@@ -251,12 +465,12 @@ class ComprasModuleTest extends TestCase
         $pedido->lineas()->create([
             'producto_id' => $producto->id,
             'descripcion' => $producto->nombre,
-            'cantidad' => 1,
+            'cantidad' => $cantidad,
             'coste_unitario' => 2,
             'iva_porcentaje' => 21,
-            'subtotal' => 2,
-            'impuestos' => 0.42,
-            'total' => 2.42,
+            'subtotal' => round($cantidad * 2, 2),
+            'impuestos' => round($cantidad * 2 * 0.21, 2),
+            'total' => round(($cantidad * 2) + ($cantidad * 2 * 0.21), 2),
             'orden' => 0,
         ]);
 

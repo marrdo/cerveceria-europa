@@ -15,18 +15,21 @@
                         <option value="{{ $proveedor->id }}" @selected(old('proveedor_id', $pedido->proveedor_id) === $proveedor->id)>{{ $proveedor->nombre }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-muted-foreground">Empresa a la que se le realiza el pedido.</p>
                 <x-input-error :messages="$errors->get('proveedor_id')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="fecha_pedido" value="Fecha pedido" />
                 <x-text-input id="fecha_pedido" name="fecha_pedido" type="date" class="mt-1 block h-10 w-full" :value="old('fecha_pedido', $pedido->fecha_pedido?->format('Y-m-d'))" />
+                <p class="mt-1 text-xs text-muted-foreground">Dia en el que se prepara o envia el pedido al proveedor.</p>
                 <x-input-error :messages="$errors->get('fecha_pedido')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="fecha_prevista" value="Fecha prevista" />
                 <x-text-input id="fecha_prevista" name="fecha_prevista" type="date" class="mt-1 block h-10 w-full" :value="old('fecha_prevista', $pedido->fecha_prevista?->format('Y-m-d'))" />
+                <p class="mt-1 text-xs text-muted-foreground">Dia estimado de llegada de la mercancia.</p>
                 <x-input-error :messages="$errors->get('fecha_prevista')" class="mt-2" />
             </div>
         </div>
@@ -34,6 +37,7 @@
         <div class="mt-4">
             <x-input-label for="notas" value="Notas" />
             <textarea id="notas" name="notas" rows="3" class="admin-input mt-1 block w-full">{{ old('notas', $pedido->notas) }}</textarea>
+            <p class="mt-1 text-xs text-muted-foreground">Observaciones internas para el equipo. No afectan al stock ni al calculo del pedido.</p>
             <x-input-error :messages="$errors->get('notas')" class="mt-2" />
         </div>
     </section>
@@ -63,12 +67,27 @@
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="border-b border-border bg-muted/50">
-                        <th class="min-w-64 px-4 py-3 text-left font-medium text-foreground">Producto</th>
-                        <th class="min-w-56 px-4 py-3 text-left font-medium text-foreground">Descripcion</th>
-                        <th class="w-32 px-4 py-3 text-left font-medium text-foreground">Cantidad</th>
-                        <th class="w-36 px-4 py-3 text-left font-medium text-foreground">Coste</th>
-                        <th class="w-28 px-4 py-3 text-left font-medium text-foreground">IVA %</th>
+                    <tr class="border-b border-border bg-muted/50 align-top">
+                        <th class="min-w-64 px-4 py-3 text-left font-medium text-foreground">
+                            Producto
+                            <p class="mt-1 text-xs font-normal text-muted-foreground">Articulo del catalogo que se pide.</p>
+                        </th>
+                        <th class="min-w-56 px-4 py-3 text-left font-medium text-foreground">
+                            Descripcion
+                            <p class="mt-1 text-xs font-normal text-muted-foreground">Texto visible en esta linea. Si lo dejas vacio se usa el nombre del producto.</p>
+                        </th>
+                        <th class="w-32 px-4 py-3 text-left font-medium text-foreground">
+                            Cantidad
+                            <p class="mt-1 text-xs font-normal text-muted-foreground">Unidades, cajas, litros o kg segun el producto.</p>
+                        </th>
+                        <th class="w-36 px-4 py-3 text-left font-medium text-foreground">
+                            Coste sin IVA
+                            <p class="mt-1 text-xs font-normal text-muted-foreground">Precio unitario antes de impuestos.</p>
+                        </th>
+                        <th class="w-28 px-4 py-3 text-left font-medium text-foreground">
+                            IVA %
+                            <p class="mt-1 text-xs font-normal text-muted-foreground">Porcentaje aplicado para calcular el total.</p>
+                        </th>
                     </tr>
                 </thead>
                 <tbody data-lineas-tbody>

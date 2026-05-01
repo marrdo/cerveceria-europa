@@ -2,6 +2,9 @@
     <x-slot name="header">
         <x-admin.page-header title="Pedido {{ $pedido->numero }}" :description="$pedido->proveedor?->nombre">
             <x-slot name="actions">
+                @if ($pedido->puedeRecibir())
+                    <a href="{{ route('admin.compras.pedidos.recepciones.create', $pedido) }}" class="admin-btn-primary">Registrar recepcion</a>
+                @endif
                 @if ($pedido->puedeEditar())
                     <a href="{{ route('admin.compras.pedidos.edit', $pedido) }}" class="admin-btn-outline">Editar</a>
                 @endif
@@ -31,7 +34,8 @@
                             <tr class="border-b border-border bg-muted/50">
                                 <th class="px-4 py-3 text-left font-medium text-foreground">Producto</th>
                                 <th class="px-4 py-3 text-left font-medium text-foreground">Cantidad</th>
-                                <th class="px-4 py-3 text-right font-medium text-foreground">Coste</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Recibido</th>
+                                <th class="px-4 py-3 text-right font-medium text-foreground">Coste sin IVA</th>
                                 <th class="px-4 py-3 text-right font-medium text-foreground">IVA</th>
                                 <th class="px-4 py-3 text-right font-medium text-foreground">Total</th>
                             </tr>
@@ -44,11 +48,48 @@
                                         <div class="text-xs text-muted-foreground">{{ $linea->producto?->sku ?? 'Sin SKU' }}</div>
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidad) ?? $linea->cantidad }} {{ $linea->producto?->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadRecibida()) ?? $linea->cantidadRecibida() }} {{ $linea->producto?->codigoUnidad() }}</td>
                                     <td class="px-4 py-3 text-right text-foreground">{{ number_format((float) $linea->coste_unitario, 2, ',', '.') }} EUR</td>
                                     <td class="px-4 py-3 text-right text-muted-foreground">{{ number_format((float) $linea->iva_porcentaje, 2, ',', '.') }}%</td>
                                     <td class="px-4 py-3 text-right font-medium text-foreground">{{ number_format((float) $linea->total, 2, ',', '.') }} EUR</td>
                                 </tr>
                             @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-card overflow-hidden">
+                <div class="border-b border-border p-4">
+                    <h2 class="text-base font-semibold text-foreground">Recepciones</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/50">
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Numero</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Fecha</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Lineas</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($pedido->recepciones as $recepcion)
+                                <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
+                                    <td class="px-4 py-3 font-medium text-foreground">{{ $recepcion->numero }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $recepcion->fecha_recepcion->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">
+                                        @foreach ($recepcion->lineas as $lineaRecepcion)
+                                            <div>{{ $lineaRecepcion->producto?->nombre }} - {{ $lineaRecepcion->producto?->formatearCantidad($lineaRecepcion->cantidad) ?? $lineaRecepcion->cantidad }} {{ $lineaRecepcion->producto?->codigoUnidad() }} en {{ $lineaRecepcion->ubicacion?->nombre }}</div>
+                                        @endforeach
+                                    </td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $recepcion->receptor?->nombre ?? 'Sin usuario' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-muted-foreground">Todavia no hay recepciones registradas.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -85,10 +126,11 @@
                 @csrf
                 @method('PATCH')
                 <h2 class="text-base font-semibold text-foreground">Cambiar estado</h2>
+                <p class="text-xs text-muted-foreground">Usa este bloque para marcar el pedido como enviado al proveedor, cerrado o cancelado. La mercancia recibida se registra siempre desde el boton Registrar recepcion.</p>
                 <div>
                     <x-input-label for="estado" value="Estado" />
                     <select id="estado" name="estado" class="admin-input mt-1 block h-10 w-full">
-                        @foreach ($estadosOperativos as $estado)
+                        @foreach ($estadosCambioManual as $estado)
                             <option value="{{ $estado->value }}" @selected($pedido->estado === $estado)>{{ $estado->etiqueta() }}</option>
                         @endforeach
                     </select>

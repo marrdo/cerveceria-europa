@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
+use App\Modulos\Compras\Http\Controllers\Admin\RecepcionCompraController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
@@ -70,6 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin/compras')->name('admin.compras.')->middleware('modulo:compras')->group(function (): void {
         Route::get('/', [PedidoCompraController::class, 'index'])->name('index');
         Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');
+        Route::get('pedidos/{pedido}/recepciones/create', [RecepcionCompraController::class, 'create'])->name('pedidos.recepciones.create');
+        Route::post('pedidos/{pedido}/recepciones', [RecepcionCompraController::class, 'store'])->name('pedidos.recepciones.store');
         Route::resource('pedidos', PedidoCompraController::class)
             ->except(['destroy'])
             ->parameters(['pedidos' => 'pedido']);

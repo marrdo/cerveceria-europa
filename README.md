@@ -238,14 +238,14 @@ Implementado:
 - Anadir lineas con producto, descripcion, cantidad, coste unitario e IVA.
 - Calculo automatico de subtotal, impuestos y total.
 - Editar pedidos solo mientras estan en `borrador`.
-- Cambiar estado del pedido desde el detalle.
+- Cambiar estado manual del pedido desde el detalle para marcarlo como `pedido`, `cerrado` o `cancelado`.
 - Registrar eventos historicos de creacion, actualizacion y cambio de estado.
 - Filtros por numero, proveedor y estado.
 - Tests funcionales del flujo base de pedidos.
 
 ### FASE 2.1 - Recepciones de compra e inventario
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Unir `Compras` con `Inventario` de forma segura.
@@ -271,6 +271,22 @@ Regla:
 
 Nota operativa:
 El encargado no deberia recibir un pedido grande entrando producto por producto desde el formulario manual de stock. La pantalla correcta sera `Recepciones`, donde podra repartir una misma linea entre varias ubicaciones, por ejemplo mitad en `Almacen` y mitad en `Camara fria`. El lector de codigo de barras se integrara aqui como un input de busqueda por `codigo_barras`, SKU o nombre.
+
+Implementado:
+
+- Nueva tabla `recepciones_compra`.
+- Nueva tabla `lineas_recepcion_compra`.
+- Pantalla para registrar recepcion desde el detalle del pedido.
+- Reparto de una misma linea entre varias ubicaciones.
+- Registro de lote y caducidad por linea recibida.
+- Productos con caducidad exigen fecha de caducidad al recibir.
+- Cada linea recibida genera un movimiento real de entrada en inventario mediante `RegistrarMovimientoInventarioAction`.
+- Actualizacion automatica del estado del pedido:
+  - `recibido_parcial`,
+  - `recibido`.
+- Los estados `recibido_parcial` y `recibido` no se pueden seleccionar manualmente: solo nacen de recepciones reales.
+- Historico de eventos de recepcion.
+- Tests funcionales de recepcion completa, parcial, reparto por ubicacion y caducidad.
 
 ### FASE 2.2 - Incidencias y cierre de pedidos
 

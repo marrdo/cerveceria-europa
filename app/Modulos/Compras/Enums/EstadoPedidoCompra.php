@@ -36,16 +36,16 @@ enum EstadoPedidoCompra: string
     }
 
     /**
-     * Estados que se pueden seleccionar manualmente desde la fase 2.0.
+     * Estados que puede seleccionar una persona manualmente.
+     *
+     * Los estados de recepcion se calculan al registrar mercancia real.
      *
      * @return array<int, self>
      */
-    public static function estadosOperativos(): array
+    public static function estadosCambioManual(): array
     {
         return [
             self::Pedido,
-            self::RecibidoParcial,
-            self::Recibido,
             self::Cerrado,
             self::Cancelado,
         ];

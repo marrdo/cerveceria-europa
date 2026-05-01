@@ -61,6 +61,12 @@ class PedidoCompra extends Model
         return $this->hasMany(EventoPedidoCompra::class, 'pedido_compra_id')->latest('created_at');
     }
 
+    /** @return HasMany<RecepcionCompra> */
+    public function recepciones(): HasMany
+    {
+        return $this->hasMany(RecepcionCompra::class, 'pedido_compra_id')->latest('created_at');
+    }
+
     /** @return BelongsTo<Usuario, $this> */
     public function creador(): BelongsTo
     {
@@ -70,5 +76,23 @@ class PedidoCompra extends Model
     public function puedeEditar(): bool
     {
         return $this->estado === EstadoPedidoCompra::Borrador;
+    }
+
+    public function puedeRecibir(): bool
+    {
+        if (in_array($this->estado, [EstadoPedidoCompra::Cerrado, EstadoPedidoCompra::Cancelado, EstadoPedidoCompra::Borrador], true)) {
+            return false;
+        }
+
+        return $this->cantidadPendienteRecepcion() > 0.0005;
+    }
+
+    public function cantidadPendienteRecepcion(): float
+    {
+        $lineas = $this->relationLoaded('lineas')
+            ? $this->lineas
+            : $this->lineas()->with('recepciones')->get();
+
+        return round((float) $lineas->sum(fn (LineaPedidoCompra $linea): float => $linea->cantidadPendiente()), 3);
     }
 }

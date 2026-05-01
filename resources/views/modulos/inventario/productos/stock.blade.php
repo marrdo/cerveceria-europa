@@ -121,6 +121,7 @@
                         <option value="{{ $tipo->value }}">{{ $tipo->etiqueta() }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-muted-foreground">Entrada suma stock, salida descuenta, ajuste fija una cantidad y transferencia mueve entre ubicaciones.</p>
                 <x-input-error :messages="$errors->get('tipo')" class="mt-2" />
             </div>
 
@@ -131,6 +132,7 @@
                         <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-muted-foreground">Ubicacion usada en entradas, salidas y ajustes.</p>
                 <x-input-error :messages="$errors->get('ubicacion_inventario_id')" class="mt-2" />
             </div>
 
@@ -143,6 +145,7 @@
                             <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-muted-foreground">Solo para transferencias: de donde sale el stock.</p>
                     <x-input-error :messages="$errors->get('ubicacion_origen_id')" class="mt-2" />
                 </div>
                 <div>
@@ -153,6 +156,7 @@
                             <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-muted-foreground">Solo para transferencias: donde entra el stock.</p>
                     <x-input-error :messages="$errors->get('ubicacion_destino_id')" class="mt-2" />
                 </div>
             </div>
@@ -165,24 +169,28 @@
                         <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-muted-foreground">Opcional. Sirve para dejar trazabilidad cuando la entrada viene de un proveedor.</p>
                 <x-input-error :messages="$errors->get('proveedor_id')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="cantidad" value="Cantidad" />
                 <x-text-input id="cantidad" name="cantidad" type="number" step="0.001" min="0.001" class="mt-1 block h-10 w-full" required />
+                <p class="mt-1 text-xs text-muted-foreground">Numero de unidades que entran, salen, se ajustan o se transfieren.</p>
                 <x-input-error :messages="$errors->get('cantidad')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="motivo" value="Motivo" />
                 <x-text-input id="motivo" name="motivo" class="mt-1 block h-10 w-full" required maxlength="191" />
+                <p class="mt-1 text-xs text-muted-foreground">Explica por que se hace el movimiento. Ejemplo: inventario inicial, rotura, merma o ajuste.</p>
                 <x-input-error :messages="$errors->get('motivo')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="referencia" value="Referencia documento" />
                 <x-text-input id="referencia" name="referencia" class="mt-1 block h-10 w-full" maxlength="191" />
+                <p class="mt-1 text-xs text-muted-foreground">Numero de albaran, factura o documento relacionado, si existe.</p>
                 <x-input-error :messages="$errors->get('referencia')" class="mt-2" />
             </div>
 
@@ -190,11 +198,13 @@
                 <div>
                     <x-input-label for="codigo_lote" value="Codigo lote" />
                     <x-text-input id="codigo_lote" name="codigo_lote" class="mt-1 block h-10 w-full" maxlength="100" />
+                    <p class="mt-1 text-xs text-muted-foreground">Codigo impreso en el producto o albaran para seguir el lote.</p>
                     <x-input-error :messages="$errors->get('codigo_lote')" class="mt-2" />
                 </div>
                 <div>
                     <x-input-label for="caduca_el" value="Fecha caducidad" />
                     <x-text-input id="caduca_el" name="caduca_el" type="date" class="mt-1 block h-10 w-full" />
+                    <p class="mt-1 text-xs text-muted-foreground">Obligatoria si el producto controla caducidad.</p>
                     <x-input-error :messages="$errors->get('caduca_el')" class="mt-2" />
                 </div>
             </div>
