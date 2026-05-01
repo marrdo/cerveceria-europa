@@ -4,59 +4,59 @@
 
 @layer base {
     :root {
-        --color-background: 250 248 242;
-        --color-foreground: 44 36 27;
-        --color-card: 255 255 255;
-        --color-card-foreground: 44 36 27;
-        --color-primary: 202 132 36;
-        --color-primary-foreground: 35 24 13;
-        --color-secondary: 241 236 226;
-        --color-secondary-foreground: 58 49 39;
-        --color-muted: 241 236 226;
-        --color-muted-foreground: 112 98 82;
-        --color-accent: 38 112 79;
+        --color-background: 244 240 232;
+        --color-foreground: 43 36 30;
+        --color-card: 255 248 237;
+        --color-card-foreground: 43 36 30;
+        --color-primary: 208 138 36;
+        --color-primary-foreground: 39 27 16;
+        --color-secondary: 232 222 207;
+        --color-secondary-foreground: 58 47 38;
+        --color-muted: 232 222 207;
+        --color-muted-foreground: 117 104 88;
+        --color-accent: 31 91 69;
         --color-accent-foreground: 255 255 255;
-        --color-destructive: 185 64 47;
+        --color-destructive: 155 74 47;
         --color-destructive-foreground: 255 255 255;
-        --color-border: 224 216 202;
-        --color-input: 224 216 202;
-        --color-ring: 202 132 36;
-        --color-warning: 220 171 59;
-        --color-warning-foreground: 45 32 16;
-        --color-success: 47 135 86;
+        --color-border: 216 201 180;
+        --color-input: 216 201 180;
+        --color-ring: 208 138 36;
+        --color-warning: 211 152 49;
+        --color-warning-foreground: 46 31 15;
+        --color-success: 31 91 69;
         --color-success-foreground: 255 255 255;
-        --color-sidebar: 246 242 234;
-        --color-sidebar-foreground: 44 36 27;
-        --color-sidebar-accent: 235 226 211;
-        --color-sidebar-border: 224 216 202;
+        --color-sidebar: 43 36 30;
+        --color-sidebar-foreground: 244 235 221;
+        --color-sidebar-accent: 73 55 43;
+        --color-sidebar-border: 100 75 58;
     }
 
     .dark {
-        --color-background: 26 23 19;
-        --color-foreground: 242 236 226;
+        --color-background: 24 21 18;
+        --color-foreground: 240 231 216;
         --color-card: 36 31 26;
-        --color-card-foreground: 242 236 226;
-        --color-primary: 224 155 55;
+        --color-card-foreground: 240 231 216;
+        --color-primary: 227 161 58;
         --color-primary-foreground: 31 22 12;
-        --color-secondary: 50 43 36;
-        --color-secondary-foreground: 242 236 226;
-        --color-muted: 50 43 36;
-        --color-muted-foreground: 170 158 141;
-        --color-accent: 55 145 103;
+        --color-secondary: 55 46 38;
+        --color-secondary-foreground: 240 231 216;
+        --color-muted: 55 46 38;
+        --color-muted-foreground: 184 169 146;
+        --color-accent: 47 138 103;
         --color-accent-foreground: 255 255 255;
-        --color-destructive: 204 76 58;
+        --color-destructive: 179 92 62;
         --color-destructive-foreground: 255 255 255;
-        --color-border: 70 61 51;
-        --color-input: 70 61 51;
-        --color-ring: 224 155 55;
-        --color-warning: 231 182 67;
+        --color-border: 58 48 40;
+        --color-input: 58 48 40;
+        --color-ring: 227 161 58;
+        --color-warning: 232 181 70;
         --color-warning-foreground: 31 22 12;
-        --color-success: 63 156 102;
+        --color-success: 64 155 112;
         --color-success-foreground: 255 255 255;
-        --color-sidebar: 22 19 16;
-        --color-sidebar-foreground: 242 236 226;
-        --color-sidebar-accent: 42 36 30;
-        --color-sidebar-border: 70 61 51;
+        --color-sidebar: 18 16 14;
+        --color-sidebar-foreground: 240 231 216;
+        --color-sidebar-accent: 45 37 31;
+        --color-sidebar-border: 58 48 40;
     }
 
     html {
@@ -87,7 +87,7 @@
 
 @layer components {
     .admin-card {
-        @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+        @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm shadow-primary/5;
     }
 
     .admin-input {
@@ -95,7 +95,7 @@
     }
 
     .admin-btn-primary {
-        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
     }
 
     .admin-btn-outline {
