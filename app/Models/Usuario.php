@@ -69,4 +69,20 @@ class Usuario extends Authenticatable
     {
         return $this->es_protegido || $this->rol === RolUsuario::Superadmin;
     }
+
+    /**
+     * Indica si el usuario puede entrar a un modulo del panel.
+     */
+    public function puedeAccederModulo(string $modulo): bool
+    {
+        if (in_array($this->rol, [RolUsuario::Superadmin, RolUsuario::Propietario], true)) {
+            return true;
+        }
+
+        return match ($modulo) {
+            'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
+            'ventas' => $this->rol === RolUsuario::Camarero,
+            default => false,
+        };
+    }
 }

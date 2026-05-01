@@ -37,6 +37,15 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - Tabla principal de autenticacion: `usuarios`.
 - Roles iniciales: `camarero`, `encargado`, `propietario`, `superadmin`.
 - El usuario `superadmin` inicial queda protegido y no puede eliminarse desde el perfil.
+- La navegacion lateral se organiza por modulos, no por tablas sueltas.
+- El acceso a modulos se controla por rol mediante middleware `modulo`.
+
+## Permisos iniciales por modulo
+
+- `camarero`: futuro modulo `Ventas`.
+- `encargado`: `Inventario` y `Compras`.
+- `propietario`: acceso completo.
+- `superadmin`: acceso completo tecnico.
 
 ## Modulos previstos
 
@@ -44,10 +53,11 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - `Compras`: futuro modulo de proveedores, pedidos, recepciones y entradas reales en inventario.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
-Documentacion del inventario:
+Documentacion por modulos:
 
 ```text
 docs/modules/inventario.md
+docs/modules/compras.md
 ```
 
 ## Roadmap por fases
@@ -195,7 +205,7 @@ Implementado:
 
 ### FASE 2.0 - Compras base
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Crear el modulo `Compras`, equivalente traducido del modulo `Purchasing` del proyecto de referencia.
@@ -219,6 +229,19 @@ Funcionalidad:
   - `cancelado`.
 - Editar pedidos mientras esten en borrador.
 - Registrar historico operativo de cambios.
+
+Implementado:
+
+- Modulo `Compras` con estructura propia.
+- Nueva pantalla `Compras > Pedidos`.
+- Crear pedidos de compra en estado `borrador`.
+- Anadir lineas con producto, descripcion, cantidad, coste unitario e IVA.
+- Calculo automatico de subtotal, impuestos y total.
+- Editar pedidos solo mientras estan en `borrador`.
+- Cambiar estado del pedido desde el detalle.
+- Registrar eventos historicos de creacion, actualizacion y cambio de estado.
+- Filtros por numero, proveedor y estado.
+- Tests funcionales del flujo base de pedidos.
 
 ### FASE 2.1 - Recepciones de compra e inventario
 

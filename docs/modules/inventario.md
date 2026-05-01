@@ -48,6 +48,8 @@ Tampoco se ha implementado todavia la integracion con compras a proveedor. Esa p
 ## Reglas de arquitectura
 
 - `Inventario` es dueno del stock real.
+- El acceso al modulo se controla con middleware `modulo:inventario`.
+- `encargado`, `propietario` y `superadmin` pueden acceder a inventario.
 - Ningun modulo externo debe actualizar `stock_inventario` directamente.
 - Las entradas, salidas, ajustes y transferencias pasan por `RegistrarMovimientoInventarioAction`.
 - Los informes leen movimientos y stock ya registrado; no modifican inventario.

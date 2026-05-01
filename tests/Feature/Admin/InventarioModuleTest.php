@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\RolUsuario;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\LoteInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
@@ -22,7 +23,7 @@ class InventarioModuleTest extends TestCase
     public function test_inventory_product_list_can_be_rendered(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $this->actingAs($usuario)
             ->get(route('admin.inventario.productos.index'))
@@ -33,7 +34,7 @@ class InventarioModuleTest extends TestCase
     public function test_product_can_be_created(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $categoria = CategoriaProducto::query()->firstOrFail();
         $unidad = UnidadInventario::query()->where('codigo', 'ud')->firstOrFail();
@@ -61,7 +62,7 @@ class InventarioModuleTest extends TestCase
     public function test_inventory_inbound_movement_updates_stock(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $producto = Producto::query()->create([
             'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
@@ -96,7 +97,7 @@ class InventarioModuleTest extends TestCase
     public function test_product_stock_screen_can_be_rendered(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $producto = Producto::query()->create([
             'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
@@ -121,7 +122,7 @@ class InventarioModuleTest extends TestCase
     public function test_supplier_document_must_be_valid_spanish_dni_nie_or_cif(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $this->actingAs($usuario)
             ->from(route('admin.inventario.proveedores.create'))
@@ -139,7 +140,7 @@ class InventarioModuleTest extends TestCase
     public function test_supplier_document_is_normalized_when_valid(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $this->actingAs($usuario)
             ->post(route('admin.inventario.proveedores.store'), [
@@ -164,7 +165,7 @@ class InventarioModuleTest extends TestCase
     public function test_supplier_email_must_have_valid_format(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $this->actingAs($usuario)
             ->from(route('admin.inventario.proveedores.create'))
@@ -182,7 +183,7 @@ class InventarioModuleTest extends TestCase
     public function test_supplier_phone_must_be_valid_spanish_phone(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $this->actingAs($usuario)
             ->from(route('admin.inventario.proveedores.create'))
@@ -200,7 +201,7 @@ class InventarioModuleTest extends TestCase
     public function test_product_filters_can_filter_by_search_provider_category_stock_status_and_active_state(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         $categoriaCervezas = CategoriaProducto::query()->where('nombre', 'Cervezas')->firstOrFail();
         $categoriaComida = CategoriaProducto::query()->where('nombre', 'Alimentacion')->firstOrFail();
@@ -263,7 +264,7 @@ class InventarioModuleTest extends TestCase
     public function test_catalog_filters_can_filter_by_name_contact_and_active_state(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         Proveedor::query()->create([
             'nombre' => 'Mayorista Norte Filtro',
@@ -295,7 +296,7 @@ class InventarioModuleTest extends TestCase
     public function test_catalog_filters_work_for_codes_and_inactive_records(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
 
         UnidadInventario::query()->create([
             'nombre' => 'Caja filtrable',
@@ -316,7 +317,7 @@ class InventarioModuleTest extends TestCase
     public function test_transfer_movement_requires_different_origin_and_destination(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
         $producto = $this->crearProductoPrueba();
 
@@ -338,7 +339,7 @@ class InventarioModuleTest extends TestCase
     public function test_non_transfer_movement_requires_main_location(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $producto = $this->crearProductoPrueba();
 
         $this->actingAs($usuario)
@@ -357,7 +358,7 @@ class InventarioModuleTest extends TestCase
     public function test_stock_alerts_screen_shows_low_stock_and_empty_stock_products(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
 
         $productoSinStock = $this->crearProductoPrueba([
@@ -391,7 +392,7 @@ class InventarioModuleTest extends TestCase
     public function test_movements_report_can_filter_by_product_and_type(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
         $productoIncluido = $this->crearProductoPrueba(['nombre' => 'Producto incluido informe']);
         $productoExcluido = $this->crearProductoPrueba(['nombre' => 'Producto excluido informe']);
@@ -432,6 +433,7 @@ class InventarioModuleTest extends TestCase
         $usuario = Usuario::factory()->create([
             'nombre' => 'Encargado Movimientos',
             'email' => 'encargado.movimientos@cerveceria-europa.local',
+            'rol' => RolUsuario::Encargado,
         ]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
         $producto = $this->crearProductoPrueba(['nombre' => 'Producto con usuario movimiento']);
@@ -456,7 +458,7 @@ class InventarioModuleTest extends TestCase
     public function test_products_can_be_exported_as_utf8_csv(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $producto = $this->crearProductoPrueba(['nombre' => 'Producto CSV fase 1.2']);
 
         $response = $this->actingAs($usuario)
@@ -474,7 +476,7 @@ class InventarioModuleTest extends TestCase
     public function test_movements_can_be_exported_as_utf8_csv_with_filters(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
         $producto = $this->crearProductoPrueba(['nombre' => 'Producto movimiento CSV']);
 
@@ -505,7 +507,7 @@ class InventarioModuleTest extends TestCase
     public function test_stock_alerts_can_be_exported_as_utf8_csv(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $producto = $this->crearProductoPrueba([
             'nombre' => 'Producto alerta CSV',
             'cantidad_alerta_stock' => 8,
@@ -526,7 +528,7 @@ class InventarioModuleTest extends TestCase
     public function test_expiry_date_is_required_for_inbound_movement_when_product_tracks_expiry(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
         $producto = $this->crearProductoPrueba([
             'nombre' => 'Producto caducidad obligatoria',
@@ -550,7 +552,7 @@ class InventarioModuleTest extends TestCase
     public function test_inbound_movement_creates_inventory_lot(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
         $producto = $this->crearProductoPrueba([
             'nombre' => 'Producto lote entrada',
@@ -580,7 +582,7 @@ class InventarioModuleTest extends TestCase
     public function test_outbound_movement_consumes_earliest_expiring_lot_first(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'CAMARA_FRIA')->firstOrFail();
         $producto = $this->crearProductoPrueba([
             'nombre' => 'Producto consumo FEFO',
@@ -632,7 +634,7 @@ class InventarioModuleTest extends TestCase
     public function test_stock_alerts_screen_shows_expired_and_near_expiry_lots(): void
     {
         $this->seed(InventarioSeeder::class);
-        $usuario = Usuario::factory()->create();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'COCINA')->firstOrFail();
         $producto = $this->crearProductoPrueba([
             'nombre' => 'Producto alerta caducidad',

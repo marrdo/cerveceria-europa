@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
@@ -34,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::prefix('admin/inventario')->name('admin.inventario.')->group(function (): void {
+    Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {
         Route::get('/', [ProductoController::class, 'index'])->name('index');
 
         Route::get('alertas', [InformeInventarioController::class, 'alertas'])->name('alertas.index');
@@ -64,6 +65,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('ubicaciones', UbicacionInventarioController::class)
             ->except(['show'])
             ->parameters(['ubicaciones' => 'item']);
+    });
+
+    Route::prefix('admin/compras')->name('admin.compras.')->middleware('modulo:compras')->group(function (): void {
+        Route::get('/', [PedidoCompraController::class, 'index'])->name('index');
+        Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');
+        Route::resource('pedidos', PedidoCompraController::class)
+            ->except(['destroy'])
+            ->parameters(['pedidos' => 'pedido']);
     });
 });
 

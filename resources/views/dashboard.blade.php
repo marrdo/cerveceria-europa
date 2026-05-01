@@ -17,10 +17,15 @@
             </div>
             <div class="admin-card p-4">
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('admin.inventario.productos.create') }}" class="admin-btn-outline">Nuevo producto</a>
-                    <a href="{{ route('admin.inventario.productos.index') }}" class="admin-btn-outline">Ver inventario</a>
-                    <a href="{{ route('admin.inventario.proveedores.index') }}" class="admin-btn-outline">Proveedores</a>
-                    <a href="{{ route('admin.inventario.ubicaciones.index') }}" class="admin-btn-outline">Ubicaciones</a>
+                    @if (auth()->user()->puedeAccederModulo('inventario'))
+                        <a href="{{ route('admin.inventario.productos.create') }}" class="admin-btn-outline">Nuevo producto</a>
+                        <a href="{{ route('admin.inventario.productos.index') }}" class="admin-btn-outline">Ver inventario</a>
+                        <a href="{{ route('admin.inventario.proveedores.index') }}" class="admin-btn-outline">Proveedores</a>
+                        <a href="{{ route('admin.inventario.ubicaciones.index') }}" class="admin-btn-outline">Ubicaciones</a>
+                    @endif
+                    @if (auth()->user()->puedeAccederModulo('compras'))
+                        <a href="{{ route('admin.compras.pedidos.index') }}" class="admin-btn-outline">Pedidos de compra</a>
+                    @endif
                 </div>
             </div>
         </section>
