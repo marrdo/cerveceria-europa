@@ -9,12 +9,12 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <x-input-label for="nombre" value="Nombre" />
-            <x-text-input id="nombre" name="nombre" class="mt-1 block h-10 w-full" :value="old('nombre', $producto->nombre)" required />
+            <x-text-input id="nombre" name="nombre" class="mt-1 block h-10 w-full" :value="old('nombre', $producto->nombre)" required maxlength="191" />
             <x-input-error :messages="$errors->get('nombre')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="sku" value="SKU interno" />
-            <x-text-input id="sku" name="sku" class="mt-1 block h-10 w-full" :value="old('sku', $producto->sku)" />
+            <x-text-input id="sku" name="sku" class="mt-1 block h-10 w-full" :value="old('sku', $producto->sku)" maxlength="100" />
             <x-input-error :messages="$errors->get('sku')" class="mt-2" />
         </div>
         <div>
@@ -24,6 +24,7 @@
                     <option value="{{ $categoria->id }}" @selected(old('categoria_producto_id', $producto->categoria_producto_id) === $categoria->id)>{{ $categoria->nombre }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('categoria_producto_id')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="unidad_inventario_id" value="Unidad" />
@@ -32,6 +33,7 @@
                     <option value="{{ $unidad->id }}" @selected(old('unidad_inventario_id', $producto->unidad_inventario_id) === $unidad->id)>{{ $unidad->nombre }} ({{ $unidad->codigo }})</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('unidad_inventario_id')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="proveedor_id" value="Proveedor principal" />
@@ -41,20 +43,24 @@
                     <option value="{{ $proveedor->id }}" @selected(old('proveedor_id', $producto->proveedor_id) === $proveedor->id)>{{ $proveedor->nombre }}</option>
                 @endforeach
             </select>
+            <x-input-error :messages="$errors->get('proveedor_id')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="referencia_proveedor" value="Referencia proveedor" />
-            <x-text-input id="referencia_proveedor" name="referencia_proveedor" class="mt-1 block h-10 w-full" :value="old('referencia_proveedor', $producto->referencia_proveedor)" />
+            <x-text-input id="referencia_proveedor" name="referencia_proveedor" class="mt-1 block h-10 w-full" :value="old('referencia_proveedor', $producto->referencia_proveedor)" maxlength="100" />
+            <x-input-error :messages="$errors->get('referencia_proveedor')" class="mt-2" />
         </div>
         <div class="md:col-span-2">
             <x-input-label for="codigo_barras" value="Codigo de barras" />
-            <x-text-input id="codigo_barras" name="codigo_barras" class="mt-1 block h-10 w-full" :value="old('codigo_barras', $producto->codigo_barras)" />
+            <x-text-input id="codigo_barras" name="codigo_barras" class="mt-1 block h-10 w-full" :value="old('codigo_barras', $producto->codigo_barras)" maxlength="100" />
+            <x-input-error :messages="$errors->get('codigo_barras')" class="mt-2" />
         </div>
     </div>
 
     <div class="mt-4">
         <x-input-label for="descripcion" value="Descripcion" />
         <textarea id="descripcion" name="descripcion" rows="4" class="admin-input mt-1 block w-full shadow-sm">{{ old('descripcion', $producto->descripcion) }}</textarea>
+        <x-input-error :messages="$errors->get('descripcion')" class="mt-2" />
     </div>
     </section>
 
@@ -64,15 +70,18 @@
         <div>
             <x-input-label for="precio_venta" value="Precio venta" />
             <x-text-input id="precio_venta" name="precio_venta" type="number" step="0.01" min="0" class="mt-1 block h-10 w-full" :value="old('precio_venta', $producto->precio_venta ?? 0)" required />
+            <x-input-error :messages="$errors->get('precio_venta')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="precio_coste" value="Precio coste" />
             <x-text-input id="precio_coste" name="precio_coste" type="number" step="0.01" min="0" class="mt-1 block h-10 w-full" :value="old('precio_coste', $producto->precio_coste)" />
+            <x-input-error :messages="$errors->get('precio_coste')" class="mt-2" />
         </div>
         <div>
             <x-input-label for="cantidad_alerta_stock" value="Alerta de stock" />
             <x-text-input id="cantidad_alerta_stock" name="cantidad_alerta_stock" type="number" step="0.001" min="0" class="mt-1 block h-10 w-full" :value="old('cantidad_alerta_stock', $producto->cantidad_alerta_stock ?? 0)" required />
             <p class="mt-1 text-xs text-muted-foreground">Aviso cuando el stock baje de este nivel.</p>
+            <x-input-error :messages="$errors->get('cantidad_alerta_stock')" class="mt-2" />
         </div>
         </div>
     </section>

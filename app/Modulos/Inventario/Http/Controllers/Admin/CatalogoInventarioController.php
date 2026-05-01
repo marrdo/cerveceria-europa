@@ -3,6 +3,9 @@
 namespace App\Modulos\Inventario\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Rules\DocumentoIdentidadEspanol;
+use App\Rules\TelefonoEspanol;
+use App\Support\Validacion\ReglasValidacion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -97,9 +100,9 @@ abstract class CatalogoInventarioController extends Controller
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:191'],
             'codigo' => ['nullable', 'string', 'max:50'],
-            'cif_nif' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:191'],
-            'telefono' => ['nullable', 'string', 'max:50'],
+            'cif_nif' => ReglasValidacion::documentoIdentidadEspanol(),
+            'email' => ReglasValidacion::email(),
+            'telefono' => ReglasValidacion::telefonoEspanol(),
             'persona_contacto' => ['nullable', 'string', 'max:191'],
             'descripcion' => ['nullable', 'string'],
             'notas' => ['nullable', 'string'],
@@ -109,6 +112,18 @@ abstract class CatalogoInventarioController extends Controller
 
         $datos['activo'] = $request->boolean('activo', true);
         $datos['permite_decimal'] = $request->boolean('permite_decimal');
+
+        if (array_key_exists('cif_nif', $datos)) {
+            $datos['cif_nif'] = DocumentoIdentidadEspanol::normalizar($datos['cif_nif']);
+        }
+
+        if (array_key_exists('email', $datos)) {
+            $datos['email'] = Str::lower($datos['email']);
+        }
+
+        if (array_key_exists('telefono', $datos)) {
+            $datos['telefono'] = TelefonoEspanol::normalizar($datos['telefono']);
+        }
 
         if (array_key_exists('codigo', $datos) && blank($datos['codigo'])) {
             $datos['codigo'] = Str::upper(Str::slug($datos['nombre'], '_'));

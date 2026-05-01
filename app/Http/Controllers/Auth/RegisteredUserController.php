@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Enums\RolUsuario;
 use App\Models\Usuario;
+use App\Support\Validacion\ReglasValidacion;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -35,13 +37,13 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Usuario::class],
+            'email' => [...ReglasValidacion::email(nullable: false), 'unique:'.Usuario::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = Usuario::create([
             'nombre' => $request->nombre,
-            'email' => $request->email,
+            'email' => Str::lower($request->email),
             'rol' => RolUsuario::Camarero,
             'password' => Hash::make($request->password),
         ]);

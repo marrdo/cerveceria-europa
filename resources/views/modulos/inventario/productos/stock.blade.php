@@ -20,10 +20,20 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
             <section class="admin-card p-4 lg:p-6">
+                @php
+                    $estadoStock = $producto->estadoStock();
+                    $estadoStockVariant = match ($estadoStock->value) {
+                        'correcto' => 'success',
+                        'bajo' => 'warning',
+                        'sin_stock' => 'danger',
+                        default => 'default',
+                    };
+                @endphp
+
                 <div class="mb-4 flex items-center justify-between gap-4">
                     <h3 class="text-base font-semibold text-foreground">Stock por ubicacion</h3>
-                    <x-admin.status-badge :variant="$producto->estaBajoStock() ? 'warning' : 'success'">
-                        {{ $producto->estaBajoStock() ? 'Bajo stock' : 'Stock correcto' }}
+                    <x-admin.status-badge :variant="$estadoStockVariant">
+                        {{ $estadoStock->etiqueta() }}
                     </x-admin.status-badge>
                 </div>
 
@@ -68,6 +78,7 @@
                         <option value="{{ $tipo->value }}">{{ $tipo->etiqueta() }}</option>
                     @endforeach
                 </select>
+                <x-input-error :messages="$errors->get('tipo')" class="mt-2" />
             </div>
 
             <div>
@@ -77,6 +88,7 @@
                         <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                     @endforeach
                 </select>
+                <x-input-error :messages="$errors->get('ubicacion_inventario_id')" class="mt-2" />
             </div>
 
             <div class="grid gap-3 md:grid-cols-2">
@@ -88,6 +100,7 @@
                             <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('ubicacion_origen_id')" class="mt-2" />
                 </div>
                 <div>
                     <x-input-label for="ubicacion_destino_id" value="Destino transferencia" />
@@ -97,6 +110,7 @@
                             <option value="{{ $ubicacion->id }}">{{ $ubicacion->nombre }}</option>
                         @endforeach
                     </select>
+                    <x-input-error :messages="$errors->get('ubicacion_destino_id')" class="mt-2" />
                 </div>
             </div>
 
@@ -108,6 +122,7 @@
                         <option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
                     @endforeach
                 </select>
+                <x-input-error :messages="$errors->get('proveedor_id')" class="mt-2" />
             </div>
 
             <div>
@@ -118,13 +133,13 @@
 
             <div>
                 <x-input-label for="motivo" value="Motivo" />
-                <x-text-input id="motivo" name="motivo" class="mt-1 block h-10 w-full" required />
+                <x-text-input id="motivo" name="motivo" class="mt-1 block h-10 w-full" required maxlength="191" />
                 <x-input-error :messages="$errors->get('motivo')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="referencia" value="Referencia documento" />
-                <x-text-input id="referencia" name="referencia" class="mt-1 block h-10 w-full" />
+                <x-text-input id="referencia" name="referencia" class="mt-1 block h-10 w-full" maxlength="191" />
                 <x-input-error :messages="$errors->get('referencia')" class="mt-2" />
             </div>
 

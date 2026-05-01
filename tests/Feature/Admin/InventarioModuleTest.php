@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\Producto;
+use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Models\Usuario;
@@ -87,5 +88,109 @@ class InventarioModuleTest extends TestCase
             'ubicacion_inventario_id' => $ubicacion->id,
             'cantidad' => 24,
         ]);
+    }
+
+    public function test_product_stock_screen_can_be_rendered(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+
+        $producto = Producto::query()->create([
+            'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
+            'unidad_inventario_id' => UnidadInventario::query()->where('codigo', 'ud')->firstOrFail()->id,
+            'nombre' => 'Tomates',
+            'sku' => 'TMT',
+            'precio_venta' => 1.50,
+            'precio_coste' => 1.00,
+            'cantidad_alerta_stock' => 5,
+            'controla_stock' => true,
+            'controla_caducidad' => true,
+            'activo' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.productos.stock', $producto))
+            ->assertOk()
+            ->assertSee('Stock de Tomates')
+            ->assertSee('Sin stock');
+    }
+
+    public function test_supplier_document_must_be_valid_spanish_dni_nie_or_cif(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.inventario.proveedores.create'))
+            ->post(route('admin.inventario.proveedores.store'), [
+                'nombre' => 'Proveedor documento invalido',
+                'cif_nif' => '12345678A',
+                'activo' => '1',
+            ])
+            ->assertRedirect(route('admin.inventario.proveedores.create'))
+            ->assertSessionHasErrors([
+                'cif_nif' => 'El campo CIF/NIF debe ser un DNI, NIE o CIF espanol valido.',
+            ]);
+    }
+
+    public function test_supplier_document_is_normalized_when_valid(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.inventario.proveedores.store'), [
+                'nombre' => 'Proveedor con CIF',
+                'cif_nif' => ' b-99286320 ',
+                'email' => 'CONTACTO@PROVEEDOR.ES',
+                'telefono' => '+34 600 123 456',
+                'activo' => '1',
+            ])
+            ->assertRedirect(route('admin.inventario.proveedores.index'));
+
+        $this->assertDatabaseHas('proveedores', [
+            'nombre' => 'Proveedor con CIF',
+            'cif_nif' => 'B99286320',
+            'email' => 'contacto@proveedor.es',
+            'telefono' => '+34600123456',
+        ]);
+
+        $this->assertTrue(Proveedor::query()->where('cif_nif', 'B99286320')->exists());
+    }
+
+    public function test_supplier_email_must_have_valid_format(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.inventario.proveedores.create'))
+            ->post(route('admin.inventario.proveedores.store'), [
+                'nombre' => 'Proveedor email invalido',
+                'email' => 'correo-no-valido',
+                'activo' => '1',
+            ])
+            ->assertRedirect(route('admin.inventario.proveedores.create'))
+            ->assertSessionHasErrors([
+                'email' => 'El campo correo electronico debe ser un correo electronico valido.',
+            ]);
+    }
+
+    public function test_supplier_phone_must_be_valid_spanish_phone(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.inventario.proveedores.create'))
+            ->post(route('admin.inventario.proveedores.store'), [
+                'nombre' => 'Proveedor telefono invalido',
+                'telefono' => '12345',
+                'activo' => '1',
+            ])
+            ->assertRedirect(route('admin.inventario.proveedores.create'))
+            ->assertSessionHasErrors([
+                'telefono' => 'El campo telefono debe ser un numero espanol valido.',
+            ]);
     }
 }

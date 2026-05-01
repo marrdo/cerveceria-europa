@@ -8,7 +8,7 @@
 
             <div>
                 <x-input-label for="email" :value="__('Correo electronico')" />
-                <x-text-input id="email" class="mt-1 block h-10 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="admin@cerveceria-europa.local" />
+                <x-text-input id="email" class="mt-1 block h-10 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" maxlength="191" title="Introduce un correo electronico valido." placeholder="admin@cerveceria-europa.local" />
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
 

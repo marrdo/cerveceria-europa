@@ -9,25 +9,25 @@
 
         <div>
             <x-input-label for="nombre" value="Nombre" />
-            <x-text-input id="nombre" class="mt-1 block h-10 w-full" type="text" name="nombre" :value="old('nombre')" required autofocus autocomplete="name" />
+            <x-text-input id="nombre" class="mt-1 block h-10 w-full" type="text" name="nombre" :value="old('nombre')" required autofocus autocomplete="name" maxlength="255" />
             <x-input-error :messages="$errors->get('nombre')" class="mt-2" />
         </div>
 
         <div>
             <x-input-label for="email" value="Email" />
-            <x-text-input id="email" class="mt-1 block h-10 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
+            <x-text-input id="email" class="mt-1 block h-10 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" maxlength="191" title="Introduce un correo electronico valido." />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div>
             <x-input-label for="password" value="Contrasena" />
-            <x-text-input id="password" class="mt-1 block h-10 w-full" type="password" name="password" required autocomplete="new-password" />
+            <x-text-input id="password" class="mt-1 block h-10 w-full" type="password" name="password" required autocomplete="new-password" minlength="8" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
             <x-input-label for="password_confirmation" value="Confirmar contrasena" />
-            <x-text-input id="password_confirmation" class="mt-1 block h-10 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
+            <x-text-input id="password_confirmation" class="mt-1 block h-10 w-full" type="password" name="password_confirmation" required autocomplete="new-password" minlength="8" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
