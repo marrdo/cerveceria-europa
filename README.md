@@ -50,6 +50,256 @@ Documentacion del inventario:
 docs/modules/inventario.md
 ```
 
+## Roadmap por fases
+
+### FASE 1.0 - Base admin e inventario inicial
+
+Estado: implementada.
+
+Objetivo:
+Tener una base funcional sobre la que construir el panel real del bar.
+
+Incluye:
+
+- Laravel 12 con Breeze.
+- Login privado.
+- Registro publico deshabilitado.
+- Usuario `superadmin` inicial protegido.
+- Usuarios con roles iniciales: `camarero`, `encargado`, `propietario`, `superadmin`.
+- Soft deletes en usuarios.
+- Configuracion UTF-8 para espanol.
+- Modulo `Inventario` inicial.
+- Proveedores.
+- Categorias de producto.
+- Unidades de inventario.
+- Ubicaciones de inventario.
+- Productos.
+- Stock por producto y ubicacion.
+- Movimientos manuales de entrada, salida, ajuste y transferencia.
+- Seeders iniciales orientados a un bar.
+- Tests basicos de autenticacion, perfil e inventario.
+
+### FASE 1.1 - Endurecer inventario
+
+Estado: pendiente.
+
+Objetivo:
+Hacer que el inventario inicial sea mas solido antes de conectarlo con compras.
+
+Tareas:
+
+- Revisar todos los formularios del modulo.
+- Revisar mensajes de error en espanol.
+- Anadir mensajes especificos en `FormRequest` cuando la validacion generica no sea suficiente.
+- Mejorar validacion de movimientos:
+  - entrada con ubicacion obligatoria,
+  - salida con ubicacion obligatoria,
+  - ajuste con ubicacion obligatoria,
+  - transferencia con origen y destino obligatorios,
+  - origen y destino distintos.
+- Probar errores visibles en vistas Blade.
+- Anadir filtros en productos:
+  - busqueda,
+  - categoria,
+  - proveedor,
+  - estado de stock,
+  - activo/inactivo.
+- Anadir tests funcionales de validacion y filtros.
+
+### FASE 1.2 - Alertas e informes de inventario
+
+Estado: pendiente.
+
+Objetivo:
+Dar visibilidad operativa al encargado o propietario.
+
+Tareas:
+
+- Alertas de stock bajo.
+- Productos sin stock.
+- Ultimos movimientos.
+- Informe de movimientos por fechas.
+- Filtros por producto, proveedor, ubicacion y tipo de movimiento.
+- Exportacion CSV UTF-8 de productos.
+- Exportacion CSV UTF-8 de movimientos.
+- Exportacion CSV UTF-8 de alertas de stock.
+
+### FASE 1.3 - Lotes y caducidad
+
+Estado: pendiente y condicionada.
+
+Objetivo:
+Controlar caducidad y rotacion solo si el bar lo necesita realmente para cocina, barriles o productos perecederos.
+
+Tareas previstas:
+
+- Tabla `lotes_inventario`.
+- Asociar entradas de inventario a lotes.
+- Caducidad opcional por lote.
+- Consumo FIFO para productos sin caducidad.
+- Consumo FEFO para productos con caducidad.
+- Alertas de lotes caducados.
+- Alertas de lotes proximos a caducar.
+
+Decision:
+No se implementa en la fase inicial para no sobrecomplicar el uso real del bar antes de validar necesidades.
+
+### FASE 2.0 - Compras base
+
+Estado: pendiente.
+
+Objetivo:
+Crear el modulo `Compras`, equivalente traducido del modulo `Purchasing` del proyecto de referencia.
+
+Tablas previstas:
+
+- `pedidos_compra`
+- `lineas_pedido_compra`
+- `eventos_pedido_compra`
+
+Funcionalidad:
+
+- Crear pedidos a proveedor.
+- Anadir lineas con productos, cantidades y costes.
+- Estados de pedido:
+  - `borrador`,
+  - `pedido`,
+  - `recibido_parcial`,
+  - `recibido`,
+  - `cerrado`,
+  - `cancelado`.
+- Editar pedidos mientras esten en borrador.
+- Registrar historico operativo de cambios.
+
+### FASE 2.1 - Recepciones de compra e inventario
+
+Estado: pendiente.
+
+Objetivo:
+Unir `Compras` con `Inventario` de forma segura.
+
+Tablas previstas:
+
+- `recepciones_compra`
+- `lineas_recepcion_compra`
+
+Flujo:
+
+```text
+Pedido a proveedor
+-> recepcion de mercancia
+-> lineas recibidas
+-> movimiento de entrada en inventario
+-> actualizacion de stock
+-> actualizacion del estado del pedido
+```
+
+Regla:
+`Compras` no actualiza `stock_inventario` directamente. Debe usar `RegistrarMovimientoInventarioAction`.
+
+### FASE 2.2 - Incidencias y cierre de pedidos
+
+Estado: pendiente.
+
+Objetivo:
+Cubrir problemas reales al recibir mercancia.
+
+Casos:
+
+- Falta mercancia.
+- Llega menos cantidad.
+- Llega producto equivocado.
+- Producto roto o en mal estado.
+- Pedido parcialmente recibido que se decide cerrar.
+
+Tabla prevista:
+
+- `incidencias_recepcion_compra`
+
+### FASE 2.3 - Devoluciones a proveedor
+
+Estado: pendiente.
+
+Objetivo:
+Permitir devolver mercancia y reflejarlo en inventario.
+
+Tablas previstas:
+
+- `devoluciones_proveedor`
+- `lineas_devolucion_proveedor`
+
+Regla:
+Una devolucion confirmada debe crear una salida real en `movimientos_inventario`.
+
+### FASE 2.4 - Propuestas de compra
+
+Estado: pendiente.
+
+Objetivo:
+Ayudar a reponer stock desde alertas.
+
+Funcionalidad:
+
+- Detectar productos bajo stock.
+- Agrupar necesidades por proveedor.
+- Proponer cantidades de compra.
+- Generar borradores de pedido.
+
+### FASE 3.0 - Lectura asistida de albaranes
+
+Estado: pendiente.
+
+Objetivo:
+Permitir subir foto o PDF de albaran/factura para generar un borrador revisable.
+
+Tablas previstas:
+
+- `documentos_compra`
+- `lecturas_documentos`
+- `borradores_compra_documento`
+
+Flujo:
+
+```text
+Foto/PDF de albaran
+-> lectura OCR o IA
+-> borrador de compra
+-> revision humana
+-> compra/recepcion confirmada
+-> entrada en inventario
+```
+
+Regla:
+La lectura de documentos nunca debe actualizar stock sin confirmacion humana.
+
+### FASE 4.0 - Panel visual definitivo
+
+Estado: pendiente.
+
+Objetivo:
+Aplicar el diseno visual generado con Vercel/v0 sobre la arquitectura Laravel existente.
+
+Alcance:
+
+- Layout admin definitivo.
+- Sidebar.
+- Topbar.
+- Modo claro/oscuro.
+- Login adaptado a la marca Cerveceria Europa.
+- Dashboard visual.
+- Tablas.
+- Formularios.
+- Estados vacios.
+- Badges de estado.
+- Componentes Blade reutilizables.
+
+Reglas:
+
+- El diseno se adapta a Blade y Tailwind.
+- No se introduce React, Vue ni TypeScript salvo decision explicita posterior.
+- La capa visual no debe cambiar la arquitectura de modulos.
+- Primero se integran componentes comunes; despues se aplican a inventario y compras.
+
 ## Arranque local
 
 ```powershell
