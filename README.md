@@ -132,7 +132,7 @@ Implementado:
 
 ### FASE 1.2 - Alertas e informes de inventario
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Dar visibilidad operativa al encargado o propietario.
@@ -147,6 +147,18 @@ Tareas:
 - Exportacion CSV UTF-8 de productos.
 - Exportacion CSV UTF-8 de movimientos.
 - Exportacion CSV UTF-8 de alertas de stock.
+
+Implementado:
+
+- Nueva pantalla `Inventario > Alertas` con productos sin stock y productos con stock bajo.
+- Nueva pantalla `Inventario > Movimientos` con ultimos movimientos paginados.
+- Filtros de movimientos por fecha, producto, proveedor, ubicacion y tipo.
+- Exportacion CSV UTF-8 con BOM para compatibilidad con Excel en Windows:
+  - productos,
+  - movimientos filtrados,
+  - alertas de stock.
+- Enlaces de informes en navegacion de inventario y sidebar admin.
+- Tests funcionales de alertas, filtros de movimientos y exportaciones CSV.
 
 ### FASE 1.3 - Lotes y caducidad
 

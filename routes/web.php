@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
+use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProveedorController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UbicacionInventarioController;
@@ -35,6 +36,12 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->group(function (): void {
         Route::get('/', [ProductoController::class, 'index'])->name('index');
+
+        Route::get('alertas', [InformeInventarioController::class, 'alertas'])->name('alertas.index');
+        Route::get('alertas/exportar', [InformeInventarioController::class, 'exportarAlertas'])->name('alertas.exportar');
+        Route::get('movimientos', [InformeInventarioController::class, 'movimientos'])->name('movimientos.index');
+        Route::get('movimientos/exportar', [InformeInventarioController::class, 'exportarMovimientos'])->name('movimientos.exportar');
+        Route::get('productos/exportar', [InformeInventarioController::class, 'exportarProductos'])->name('productos.exportar');
 
         Route::resource('productos', ProductoController::class)
             ->except(['show'])

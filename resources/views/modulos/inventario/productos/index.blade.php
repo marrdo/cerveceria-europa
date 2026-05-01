@@ -2,6 +2,7 @@
     <x-slot name="header">
         <x-admin.page-header title="Productos" :description="$productos->total().' productos en el catalogo'">
             <x-slot name="actions">
+                <a href="{{ route('admin.inventario.productos.exportar') }}" class="admin-btn-outline">Exportar CSV</a>
                 <a href="{{ route('admin.inventario.productos.create') }}" class="admin-btn-primary">Nuevo producto</a>
             </x-slot>
         </x-admin.page-header>

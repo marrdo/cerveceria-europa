@@ -109,6 +109,22 @@
                         </span>
                         Unidades
                     </a>
+                    <a href="{{ route('admin.inventario.alertas.index') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition {{ request()->routeIs('admin.inventario.alertas.*') ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent' }}">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v4m0 4h.01M10.3 4.4L2.7 18a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 4.4a2 2 0 00-3.4 0z" />
+                            </svg>
+                        </span>
+                        Alertas
+                    </a>
+                    <a href="{{ route('admin.inventario.movimientos.index') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition {{ request()->routeIs('admin.inventario.movimientos.*') ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent' }}">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7h11m0 0-3-3m3 3-3 3M20 17H9m0 0 3-3m-3 3 3 3" />
+                            </svg>
+                        </span>
+                        Movimientos
+                    </a>
                 </nav>
 
                 <div class="border-t border-sidebar-border p-3">

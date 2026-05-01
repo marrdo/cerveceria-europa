@@ -62,6 +62,18 @@ class MovimientoInventario extends Model
         return $this->belongsTo(UbicacionInventario::class, 'ubicacion_inventario_id')->withTrashed();
     }
 
+    /** @return BelongsTo<UbicacionInventario, $this> */
+    public function ubicacionOrigen(): BelongsTo
+    {
+        return $this->belongsTo(UbicacionInventario::class, 'ubicacion_origen_id')->withTrashed();
+    }
+
+    /** @return BelongsTo<UbicacionInventario, $this> */
+    public function ubicacionDestino(): BelongsTo
+    {
+        return $this->belongsTo(UbicacionInventario::class, 'ubicacion_destino_id')->withTrashed();
+    }
+
     /** @return BelongsTo<Usuario, $this> */
     public function creador(): BelongsTo
     {

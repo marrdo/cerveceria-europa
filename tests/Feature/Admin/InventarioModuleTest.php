@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Modulos\Inventario\Models\CategoriaProducto;
+use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\StockInventario;
@@ -352,9 +353,156 @@ class InventarioModuleTest extends TestCase
             ]);
     }
 
-    private function crearProductoPrueba(): Producto
+    public function test_stock_alerts_screen_shows_low_stock_and_empty_stock_products(): void
     {
-        return Producto::query()->create([
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+
+        $productoSinStock = $this->crearProductoPrueba([
+            'nombre' => 'Barril sin stock alerta',
+            'sku' => 'ALERTA-SIN-STOCK',
+            'cantidad_alerta_stock' => 5,
+        ]);
+
+        $productoBajoStock = $this->crearProductoPrueba([
+            'nombre' => 'Botella bajo stock alerta',
+            'sku' => 'ALERTA-BAJO-STOCK',
+            'cantidad_alerta_stock' => 10,
+        ]);
+
+        StockInventario::query()->create([
+            'producto_id' => $productoBajoStock->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 3,
+            'cantidad_minima' => 0,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.alertas.index'))
+            ->assertOk()
+            ->assertSee($productoSinStock->nombre)
+            ->assertSee($productoBajoStock->nombre)
+            ->assertSee('Sin stock')
+            ->assertSee('Stock bajo');
+    }
+
+    public function test_movements_report_can_filter_by_product_and_type(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $productoIncluido = $this->crearProductoPrueba(['nombre' => 'Producto incluido informe']);
+        $productoExcluido = $this->crearProductoPrueba(['nombre' => 'Producto excluido informe']);
+
+        MovimientoInventario::query()->create([
+            'producto_id' => $productoIncluido->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'entrada',
+            'cantidad' => 5,
+            'stock_antes' => 0,
+            'stock_despues' => 5,
+            'motivo' => 'Movimiento incluido fase 1.2',
+        ]);
+
+        MovimientoInventario::query()->create([
+            'producto_id' => $productoExcluido->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'salida',
+            'cantidad' => 2,
+            'stock_antes' => 5,
+            'stock_despues' => 3,
+            'motivo' => 'Movimiento excluido fase 1.2',
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.movimientos.index', [
+                'producto_id' => $productoIncluido->id,
+                'tipo' => 'entrada',
+            ]))
+            ->assertOk()
+            ->assertSee('Movimiento incluido fase 1.2')
+            ->assertDontSee('Movimiento excluido fase 1.2');
+    }
+
+    public function test_products_can_be_exported_as_utf8_csv(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $producto = $this->crearProductoPrueba(['nombre' => 'Producto CSV fase 1.2']);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('admin.inventario.productos.exportar'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $contenido = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
+        $this->assertStringContainsString('Nombre;SKU;Categoria;Proveedor;Unidad;Stock;Estado', $contenido);
+        $this->assertStringContainsString($producto->nombre, $contenido);
+    }
+
+    public function test_movements_can_be_exported_as_utf8_csv_with_filters(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba(['nombre' => 'Producto movimiento CSV']);
+
+        MovimientoInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'entrada',
+            'cantidad' => 7,
+            'stock_antes' => 0,
+            'stock_despues' => 7,
+            'motivo' => 'Movimiento CSV fase 1.2',
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('admin.inventario.movimientos.exportar', [
+                'producto_id' => $producto->id,
+            ]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $contenido = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
+        $this->assertStringContainsString('Fecha;Producto;Tipo;Cantidad;Unidad', $contenido);
+        $this->assertStringContainsString('Movimiento CSV fase 1.2', $contenido);
+    }
+
+    public function test_stock_alerts_can_be_exported_as_utf8_csv(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto alerta CSV',
+            'cantidad_alerta_stock' => 8,
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('admin.inventario.alertas.exportar'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $contenido = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
+        $this->assertStringContainsString('Producto;SKU;Categoria;Proveedor;Stock;Unidad;Alerta;Estado', $contenido);
+        $this->assertStringContainsString($producto->nombre, $contenido);
+    }
+
+    /**
+     * Crea un producto de prueba con valores por defecto solidos para inventario.
+     *
+     * @param array<string, mixed> $sobrescribir
+     */
+    private function crearProductoPrueba(array $sobrescribir = []): Producto
+    {
+        return Producto::query()->create(array_merge([
             'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
             'unidad_inventario_id' => UnidadInventario::query()->where('codigo', 'ud')->firstOrFail()->id,
             'nombre' => 'Producto movimiento prueba',
@@ -365,6 +513,7 @@ class InventarioModuleTest extends TestCase
             'controla_stock' => true,
             'controla_caducidad' => false,
             'activo' => true,
-        ]);
+        ], $sobrescribir));
     }
+
 }
