@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-base font-semibold text-foreground">
             {{ __('Datos del perfil') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-muted-foreground">
             {{ __('Actualiza el nombre visible y el correo de acceso.') }}
         </p>
     </header>
@@ -30,16 +30,16 @@
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
-                    <p class="text-sm mt-2 text-gray-800">
+                    <p class="mt-2 text-sm text-foreground">
                         {{ __('Tu correo electronico no esta verificado.') }}
 
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button form="send-verification" class="text-sm font-medium text-primary hover:underline">
                             {{ __('Reenviar correo de verificacion') }}
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
+                        <p class="mt-2 text-sm font-medium text-success">
                             {{ __('Se ha enviado un nuevo enlace de verificacion.') }}
                         </p>
                     @endif
@@ -56,7 +56,7 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
+                    class="text-sm text-muted-foreground"
                 >{{ __('Guardado.') }}</p>
             @endif
         </div>

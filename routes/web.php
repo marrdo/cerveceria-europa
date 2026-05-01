@@ -6,6 +6,8 @@ use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProveedorController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UbicacionInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UnidadInventarioController;
+use App\Modulos\Inventario\Models\MovimientoInventario;
+use App\Modulos\Inventario\Models\Producto;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -17,7 +19,13 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/admin', function () {
-    return view('dashboard');
+    $productos = Producto::query()->with('stock')->get();
+
+    return view('dashboard', [
+        'totalProductos' => $productos->count(),
+        'productosBajoStock' => $productos->filter(fn (Producto $producto): bool => $producto->estadoStock()->value === 'bajo')->count(),
+        'movimientosRecientes' => MovimientoInventario::query()->where('created_at', '>=', now()->subDays(7))->count(),
+    ]);
 })->middleware(['auth', 'verified'])->name('admin.dashboard');
 
 Route::middleware('auth')->group(function () {

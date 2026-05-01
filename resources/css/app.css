@@ -1,3 +1,162 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --color-background: 250 248 242;
+        --color-foreground: 44 36 27;
+        --color-card: 255 255 255;
+        --color-card-foreground: 44 36 27;
+        --color-primary: 202 132 36;
+        --color-primary-foreground: 35 24 13;
+        --color-secondary: 241 236 226;
+        --color-secondary-foreground: 58 49 39;
+        --color-muted: 241 236 226;
+        --color-muted-foreground: 112 98 82;
+        --color-accent: 38 112 79;
+        --color-accent-foreground: 255 255 255;
+        --color-destructive: 185 64 47;
+        --color-destructive-foreground: 255 255 255;
+        --color-border: 224 216 202;
+        --color-input: 224 216 202;
+        --color-ring: 202 132 36;
+        --color-warning: 220 171 59;
+        --color-warning-foreground: 45 32 16;
+        --color-success: 47 135 86;
+        --color-success-foreground: 255 255 255;
+        --color-sidebar: 246 242 234;
+        --color-sidebar-foreground: 44 36 27;
+        --color-sidebar-accent: 235 226 211;
+        --color-sidebar-border: 224 216 202;
+    }
+
+    .dark {
+        --color-background: 26 23 19;
+        --color-foreground: 242 236 226;
+        --color-card: 36 31 26;
+        --color-card-foreground: 242 236 226;
+        --color-primary: 224 155 55;
+        --color-primary-foreground: 31 22 12;
+        --color-secondary: 50 43 36;
+        --color-secondary-foreground: 242 236 226;
+        --color-muted: 50 43 36;
+        --color-muted-foreground: 170 158 141;
+        --color-accent: 55 145 103;
+        --color-accent-foreground: 255 255 255;
+        --color-destructive: 204 76 58;
+        --color-destructive-foreground: 255 255 255;
+        --color-border: 70 61 51;
+        --color-input: 70 61 51;
+        --color-ring: 224 155 55;
+        --color-warning: 231 182 67;
+        --color-warning-foreground: 31 22 12;
+        --color-success: 63 156 102;
+        --color-success-foreground: 255 255 255;
+        --color-sidebar: 22 19 16;
+        --color-sidebar-foreground: 242 236 226;
+        --color-sidebar-accent: 42 36 30;
+        --color-sidebar-border: 70 61 51;
+    }
+
+    html {
+        color-scheme: light;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    body {
+        @apply bg-background text-foreground antialiased;
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply rounded-full bg-border;
+    }
+}
+
+@layer components {
+    .admin-card {
+        @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+    }
+
+    .admin-input {
+        @apply rounded-md border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring;
+    }
+
+    .admin-btn-primary {
+        @apply inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+    }
+
+    .admin-btn-outline {
+        @apply inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+    }
+
+    .theme-toggle-button {
+        @apply rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:border-primary/60 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40;
+    }
+
+    .theme-toggle-icon {
+        cursor: pointer;
+    }
+
+    .theme-toggle-icon .sun-core {
+        fill: rgb(var(--color-primary));
+        transition: fill 0.5s ease;
+    }
+
+    .theme-toggle-icon .sun-rays {
+        stroke: rgb(var(--color-primary));
+        stroke-width: 6;
+        stroke-linecap: round;
+        fill: none;
+        opacity: 1;
+        transform-origin: center;
+        transition: stroke 0.5s ease, transform 0.6s ease, opacity 0.4s ease;
+    }
+
+    .theme-toggle-icon .stars {
+        fill: rgb(var(--color-foreground));
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.4s ease, transform 0.5s ease;
+    }
+
+    .theme-toggle-icon .clouds {
+        fill: rgb(var(--color-muted-foreground));
+        opacity: 0.45;
+        transform: scale(1) translateX(0);
+        transition: opacity 0.4s ease, transform 0.5s ease;
+    }
+
+    .theme-toggle-icon.is-dark .sun-core {
+        fill: rgb(var(--color-foreground));
+        mask: url(#theme-toggle-moon-mask);
+    }
+
+    .theme-toggle-icon.is-dark .sun-rays {
+        stroke: rgb(var(--color-muted-foreground));
+        opacity: 0;
+        transform: rotate(45deg) scale(0.5);
+    }
+
+    .theme-toggle-icon.is-dark .stars {
+        opacity: 1;
+        transform: translateY(0) rotate(10deg);
+    }
+
+    .theme-toggle-icon.is-dark .clouds {
+        opacity: 0;
+        transform: scale(0.8) translateX(10px);
+    }
+}

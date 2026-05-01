@@ -1,48 +1,58 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Productos</h2>
-            <a href="{{ route('admin.inventario.productos.create') }}" class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">Nuevo producto</a>
-        </div>
+        <x-admin.page-header title="Productos" :description="$productos->total().' productos en el catalogo'">
+            <x-slot name="actions">
+                <a href="{{ route('admin.inventario.productos.create') }}" class="admin-btn-primary">Nuevo producto</a>
+            </x-slot>
+        </x-admin.page-header>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @include('modulos.inventario.partials.nav')
 
             @if (session('status'))
-                <div class="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-800">{{ session('status') }}</div>
+                <div class="mb-4 rounded-md border border-success/30 bg-success/10 p-4 text-sm text-success">{{ session('status') }}</div>
             @endif
 
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Producto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Categoria</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Stock</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Estado</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Acciones</th>
+            <div class="overflow-x-auto rounded-lg border border-border bg-card">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="px-4 py-3 text-left font-medium text-foreground">Producto</th>
+                            <th class="hidden px-4 py-3 text-left font-medium text-foreground md:table-cell">Categoria</th>
+                            <th class="px-4 py-3 text-left font-medium text-foreground">Stock</th>
+                            <th class="px-4 py-3 text-left font-medium text-foreground">Estado</th>
+                            <th class="px-4 py-3 text-right font-medium text-foreground">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody>
                         @forelse ($productos as $producto)
-                            <tr>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $producto->nombre }}</div>
-                                    <div class="text-xs text-gray-500">{{ $producto->sku ?? 'Sin SKU' }}</div>
+                            <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-foreground">{{ $producto->nombre }}</div>
+                                    <div class="text-xs text-muted-foreground">{{ $producto->sku ?? 'Sin SKU' }}</div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ $producto->categoria?->nombre }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $producto->formatearCantidad($producto->cantidadStock()) }} {{ $producto->codigoUnidad() }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ $producto->estadoStock()->etiqueta() }}</td>
-                                <td class="px-6 py-4 text-right text-sm">
-                                    <a href="{{ route('admin.inventario.productos.stock', $producto) }}" class="text-gray-700 hover:text-gray-900">Stock</a>
-                                    <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="ms-3 text-indigo-600 hover:text-indigo-900">Editar</a>
+                                <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">{{ $producto->categoria?->nombre }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $producto->formatearCantidad($producto->cantidadStock()) }} {{ $producto->codigoUnidad() }}</td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $estado = $producto->estadoStock();
+                                        $variant = match ($estado->value) {
+                                            'correcto' => 'success',
+                                            'bajo' => 'warning',
+                                            'sin_stock' => 'danger',
+                                            default => 'default',
+                                        };
+                                    @endphp
+                                    <x-admin.status-badge :variant="$variant">{{ $estado->etiqueta() }}</x-admin.status-badge>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <a href="{{ route('admin.inventario.productos.stock', $producto) }}" class="text-primary hover:underline">Stock</a>
+                                    <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="ms-3 text-primary hover:underline">Editar</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">No hay productos todavia.</td>
+                                <td colspan="5" class="px-4 py-8 text-center text-sm text-muted-foreground">No hay productos todavia.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -50,6 +60,4 @@
             </div>
 
             <div class="mt-4">{{ $productos->links() }}</div>
-        </div>
-    </div>
 </x-app-layout>
