@@ -22,6 +22,7 @@ class UsuarioAdministradorSeeder extends Seeder
             [
                 'nombre' => env('SUPERADMIN_NAME', 'Superadmin Cerveceria Europa'),
                 'rol' => RolUsuario::Superadmin,
+                'es_protegido' => true,
                 'password' => Hash::make(env('SUPERADMIN_PASSWORD', 'password')),
                 'email_verified_at' => now(),
             ],

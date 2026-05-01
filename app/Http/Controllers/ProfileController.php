@@ -48,6 +48,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->esProtegido()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'Este usuario esta protegido y no puede eliminarse.',
+            ], 'userDeletion');
+        }
+
         Auth::logout();
 
         $user->delete();

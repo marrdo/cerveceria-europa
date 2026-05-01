@@ -16,10 +16,12 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('email', 191)->unique();
             $table->string('rol', 30)->index();
+            $table->boolean('es_protegido')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -36,12 +36,19 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - Modelo principal de autenticacion: `App\Models\Usuario`.
 - Tabla principal de autenticacion: `usuarios`.
 - Roles iniciales: `camarero`, `encargado`, `propietario`, `superadmin`.
+- El usuario `superadmin` inicial queda protegido y no puede eliminarse desde el perfil.
 
 ## Modulos previstos
 
-- `Inventory`: productos, categorias, unidades, ubicaciones, stock, movimientos y lotes.
-- `Purchasing`: proveedores, pedidos, recepciones y entradas reales en inventario.
+- `Inventario`: productos, categorias, unidades, ubicaciones, stock y movimientos.
+- `Compras`: futuro modulo de proveedores, pedidos, recepciones y entradas reales en inventario.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
+
+Documentacion del inventario:
+
+```text
+docs/modules/inventario.md
+```
 
 ## Arranque local
 

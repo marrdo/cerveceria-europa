@@ -6,13 +6,14 @@ use App\Enums\RolUsuario;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Usuario extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UsuarioFactory> */
-    use HasFactory, HasUuids, Notifiable;
+    use HasFactory, HasUuids, Notifiable, SoftDeletes;
 
     /**
      * Tabla principal de usuarios del panel.
@@ -32,6 +33,7 @@ class Usuario extends Authenticatable
         'nombre',
         'email',
         'rol',
+        'es_protegido',
         'password',
     ];
 
@@ -56,6 +58,15 @@ class Usuario extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'rol' => RolUsuario::class,
+            'es_protegido' => 'boolean',
         ];
+    }
+
+    /**
+     * Indica si este usuario no debe poder eliminarse desde el panel.
+     */
+    public function esProtegido(): bool
+    {
+        return $this->es_protegido || $this->rol === RolUsuario::Superadmin;
     }
 }
