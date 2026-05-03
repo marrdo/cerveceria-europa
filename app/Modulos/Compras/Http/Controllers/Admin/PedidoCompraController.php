@@ -4,6 +4,8 @@ namespace App\Modulos\Compras\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
+use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
+use App\Modulos\Compras\Http\Requests\CerrarPedidoCompraPendienteRequest;
 use App\Modulos\Compras\Http\Requests\GuardarPedidoCompraRequest;
 use App\Modulos\Compras\Models\PedidoCompra;
 use App\Modulos\Inventario\Models\Producto;
@@ -83,8 +85,9 @@ class PedidoCompraController extends Controller
     public function show(PedidoCompra $pedido): View
     {
         return view('modulos.compras.pedidos.show', [
-            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'lineas.recepciones', 'recepciones.lineas.producto.unidad', 'recepciones.lineas.ubicacion', 'recepciones.receptor', 'eventos.usuario', 'creador']),
+            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'lineas.recepciones', 'recepciones.lineas.producto.unidad', 'recepciones.lineas.ubicacion', 'recepciones.receptor', 'incidencias.recepcion', 'incidencias.lineaPedido.producto.unidad', 'incidencias.registrador', 'eventos.usuario', 'creador']),
             'estadosCambioManual' => EstadoPedidoCompra::estadosCambioManual(),
+            'tiposIncidencia' => TipoIncidenciaRecepcionCompra::cases(),
         ]);
     }
 
@@ -166,6 +169,37 @@ class PedidoCompraController extends Controller
     }
 
     /**
+     * Cierra un pedido parcialmente recibido manteniendo trazabilidad del motivo.
+     */
+    public function cerrarPendiente(CerrarPedidoCompraPendienteRequest $request, PedidoCompra $pedido): RedirectResponse
+    {
+        $pedido->loadMissing(['lineas.recepciones']);
+
+        if (! $pedido->puedeCerrarConPendiente()) {
+            return redirect()->route('admin.compras.pedidos.show', $pedido)
+                ->with('status', 'Solo puedes cerrar con pendiente pedidos recibidos parcialmente.');
+        }
+
+        $estadoAnterior = $pedido->estado;
+        $pedido->update([
+            'estado' => EstadoPedidoCompra::Cerrado,
+            'actualizado_por' => $request->user()?->id,
+        ]);
+
+        $this->registrarEvento(
+            $pedido,
+            'cierre_pendiente',
+            'Pedido cerrado con mercancia pendiente. Motivo: '.$request->motivoCierre(),
+            $request->user()?->id,
+            $estadoAnterior,
+            EstadoPedidoCompra::Cerrado,
+        );
+
+        return redirect()->route('admin.compras.pedidos.show', $pedido)
+            ->with('status', 'Pedido cerrado correctamente con motivo registrado.');
+    }
+
+    /**
      * Opciones comunes del formulario.
      *
      * @return array<string, mixed>
@@ -180,10 +214,20 @@ class PedidoCompraController extends Controller
 
     private function generarNumeroPedido(): string
     {
-        $prefijo = 'PC-'.now()->format('Ymd').'-';
-        $secuencia = PedidoCompra::query()->where('numero', 'like', $prefijo.'%')->count() + 1;
+        $anio = now()->year;
+        $ultimoNumero = PedidoCompra::query()
+            ->where('numero', 'like', "PC-%-{$anio}")
+            ->orderByDesc('numero')
+            ->lockForUpdate()
+            ->value('numero');
 
-        return $prefijo.str_pad((string) $secuencia, 4, '0', STR_PAD_LEFT);
+        $secuencia = 1;
+
+        if (is_string($ultimoNumero) && preg_match('/^PC-(\d{5})-'.$anio.'$/', $ultimoNumero, $coincidencias) === 1) {
+            $secuencia = ((int) $coincidencias[1]) + 1;
+        }
+
+        return 'PC-'.str_pad((string) $secuencia, 5, '0', STR_PAD_LEFT).'-'.$anio;
     }
 
     /**

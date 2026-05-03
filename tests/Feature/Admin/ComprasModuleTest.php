@@ -4,19 +4,19 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
+use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
 use App\Modulos\Compras\Models\EventoPedidoCompra;
 use App\Modulos\Compras\Models\PedidoCompra;
-use App\Modulos\Compras\Models\RecepcionCompra;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
-use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ComprasModuleTest extends TestCase
@@ -36,6 +36,7 @@ class ComprasModuleTest extends TestCase
 
     public function test_purchase_order_can_be_created_with_lines_and_totals(): void
     {
+        $this->travelTo(Carbon::parse('2026-05-01 10:00:00'));
         $this->seed(InventarioSeeder::class);
         $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $proveedor = Proveedor::query()->firstOrFail();
@@ -61,6 +62,7 @@ class ComprasModuleTest extends TestCase
 
         $pedido = PedidoCompra::query()->with('lineas')->firstOrFail();
 
+        $this->assertSame('PC-00001-2026', $pedido->numero);
         $this->assertSame(EstadoPedidoCompra::Borrador, $pedido->estado);
         $this->assertSame('25.00', $pedido->subtotal);
         $this->assertSame('5.25', $pedido->impuestos);
@@ -194,6 +196,36 @@ class ComprasModuleTest extends TestCase
             'estado_nuevo' => EstadoPedidoCompra::Pedido->value,
             'descripcion' => 'Pedido enviado al proveedor',
             'usuario_id' => $usuario->id,
+        ]);
+    }
+
+    public function test_purchase_order_number_continues_last_sequence_for_current_year(): void
+    {
+        $this->travelTo(Carbon::parse('2026-05-01 10:00:00'));
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $this->crearPedidoBorrador($usuario, $proveedor, $producto, 1, 'PC-00007-2026');
+        $this->crearPedidoBorrador($usuario, $proveedor, $producto, 1, 'PC-00099-2025');
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.store'), [
+                'proveedor_id' => $proveedor->id,
+                'fecha_pedido' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'producto_id' => $producto->id,
+                        'cantidad' => 1,
+                        'coste_unitario' => 2,
+                        'iva_porcentaje' => 21,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('pedidos_compra', [
+            'numero' => 'PC-00008-2026',
         ]);
     }
 
@@ -430,6 +462,126 @@ class ComprasModuleTest extends TestCase
             ]);
     }
 
+    public function test_purchase_reception_issue_can_be_registered(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.incidencias.store', $pedido), [
+                'tipo' => TipoIncidenciaRecepcionCompra::MenosCantidad->value,
+                'linea_pedido_compra_id' => $linea->id,
+                'cantidad_afectada' => 2,
+                'descripcion' => 'El proveedor no entrega dos botellas.',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertDatabaseHas('incidencias_recepcion_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'linea_pedido_compra_id' => $linea->id,
+            'tipo' => TipoIncidenciaRecepcionCompra::MenosCantidad->value,
+            'cantidad_afectada' => 2,
+            'descripcion' => 'El proveedor no entrega dos botellas.',
+            'registrada_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'incidencia_recepcion',
+            'descripcion' => 'Incidencia registrada: Llega menos cantidad.',
+            'usuario_id' => $usuario->id,
+        ]);
+    }
+
+    public function test_purchase_reception_issue_must_belong_to_order(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $otroPedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $lineaOtroPedido = $otroPedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.compras.pedidos.show', $pedido))
+            ->post(route('admin.compras.pedidos.incidencias.store', $pedido), [
+                'tipo' => TipoIncidenciaRecepcionCompra::ProductoEquivocado->value,
+                'linea_pedido_compra_id' => $lineaOtroPedido->id,
+                'descripcion' => 'Linea de otro pedido.',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido))
+            ->assertSessionHasErrors([
+                'linea_pedido_compra_id' => 'La linea seleccionada no pertenece a este pedido.',
+            ]);
+    }
+
+    public function test_partially_received_order_can_be_closed_with_reason(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ]);
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.compras.pedidos.cerrar-pendiente', $pedido), [
+                'motivo_cierre' => 'El proveedor no va a servir la cantidad pendiente.',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertSame(EstadoPedidoCompra::Cerrado, $pedido->refresh()->estado);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'cierre_pendiente',
+            'estado_anterior' => EstadoPedidoCompra::RecibidoParcial->value,
+            'estado_nuevo' => EstadoPedidoCompra::Cerrado->value,
+            'descripcion' => 'Pedido cerrado con mercancia pendiente. Motivo: El proveedor no va a servir la cantidad pendiente.',
+            'usuario_id' => $usuario->id,
+        ]);
+    }
+
+    public function test_order_without_partial_reception_cannot_be_closed_with_pending_reason(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.compras.pedidos.cerrar-pendiente', $pedido), [
+                'motivo_cierre' => 'No deberia cerrar.',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertSame(EstadoPedidoCompra::Pedido, $pedido->refresh()->estado);
+        $this->assertDatabaseMissing('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'cierre_pendiente',
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $sobrescribir
      */
@@ -449,11 +601,11 @@ class ComprasModuleTest extends TestCase
         ], $sobrescribir));
     }
 
-    private function crearPedidoBorrador(Usuario $usuario, Proveedor $proveedor, Producto $producto, float $cantidad = 1): PedidoCompra
+    private function crearPedidoBorrador(Usuario $usuario, Proveedor $proveedor, Producto $producto, float $cantidad = 1, ?string $numero = null): PedidoCompra
     {
         $pedido = PedidoCompra::query()->create([
             'proveedor_id' => $proveedor->id,
-            'numero' => 'PC-TEST-'.str()->random(6),
+            'numero' => $numero ?? 'PC-TEST-'.str()->random(6),
             'estado' => EstadoPedidoCompra::Borrador,
             'subtotal' => round($cantidad * 2, 2),
             'impuestos' => round($cantidad * 2 * 0.21, 2),

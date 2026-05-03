@@ -235,6 +235,7 @@ Implementado:
 - Modulo `Compras` con estructura propia.
 - Nueva pantalla `Compras > Pedidos`.
 - Crear pedidos de compra en estado `borrador`.
+- Numeracion anual de pedidos con formato `PC-00001-2026`.
 - Anadir lineas con producto, descripcion, cantidad, coste unitario e IVA.
 - Calculo automatico de subtotal, impuestos y total.
 - Editar pedidos solo mientras estan en `borrador`.
@@ -290,7 +291,7 @@ Implementado:
 
 ### FASE 2.2 - Incidencias y cierre de pedidos
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Cubrir problemas reales al recibir mercancia.
@@ -306,6 +307,23 @@ Casos:
 Tabla prevista:
 
 - `incidencias_recepcion_compra`
+
+Implementado:
+
+- Nueva tabla `incidencias_recepcion_compra`.
+- Registro de incidencias desde el detalle del pedido.
+- Tipos de incidencia:
+  - falta de mercancia,
+  - llega menos cantidad,
+  - producto equivocado,
+  - producto roto,
+  - producto en mal estado,
+  - otro motivo.
+- Vinculacion opcional de incidencia con recepcion y linea de pedido.
+- Cantidad afectada opcional para documentar diferencias.
+- Evento historico al registrar incidencia.
+- Cierre de pedidos `recibido_parcial` con mercancia pendiente y motivo obligatorio.
+- El cierre con pendiente no modifica inventario; solo cierra el pedido y deja trazabilidad.
 
 ### FASE 2.3 - Devoluciones a proveedor
 

@@ -95,6 +95,47 @@
                 </div>
             </section>
 
+            <section class="admin-card overflow-hidden">
+                <div class="border-b border-border p-4">
+                    <h2 class="text-base font-semibold text-foreground">Incidencias</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Diferencias detectadas al recibir mercancia: faltas, roturas, productos equivocados o mal estado.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/50">
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Tipo</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Linea</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Cantidad</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Descripcion</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($pedido->incidencias as $incidencia)
+                                <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
+                                    <td class="px-4 py-3 font-medium text-foreground">{{ $incidencia->tipo->etiqueta() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $incidencia->lineaPedido?->descripcion ?? 'Pedido general' }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">
+                                        @if ($incidencia->cantidad_afectada)
+                                            {{ $incidencia->lineaPedido?->producto?->formatearCantidad($incidencia->cantidad_afectada) ?? $incidencia->cantidad_afectada }} {{ $incidencia->lineaPedido?->producto?->codigoUnidad() }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $incidencia->descripcion }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $incidencia->registrador?->nombre ?? 'Sin usuario' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-sm text-muted-foreground">Todavia no hay incidencias registradas.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="admin-card p-4 lg:p-6">
                 <h2 class="mb-4 text-base font-semibold text-foreground">Eventos</h2>
                 <div class="divide-y divide-border">
@@ -143,6 +184,73 @@
                 </div>
                 <x-primary-button class="w-full justify-center">Actualizar estado</x-primary-button>
             </form>
+
+            <form method="POST" action="{{ route('admin.compras.pedidos.incidencias.store', $pedido) }}" class="admin-card space-y-4 p-4 lg:p-6">
+                @csrf
+                <h2 class="text-base font-semibold text-foreground">Registrar incidencia</h2>
+                <p class="text-xs text-muted-foreground">Usalo cuando el pedido llegue con menos mercancia, producto equivocado, roturas o cualquier diferencia con el albaran.</p>
+                <div>
+                    <x-input-label for="tipo" value="Tipo" />
+                    <select id="tipo" name="tipo" class="admin-input mt-1 block h-10 w-full" required>
+                        <option value="">Selecciona tipo</option>
+                        @foreach ($tiposIncidencia as $tipoIncidencia)
+                            <option value="{{ $tipoIncidencia->value }}" @selected(old('tipo') === $tipoIncidencia->value)>{{ $tipoIncidencia->etiqueta() }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-muted-foreground">Clasifica el problema para poder revisarlo despues con el proveedor.</p>
+                    <x-input-error :messages="$errors->get('tipo')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="linea_pedido_compra_id" value="Linea afectada" />
+                    <select id="linea_pedido_compra_id" name="linea_pedido_compra_id" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Pedido general</option>
+                        @foreach ($pedido->lineas as $linea)
+                            <option value="{{ $linea->id }}" @selected(old('linea_pedido_compra_id') === $linea->id)>{{ $linea->descripcion }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-muted-foreground">Opcional. Selecciona el producto concreto si la incidencia afecta a una linea.</p>
+                    <x-input-error :messages="$errors->get('linea_pedido_compra_id')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="recepcion_compra_id" value="Recepcion relacionada" />
+                    <select id="recepcion_compra_id" name="recepcion_compra_id" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Sin recepcion concreta</option>
+                        @foreach ($pedido->recepciones as $recepcion)
+                            <option value="{{ $recepcion->id }}" @selected(old('recepcion_compra_id') === $recepcion->id)>{{ $recepcion->numero }} - {{ $recepcion->fecha_recepcion->format('d/m/Y') }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-muted-foreground">Opcional. Vincula la incidencia a una recepcion ya registrada.</p>
+                    <x-input-error :messages="$errors->get('recepcion_compra_id')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="cantidad_afectada" value="Cantidad afectada" />
+                    <x-text-input id="cantidad_afectada" name="cantidad_afectada" type="number" step="0.001" min="0.001" class="mt-1 block h-10 w-full" :value="old('cantidad_afectada')" />
+                    <p class="mt-1 text-xs text-muted-foreground">Opcional. Indica cuantas unidades, cajas, litros o kg estan afectados.</p>
+                    <x-input-error :messages="$errors->get('cantidad_afectada')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="descripcion_incidencia" value="Descripcion" />
+                    <textarea id="descripcion_incidencia" name="descripcion" rows="4" class="admin-input mt-1 block w-full" required>{{ old('descripcion') }}</textarea>
+                    <p class="mt-1 text-xs text-muted-foreground">Explica que ha pasado y que se ha acordado con el proveedor si ya se sabe.</p>
+                    <x-input-error :messages="$errors->get('descripcion')" class="mt-2" />
+                </div>
+                <x-primary-button class="w-full justify-center">Guardar incidencia</x-primary-button>
+            </form>
+
+            @if ($pedido->puedeCerrarConPendiente())
+                <form method="POST" action="{{ route('admin.compras.pedidos.cerrar-pendiente', $pedido) }}" class="admin-card space-y-4 border-warning/40 p-4 lg:p-6">
+                    @csrf
+                    @method('PATCH')
+                    <h2 class="text-base font-semibold text-foreground">Cerrar con pendiente</h2>
+                    <p class="text-xs text-muted-foreground">Usalo si se decide no esperar la mercancia pendiente. El stock no cambia; solo se cierra el pedido con motivo.</p>
+                    <div>
+                        <x-input-label for="motivo_cierre" value="Motivo de cierre" />
+                        <textarea id="motivo_cierre" name="motivo_cierre" rows="4" class="admin-input mt-1 block w-full" required>{{ old('motivo_cierre') }}</textarea>
+                        <x-input-error :messages="$errors->get('motivo_cierre')" class="mt-2" />
+                    </div>
+                    <x-primary-button class="w-full justify-center">Cerrar pedido</x-primary-button>
+                </form>
+            @endif
         </aside>
     </div>
 </x-app-layout>

@@ -41,6 +41,12 @@ class RecepcionCompra extends Model
         return $this->hasMany(LineaRecepcionCompra::class, 'recepcion_compra_id');
     }
 
+    /** @return HasMany<IncidenciaRecepcionCompra> */
+    public function incidencias(): HasMany
+    {
+        return $this->hasMany(IncidenciaRecepcionCompra::class, 'recepcion_compra_id');
+    }
+
     /** @return BelongsTo<Usuario, $this> */
     public function receptor(): BelongsTo
     {
