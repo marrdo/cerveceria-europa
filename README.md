@@ -58,6 +58,7 @@ Documentacion por modulos:
 ```text
 docs/modules/inventario.md
 docs/modules/compras.md
+docs/modules/web-publica.md
 ```
 
 ## Roadmap por fases
@@ -474,6 +475,39 @@ Reglas:
 - La capa visual no debe cambiar la arquitectura de modulos.
 - Primero se integran componentes comunes; despues se aplican a inventario y compras.
 
+### FASE 5.0 - Web publica gestionable
+
+Estado: pendiente.
+
+Objetivo:
+Crear la web publica de Cerveceria Europa dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
+
+Idea de rutas:
+
+```text
+cerveceriaEuropa.com
+cerveceriaEuropa.com/carta
+cerveceriaEuropa.com/cervezas
+cerveceriaEuropa.com/recomendaciones
+cerveceriaEuropa.com/blog
+cerveceriaEuropa.com/contacto
+cerveceriaEuropa.com/admin
+```
+
+Contenido gestionable desde el panel:
+
+- Fotos de platos.
+- Fotos de cervezas.
+- Platos fuera de carta.
+- Cervezas fuera de carta.
+- Recomendaciones del chef.
+- Recomendaciones de cerveza de la semana.
+- Noticias o blog si aporta valor real.
+- Datos de contacto, ubicacion y horarios.
+
+Regla:
+La web publica debe leer contenido publicado desde tablas propias y no desde textos fijos en Blade, salvo contenido estructural de diseno.
+
 ## Arranque local
 
 ```powershell
@@ -489,4 +523,12 @@ Usuario inicial:
 ```text
 admin@cerveceria-europa.local
 password
+```
+
+Usuarios demo por rol:
+
+```text
+camarero@cerveceria-europa.local / password
+encargado@cerveceria-europa.local / password
+propietario@cerveceria-europa.local / password
 ```
