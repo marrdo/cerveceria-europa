@@ -353,7 +353,7 @@ Implementado:
 
 ### FASE 2.4 - Propuestas de compra
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Ayudar a reponer stock desde alertas.
@@ -364,6 +364,19 @@ Funcionalidad:
 - Agrupar necesidades por proveedor.
 - Proponer cantidades de compra.
 - Generar borradores de pedido.
+
+Implementado:
+
+- Pantalla `Compras > Propuestas`.
+- Deteccion de productos activos con control de stock en estado `sin_stock` o `bajo`.
+- Agrupacion de productos por proveedor principal.
+- Calculo inicial de cantidad sugerida:
+  - si hay alerta configurada, propone reponer hasta el doble de la alerta,
+  - si no hay alerta, propone minimo 1 unidad.
+- Edicion manual de cantidad propuesta antes de crear pedido.
+- Generacion de pedido en estado `borrador` desde una propuesta.
+- Evento historico `propuesta_compra`.
+- Aviso de productos sin proveedor principal para corregir su ficha antes de generar pedidos.
 
 ### FASE 3.0 - Lectura asistida de albaranes
 

@@ -3,6 +3,7 @@
 namespace App\Modulos\Compras\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modulos\Compras\Actions\CrearPedidoCompraBorradorAction;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
 use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
 use App\Modulos\Compras\Http\Requests\CerrarPedidoCompraPendienteRequest;
@@ -59,22 +60,9 @@ class PedidoCompraController extends Controller
     /**
      * Guarda un pedido nuevo en borrador.
      */
-    public function store(GuardarPedidoCompraRequest $request): RedirectResponse
+    public function store(GuardarPedidoCompraRequest $request, CrearPedidoCompraBorradorAction $crearPedido): RedirectResponse
     {
-        $pedido = DB::transaction(function () use ($request): PedidoCompra {
-            $pedido = PedidoCompra::query()->create(array_merge($request->datosPedido(), [
-                'numero' => $this->generarNumeroPedido(),
-                'estado' => EstadoPedidoCompra::Borrador,
-                'creado_por' => $request->user()?->id,
-                'actualizado_por' => $request->user()?->id,
-            ]));
-
-            $this->guardarLineas($pedido, $request->lineasLimpias());
-            $this->recalcularTotales($pedido);
-            $this->registrarEvento($pedido, 'creado', 'Pedido creado en borrador.', $request->user()?->id);
-
-            return $pedido;
-        });
+        $pedido = $crearPedido->execute($request->datosPedido(), $request->lineasLimpias(), $request->user()?->id);
 
         return redirect()->route('admin.compras.pedidos.show', $pedido)
             ->with('status', 'Pedido de compra creado correctamente.');
@@ -212,24 +200,6 @@ class PedidoCompraController extends Controller
             'proveedores' => Proveedor::query()->where('activo', true)->orderBy('nombre')->get(),
             'productos' => Producto::query()->where('activo', true)->with('unidad')->orderBy('nombre')->get(),
         ];
-    }
-
-    private function generarNumeroPedido(): string
-    {
-        $anio = now()->year;
-        $ultimoNumero = PedidoCompra::query()
-            ->where('numero', 'like', "PC-%-{$anio}")
-            ->orderByDesc('numero')
-            ->lockForUpdate()
-            ->value('numero');
-
-        $secuencia = 1;
-
-        if (is_string($ultimoNumero) && preg_match('/^PC-(\d{5})-'.$anio.'$/', $ultimoNumero, $coincidencias) === 1) {
-            $secuencia = ((int) $coincidencias[1]) + 1;
-        }
-
-        return 'PC-'.str_pad((string) $secuencia, 5, '0', STR_PAD_LEFT).'-'.$anio;
     }
 
     /**

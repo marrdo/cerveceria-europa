@@ -2,9 +2,9 @@
 
 ## Estado
 
-Fase 2.3 implementada.
+Fase 2.4 implementada.
 
-El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas y devoluciones a proveedor. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
+El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas, devoluciones a proveedor y propuestas de compra desde alertas de stock. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
 
 ## Implementado
 
@@ -35,6 +35,8 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Cierre de pedidos parcialmente recibidos con motivo.
 - Devoluciones a proveedor.
 - Salidas reales de inventario asociadas a devoluciones.
+- Propuestas de compra desde productos bajo stock o sin stock.
+- Generacion de pedidos borrador desde propuestas agrupadas por proveedor.
 
 ## Tablas
 
@@ -64,6 +66,9 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Las devoluciones a proveedor si cambian inventario: cada devolucion confirmada crea una salida real.
 - No se puede devolver mas cantidad de la recibida pendiente de devolver.
 - La salida de devolucion respeta stock disponible y reglas de lotes/caducidad.
+- Las propuestas no crean movimientos de inventario; solo generan pedidos borrador.
+- Una propuesta solo puede generar pedido si el producto tiene proveedor principal.
+- La cantidad sugerida es una ayuda editable, no una obligacion operativa.
 - Todo cambio importante debe dejar evento en `eventos_pedido_compra`.
 - Los importes se recalculan desde las lineas, no se introducen manualmente.
 - Los nombres de tablas, modelos, controladores y vistas son espanoles.
@@ -82,6 +87,8 @@ Crear pedido en borrador
 -> Registrar incidencias si hay diferencias
 -> Cerrar con pendiente si se decide no esperar el resto
 -> Registrar devolucion si mercancia recibida vuelve al proveedor
+-> Revisar propuestas para reponer stock bajo
+-> Generar pedidos borrador desde propuestas
 -> Registrar eventos de cambios
 ```
 
@@ -137,10 +144,30 @@ La devolucion queda trazada contra:
 - ubicacion de inventario,
 - movimiento de inventario.
 
+## Propuestas de compra
+
+Las propuestas ayudan al encargado a detectar reposicion sin entrar producto por producto.
+
+Flujo:
+
+```text
+Productos activos con control de stock
+-> Estado sin stock o stock bajo
+-> Agrupacion por proveedor principal
+-> Cantidad sugerida editable
+-> Pedido borrador
+```
+
+Criterio inicial:
+
+- Si el producto tiene `cantidad_alerta_stock`, se propone comprar hasta llegar al doble de esa alerta.
+- Si el producto esta sin stock y no tiene alerta, se propone 1 unidad.
+- Los productos sin proveedor principal se muestran aparte para corregir su ficha.
+
 ## Siguiente fase
 
-Fase 2.4:
+Fase 3.0:
 
-- Propuestas de compra.
-- Agrupar necesidades por proveedor desde alertas de stock.
-- Generar borradores de pedido.
+- Lectura asistida de albaranes.
+- Subida de foto o PDF.
+- Borrador revisable antes de tocar compras o inventario.

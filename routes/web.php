@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
 use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
+use App\Modulos\Compras\Http\Controllers\Admin\PropuestaCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\RecepcionCompraController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
@@ -72,6 +73,8 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/compras')->name('admin.compras.')->middleware('modulo:compras')->group(function (): void {
         Route::get('/', [PedidoCompraController::class, 'index'])->name('index');
+        Route::get('propuestas', [PropuestaCompraController::class, 'index'])->name('propuestas.index');
+        Route::post('propuestas', [PropuestaCompraController::class, 'store'])->name('propuestas.store');
         Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');
         Route::patch('pedidos/{pedido}/cerrar-pendiente', [PedidoCompraController::class, 'cerrarPendiente'])->name('pedidos.cerrar-pendiente');
         Route::post('pedidos/{pedido}/incidencias', [IncidenciaRecepcionCompraController::class, 'store'])->name('pedidos.incidencias.store');

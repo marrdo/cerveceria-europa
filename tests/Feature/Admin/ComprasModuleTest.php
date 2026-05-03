@@ -11,6 +11,7 @@ use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
+use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Models\Usuario;
@@ -226,6 +227,71 @@ class ComprasModuleTest extends TestCase
 
         $this->assertDatabaseHas('pedidos_compra', [
             'numero' => 'PC-00008-2026',
+        ]);
+    }
+
+    public function test_purchase_proposals_are_grouped_by_supplier_from_low_stock(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'proveedor_id' => $proveedor->id,
+            'cantidad_alerta_stock' => 10,
+        ]);
+
+        StockInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 3,
+            'cantidad_minima' => 0,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.propuestas.index'))
+            ->assertOk()
+            ->assertSee('Criterio de propuesta')
+            ->assertSee($proveedor->nombre)
+            ->assertSee($producto->nombre)
+            ->assertSee('17');
+    }
+
+    public function test_purchase_proposal_can_generate_draft_order(): void
+    {
+        $this->travelTo(Carbon::parse('2026-05-01 10:00:00'));
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'proveedor_id' => $proveedor->id,
+            'precio_coste' => 1.75,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.propuestas.store'), [
+                'proveedor_id' => $proveedor->id,
+                'productos' => [
+                    [
+                        'producto_id' => $producto->id,
+                        'cantidad' => 6,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $pedido = PedidoCompra::query()->with('lineas')->where('proveedor_id', $proveedor->id)->firstOrFail();
+
+        $this->assertSame('PC-00001-2026', $pedido->numero);
+        $this->assertSame(EstadoPedidoCompra::Borrador, $pedido->estado);
+        $this->assertSame('Pedido generado desde propuesta de compra por stock bajo.', $pedido->notas);
+        $this->assertSame(1, $pedido->lineas->count());
+        $this->assertSame('6.000', $pedido->lineas->first()->cantidad);
+        $this->assertSame('1.75', $pedido->lineas->first()->coste_unitario);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'propuesta_compra',
+            'descripcion' => 'Pedido generado desde propuesta de compra.',
         ]);
     }
 
