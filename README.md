@@ -380,7 +380,7 @@ Implementado:
 
 ### FASE 3.0 - Lectura asistida de albaranes
 
-Estado: pendiente.
+Estado: implementada como base de captura y trazabilidad.
 
 Objetivo:
 Permitir subir foto o PDF de albaran/factura para generar un borrador revisable.
@@ -404,6 +404,24 @@ Foto/PDF de albaran
 
 Regla:
 La lectura de documentos nunca debe actualizar stock sin confirmacion humana.
+
+Implementado:
+
+- Nueva pantalla `Compras > Documentos`.
+- Subida de fotos JPG/PNG o PDF de albaranes/facturas.
+- Almacenamiento privado del archivo original.
+- Nueva tabla `documentos_compra`.
+- Nueva tabla `lecturas_documentos`.
+- Nueva tabla `borradores_compra_documento`.
+- Creacion automatica de lectura pendiente y borrador pendiente de revision al subir documento.
+- Trazabilidad de proveedor opcional, tipo de documento, usuario que sube, archivo original y notas.
+- Pantalla de detalle con archivo, lecturas y borrador asociado.
+
+Pendiente para fases posteriores:
+
+- Integracion real con OCR o IA multimodal.
+- Extraccion automatica de texto y lineas.
+- Conversion del borrador revisado en pedido/recepcion.
 
 ### FASE 4.0 - Panel visual definitivo
 

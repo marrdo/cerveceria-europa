@@ -5,6 +5,8 @@ namespace Tests\Feature\Admin;
 use App\Enums\RolUsuario;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
 use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
+use App\Modulos\Compras\Enums\TipoDocumentoCompra;
+use App\Modulos\Compras\Models\DocumentoCompra;
 use App\Modulos\Compras\Models\EventoPedidoCompra;
 use App\Modulos\Compras\Models\PedidoCompra;
 use App\Modulos\Inventario\Models\CategoriaProducto;
@@ -17,7 +19,9 @@ use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ComprasModuleTest extends TestCase
@@ -293,6 +297,59 @@ class ComprasModuleTest extends TestCase
             'tipo' => 'propuesta_compra',
             'descripcion' => 'Pedido generado desde propuesta de compra.',
         ]);
+    }
+
+    public function test_purchase_document_upload_creates_traceability_records(): void
+    {
+        Storage::fake('local');
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $archivo = UploadedFile::fake()->create('albaran-europa.pdf', 128, 'application/pdf');
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.documentos.store'), [
+                'proveedor_id' => $proveedor->id,
+                'tipo_documento' => TipoDocumentoCompra::Albaran->value,
+                'archivo' => $archivo,
+                'notas' => 'Foto recibida en barra.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('documentos_compra', [
+            'proveedor_id' => $proveedor->id,
+            'tipo_documento' => TipoDocumentoCompra::Albaran->value,
+            'estado' => 'pendiente',
+            'nombre_original' => 'albaran-europa.pdf',
+            'disco' => 'local',
+            'notas' => 'Foto recibida en barra.',
+            'subido_por' => $usuario->id,
+        ]);
+
+        $documento = DocumentoCompra::query()->firstOrFail();
+
+        Storage::disk('local')->assertExists($documento->ruta_archivo);
+        $this->assertDatabaseHas('lecturas_documentos', [
+            'documento_compra_id' => $documento->id,
+            'motor' => 'pendiente',
+            'estado' => 'pendiente',
+        ]);
+        $this->assertDatabaseHas('borradores_compra_documento', [
+            'documento_compra_id' => $documento->id,
+            'estado' => 'pendiente_revision',
+        ]);
+    }
+
+    public function test_purchase_documents_screen_can_be_rendered(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.documentos.index'))
+            ->assertOk()
+            ->assertSee('Lectura asistida')
+            ->assertSee('Subir documento');
     }
 
     public function test_purchase_order_cannot_be_manually_marked_as_received(): void

@@ -4,7 +4,7 @@
 
 Fase 2.4 implementada.
 
-El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas, devoluciones a proveedor y propuestas de compra desde alertas de stock. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
+El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas, devoluciones a proveedor, propuestas de compra desde alertas de stock y documentos de compra para lectura asistida. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
 
 ## Implementado
 
@@ -37,6 +37,8 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Salidas reales de inventario asociadas a devoluciones.
 - Propuestas de compra desde productos bajo stock o sin stock.
 - Generacion de pedidos borrador desde propuestas agrupadas por proveedor.
+- Documentos de compra para subida de albaranes/facturas.
+- Lecturas pendientes y borradores revisables asociados a documentos.
 
 ## Tablas
 
@@ -48,6 +50,9 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - `incidencias_recepcion_compra`
 - `devoluciones_proveedor`
 - `lineas_devolucion_proveedor`
+- `documentos_compra`
+- `lecturas_documentos`
+- `borradores_compra_documento`
 
 ## Reglas de arquitectura
 
@@ -69,6 +74,8 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Las propuestas no crean movimientos de inventario; solo generan pedidos borrador.
 - Una propuesta solo puede generar pedido si el producto tiene proveedor principal.
 - La cantidad sugerida es una ayuda editable, no una obligacion operativa.
+- Los documentos subidos nunca actualizan stock ni crean recepciones automaticamente.
+- Todo documento genera trazabilidad de archivo original, lectura pendiente y borrador pendiente de revision.
 - Todo cambio importante debe dejar evento en `eventos_pedido_compra`.
 - Los importes se recalculan desde las lineas, no se introducen manualmente.
 - Los nombres de tablas, modelos, controladores y vistas son espanoles.
@@ -89,6 +96,8 @@ Crear pedido en borrador
 -> Registrar devolucion si mercancia recibida vuelve al proveedor
 -> Revisar propuestas para reponer stock bajo
 -> Generar pedidos borrador desde propuestas
+-> Subir documentos para lectura asistida
+-> Revisar borradores antes de confirmar compras o recepciones
 -> Registrar eventos de cambios
 ```
 
@@ -166,8 +175,8 @@ Criterio inicial:
 
 ## Siguiente fase
 
-Fase 3.0:
+Fase 3.1:
 
-- Lectura asistida de albaranes.
-- Subida de foto o PDF.
-- Borrador revisable antes de tocar compras o inventario.
+- Integracion real OCR/IA para documentos de compra.
+- Rellenar texto extraido y datos estructurados.
+- Pantalla de revision para convertir datos revisados en pedido o recepcion.

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
+use App\Modulos\Compras\Http\Controllers\Admin\DocumentoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PropuestaCompraController;
@@ -73,6 +74,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/compras')->name('admin.compras.')->middleware('modulo:compras')->group(function (): void {
         Route::get('/', [PedidoCompraController::class, 'index'])->name('index');
+        Route::resource('documentos', DocumentoCompraController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->parameters(['documentos' => 'documento']);
         Route::get('propuestas', [PropuestaCompraController::class, 'index'])->name('propuestas.index');
         Route::post('propuestas', [PropuestaCompraController::class, 'store'])->name('propuestas.store');
         Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');

@@ -123,6 +123,7 @@
                             <div x-show="moduloAbierto === 'compras'" x-transition class="space-y-1 pb-2 ps-14">
                                 <a href="{{ route('admin.compras.pedidos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.pedidos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Pedidos</a>
                                 <a href="{{ route('admin.compras.propuestas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.propuestas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Propuestas</a>
+                                <a href="{{ route('admin.compras.documentos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.documentos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Documentos</a>
                             </div>
                         </div>
                     @endif
