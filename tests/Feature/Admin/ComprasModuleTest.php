@@ -6,6 +6,7 @@ use App\Enums\RolUsuario;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
 use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
 use App\Modulos\Compras\Enums\TipoDocumentoCompra;
+use App\Modulos\Compras\Models\BorradorCompraDocumento;
 use App\Modulos\Compras\Models\DocumentoCompra;
 use App\Modulos\Compras\Models\EventoPedidoCompra;
 use App\Modulos\Compras\Models\PedidoCompra;
@@ -350,6 +351,153 @@ class ComprasModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Lectura asistida')
             ->assertSee('Subir documento');
+    }
+
+    public function test_purchase_document_draft_can_be_manually_reviewed(): void
+    {
+        Storage::fake('local');
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba(['proveedor_id' => $proveedor->id]);
+        $borrador = $this->crearBorradorDocumentoPrueba($usuario);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.documentos.borradores.update', $borrador), [
+                'proveedor_id' => $proveedor->id,
+                'fecha_documento' => '2026-05-03',
+                'numero_documento' => 'FAC-123',
+                'notas_revision' => 'Revision manual completada.',
+                'lineas' => [
+                    [
+                        'producto_id' => $producto->id,
+                        'descripcion' => 'Linea revisada',
+                        'cantidad' => 3,
+                        'coste_unitario' => 1.25,
+                        'iva_porcentaje' => 21,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.compras.documentos.show', $borrador->documento));
+
+        $borrador->refresh();
+
+        $this->assertSame('pendiente_revision', $borrador->estado);
+        $this->assertSame('FAC-123', $borrador->datos_borrador['numero_documento']);
+        $this->assertSame($producto->id, $borrador->datos_borrador['lineas'][0]['producto_id']);
+        $this->assertSame($usuario->id, $borrador->revisado_por);
+        $this->assertDatabaseHas('documentos_compra', [
+            'id' => $borrador->documento_compra_id,
+            'proveedor_id' => $proveedor->id,
+            'estado' => 'en_revision',
+        ]);
+        $this->assertDatabaseMissing('pedidos_compra', [
+            'proveedor_id' => $proveedor->id,
+        ]);
+    }
+
+    public function test_purchase_document_draft_review_screen_can_be_rendered(): void
+    {
+        Storage::fake('local');
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $borrador = $this->crearBorradorDocumentoPrueba($usuario);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.documentos.borradores.edit', $borrador))
+            ->assertOk()
+            ->assertSee('Datos del documento')
+            ->assertSee('Lineas revisadas');
+    }
+
+    public function test_purchase_document_draft_can_generate_draft_order(): void
+    {
+        Storage::fake('local');
+        $this->travelTo(Carbon::parse('2026-05-03 10:00:00'));
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba(['proveedor_id' => $proveedor->id]);
+        $borrador = $this->crearBorradorDocumentoPrueba($usuario);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.documentos.borradores.generar-pedido', $borrador), [
+                'proveedor_id' => $proveedor->id,
+                'fecha_documento' => '2026-05-03',
+                'numero_documento' => 'ALB-456',
+                'notas_revision' => 'Listo para pedido.',
+                'lineas' => [
+                    [
+                        'producto_id' => $producto->id,
+                        'descripcion' => 'Producto de albaran',
+                        'cantidad' => 4,
+                        'coste_unitario' => 2.50,
+                        'iva_porcentaje' => 21,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $pedido = PedidoCompra::query()->with('lineas')->firstOrFail();
+        $borrador->refresh();
+
+        $this->assertSame('PC-00001-2026', $pedido->numero);
+        $this->assertSame(EstadoPedidoCompra::Borrador, $pedido->estado);
+        $this->assertSame($pedido->id, $borrador->pedido_compra_id);
+        $this->assertSame('convertido_pedido', $borrador->estado);
+        $this->assertSame('procesado', $borrador->documento->refresh()->estado->value);
+        $this->assertSame(1, $pedido->lineas->count());
+        $this->assertSame('4.000', $pedido->lineas->first()->cantidad);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'documento_compra',
+            'descripcion' => 'Pedido generado desde documento de compra revisado.',
+        ]);
+    }
+
+    public function test_purchase_document_can_be_deleted_when_it_has_no_generated_order(): void
+    {
+        Storage::fake('local');
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $borrador = $this->crearBorradorDocumentoPrueba($usuario);
+        $documento = $borrador->documento;
+
+        $this->actingAs($usuario)
+            ->delete(route('admin.compras.documentos.destroy', $documento))
+            ->assertRedirect(route('admin.compras.documentos.index'));
+
+        $this->assertSoftDeleted('documentos_compra', [
+            'id' => $documento->id,
+        ]);
+
+        Storage::disk('local')->assertMissing('documentos_compra/test.pdf');
+    }
+
+    public function test_purchase_document_cannot_be_deleted_when_it_generated_order(): void
+    {
+        Storage::fake('local');
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $producto = $this->crearProductoPrueba(['proveedor_id' => $proveedor->id]);
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto);
+        $borrador = $this->crearBorradorDocumentoPrueba($usuario);
+        $documento = $borrador->documento;
+
+        $borrador->update([
+            'pedido_compra_id' => $pedido->id,
+        ]);
+
+        $this->actingAs($usuario)
+            ->delete(route('admin.compras.documentos.destroy', $documento))
+            ->assertRedirect(route('admin.compras.documentos.show', $documento));
+
+        $this->assertNotSoftDeleted('documentos_compra', [
+            'id' => $documento->id,
+        ]);
+
+        Storage::disk('local')->assertExists('documentos_compra/test.pdf');
     }
 
     public function test_purchase_order_cannot_be_manually_marked_as_received(): void
@@ -868,5 +1016,34 @@ class ComprasModuleTest extends TestCase
         ]);
 
         return $pedido;
+    }
+
+    private function crearBorradorDocumentoPrueba(Usuario $usuario): BorradorCompraDocumento
+    {
+        Storage::disk('local')->put('documentos_compra/test.pdf', 'PDF falso para test');
+
+        $documento = DocumentoCompra::query()->create([
+            'tipo_documento' => TipoDocumentoCompra::Albaran,
+            'estado' => 'pendiente',
+            'nombre_original' => 'test.pdf',
+            'disco' => 'local',
+            'ruta_archivo' => 'documentos_compra/test.pdf',
+            'mime_type' => 'application/pdf',
+            'tamano_bytes' => 18,
+            'subido_por' => $usuario->id,
+        ]);
+
+        $documento->lecturas()->create([
+            'motor' => 'pendiente',
+            'estado' => 'pendiente',
+        ]);
+
+        return $documento->borrador()->create([
+            'estado' => 'pendiente_revision',
+            'datos_borrador' => [
+                'proveedor_id' => null,
+                'lineas' => [],
+            ],
+        ]);
     }
 }

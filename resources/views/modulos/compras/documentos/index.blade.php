@@ -41,8 +41,13 @@
                         <td class="px-4 py-3 text-muted-foreground">{{ $documento->proveedor?->nombre ?? 'Sin proveedor' }}</td>
                         <td class="px-4 py-3"><x-admin.status-badge :variant="$documento->estado->variante()">{{ $documento->estado->etiqueta() }}</x-admin.status-badge></td>
                         <td class="px-4 py-3 text-muted-foreground">{{ $documento->subidor?->nombre ?? 'Sin usuario' }}</td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
                             <a href="{{ route('admin.compras.documentos.show', $documento) }}" class="text-primary hover:underline">Ver</a>
+                            <form method="POST" action="{{ route('admin.compras.documentos.destroy', $documento) }}" class="inline" onsubmit="return confirm('Eliminar este documento? Esta accion quitara el archivo subido si no tiene pedido generado.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="ms-3 text-destructive hover:underline">Eliminar</button>
+                            </form>
                         </td>
                     </tr>
                 @empty

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.4 implementada.
+Fase 3.1 implementada.
 
 El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas, devoluciones a proveedor, propuestas de compra desde alertas de stock y documentos de compra para lectura asistida. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
 
@@ -39,6 +39,9 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Generacion de pedidos borrador desde propuestas agrupadas por proveedor.
 - Documentos de compra para subida de albaranes/facturas.
 - Lecturas pendientes y borradores revisables asociados a documentos.
+- Revision manual de borradores de documento.
+- Conversion de borrador revisado en pedido de compra en estado `borrador`.
+- Eliminacion de documentos equivocados si todavia no han generado pedido.
 
 ## Tablas
 
@@ -76,6 +79,9 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - La cantidad sugerida es una ayuda editable, no una obligacion operativa.
 - Los documentos subidos nunca actualizan stock ni crean recepciones automaticamente.
 - Todo documento genera trazabilidad de archivo original, lectura pendiente y borrador pendiente de revision.
+- Un borrador revisado puede generar pedido, pero no recepcion ni movimiento de inventario.
+- Un documento que ya genero pedido no se elimina para no romper la trazabilidad.
+- En la fase actual las lineas del borrador se introducen manualmente con productos ya existentes.
 - Todo cambio importante debe dejar evento en `eventos_pedido_compra`.
 - Los importes se recalculan desde las lineas, no se introducen manualmente.
 - Los nombres de tablas, modelos, controladores y vistas son espanoles.
@@ -98,6 +104,7 @@ Crear pedido en borrador
 -> Generar pedidos borrador desde propuestas
 -> Subir documentos para lectura asistida
 -> Revisar borradores antes de confirmar compras o recepciones
+-> Convertir borrador revisado en pedido borrador
 -> Registrar eventos de cambios
 ```
 
@@ -175,8 +182,8 @@ Criterio inicial:
 
 ## Siguiente fase
 
-Fase 3.1:
+Fase 3.2:
 
 - Integracion real OCR/IA para documentos de compra.
 - Rellenar texto extraido y datos estructurados.
-- Pantalla de revision para convertir datos revisados en pedido o recepcion.
+- Preparar conversion revisada hacia recepcion cuando el pedido ya exista.

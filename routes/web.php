@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Modulos\Compras\Http\Controllers\Admin\BorradorCompraDocumentoController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
 use App\Modulos\Compras\Http\Controllers\Admin\DocumentoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraController;
@@ -74,8 +75,11 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/compras')->name('admin.compras.')->middleware('modulo:compras')->group(function (): void {
         Route::get('/', [PedidoCompraController::class, 'index'])->name('index');
+        Route::get('documentos/borradores/{borrador}/edit', [BorradorCompraDocumentoController::class, 'edit'])->name('documentos.borradores.edit');
+        Route::post('documentos/borradores/{borrador}', [BorradorCompraDocumentoController::class, 'update'])->name('documentos.borradores.update');
+        Route::post('documentos/borradores/{borrador}/generar-pedido', [BorradorCompraDocumentoController::class, 'generarPedido'])->name('documentos.borradores.generar-pedido');
         Route::resource('documentos', DocumentoCompraController::class)
-            ->only(['index', 'create', 'store', 'show'])
+            ->only(['index', 'create', 'store', 'show', 'destroy'])
             ->parameters(['documentos' => 'documento']);
         Route::get('propuestas', [PropuestaCompraController::class, 'index'])->name('propuestas.index');
         Route::post('propuestas', [PropuestaCompraController::class, 'store'])->name('propuestas.store');

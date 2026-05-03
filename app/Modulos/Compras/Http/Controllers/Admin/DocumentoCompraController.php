@@ -64,6 +64,7 @@ class DocumentoCompraController extends Controller
             $documento->lecturas()->create([
                 'motor' => 'pendiente',
                 'estado' => 'pendiente',
+                'mensaje_error' => 'Lectura automatica no configurada en esta fase. Revisa el borrador manualmente.',
             ]);
 
             $documento->borrador()->create([
@@ -78,7 +79,7 @@ class DocumentoCompraController extends Controller
         });
 
         return redirect()->route('admin.compras.documentos.show', $documento)
-            ->with('status', 'Documento subido correctamente. Queda pendiente de lectura asistida y revision humana.');
+            ->with('status', 'Documento subido correctamente. Revisa el borrador manualmente antes de generar el pedido.');
     }
 
     /**
@@ -90,5 +91,31 @@ class DocumentoCompraController extends Controller
             'documento' => $documento->load(['proveedor', 'subidor', 'lecturas.procesador', 'borrador.revisor', 'borrador.pedido']),
             'archivoExiste' => Storage::disk($documento->disco)->exists($documento->ruta_archivo),
         ]);
+    }
+
+    /**
+     * Elimina un documento equivocado mientras no haya generado un pedido.
+     */
+    public function destroy(DocumentoCompra $documento): RedirectResponse
+    {
+        $documento->load('borrador');
+
+        if ($documento->borrador?->pedido_compra_id) {
+            return redirect()->route('admin.compras.documentos.show', $documento)
+                ->with('status', 'No puedes eliminar un documento que ya genero un pedido. Mantiene trazabilidad con compras.');
+        }
+
+        DB::transaction(function () use ($documento): void {
+            Storage::disk($documento->disco)->delete($documento->ruta_archivo);
+
+            $documento->forceFill([
+                'estado' => EstadoDocumentoCompra::Descartado,
+            ])->save();
+
+            $documento->delete();
+        });
+
+        return redirect()->route('admin.compras.documentos.index')
+            ->with('status', 'Documento eliminado correctamente.');
     }
 }

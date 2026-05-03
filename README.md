@@ -416,12 +416,35 @@ Implementado:
 - Creacion automatica de lectura pendiente y borrador pendiente de revision al subir documento.
 - Trazabilidad de proveedor opcional, tipo de documento, usuario que sube, archivo original y notas.
 - Pantalla de detalle con archivo, lecturas y borrador asociado.
+- Eliminacion de documentos equivocados mientras no hayan generado pedido.
 
 Pendiente para fases posteriores:
 
-- Integracion real con OCR o IA multimodal.
-- Extraccion automatica de texto y lineas.
-- Conversion del borrador revisado en pedido/recepcion.
+- Integracion con IA multimodal para fotos/PDF complejos.
+- Extraccion automatica de lineas.
+- Conversion del borrador revisado en recepcion.
+
+### FASE 3.1 - Revision de borradores de documento
+
+Estado: implementada.
+
+Objetivo:
+Permitir que una persona revise manualmente el borrador asociado a un documento y lo convierta en pedido de compra en estado `borrador`.
+
+Implementado:
+
+- Pantalla para revisar `borradores_compra_documento`.
+- Edicion manual de proveedor, fecha, numero de documento y lineas.
+- Guardado de revision sin crear pedido ni tocar inventario.
+- Conversion del borrador revisado en `PedidoCompra` en estado `borrador`.
+- Evento historico `documento_compra` en el pedido generado.
+- El documento pasa a `en_revision` al guardar revision y a `procesado` al generar pedido.
+
+Regla:
+La conversion desde documento solo crea un pedido borrador. No crea recepciones ni movimientos de inventario.
+
+Nota operativa:
+En esta fase no se conecta OCR ni IA. Las lineas se introducen manualmente seleccionando productos existentes. Cuando conectemos IA, el sistema propondra lineas intentando emparejar por codigo de barras, SKU, referencia de proveedor o nombre aproximado, siempre con revision humana.
 
 ### FASE 4.0 - Panel visual definitivo
 

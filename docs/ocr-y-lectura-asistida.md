@@ -36,6 +36,7 @@ La primera base ya esta implementada dentro del modulo `Compras`:
 
 - Pantalla `Compras > Documentos`.
 - Subida de JPG, PNG o PDF.
+- Eliminacion de documentos equivocados mientras no hayan generado pedido.
 - Archivo original guardado en disco privado `local`.
 - Tabla `documentos_compra` para el documento original.
 - Tabla `lecturas_documentos` para intentos de OCR/IA.
@@ -49,4 +50,29 @@ documento_compra
 -> borrador pendiente de revision
 ```
 
-La siguiente mejora natural sera conectar un motor OCR/IA que rellene `texto_extraido` y `datos_extraidos`, siempre manteniendo revision humana antes de crear pedidos, recepciones o movimientos de inventario.
+La siguiente mejora natural sera conectar una IA multimodal para PDF/fotos complejas y rellenar automaticamente lineas de producto, siempre manteniendo revision humana antes de crear pedidos, recepciones o movimientos de inventario.
+
+## Fase 3.1 implementada
+
+El borrador pendiente ya se puede revisar manualmente:
+
+- Elegir proveedor.
+- Informar fecha del documento.
+- Informar numero de factura/albaran.
+- Anadir o corregir lineas con producto, cantidad, coste e IVA.
+- Guardar revision sin crear compras ni tocar stock.
+- Convertir el borrador revisado en un pedido de compra en estado `borrador`.
+
+Importante: en esta fase las lineas no se rellenan solas. El usuario debe seleccionar productos existentes del catalogo. Cuando conectemos IA, el sistema propondra lineas intentando emparejar por codigo de barras, SKU, referencia de proveedor o nombre aproximado, pero siempre con revision humana.
+
+Regla aplicada:
+
+```text
+documento revisado
+-> pedido borrador
+-> revision operativa normal
+-> recepcion manual posterior
+-> entrada real en inventario
+```
+
+El documento no crea recepciones ni movimientos de inventario directamente. La siguiente fase tecnica sera conectar OCR/IA para rellenar automaticamente el texto y los datos iniciales del borrador, manteniendo esta pantalla como punto de control humano.
