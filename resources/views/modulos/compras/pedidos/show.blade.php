@@ -35,6 +35,7 @@
                                 <th class="px-4 py-3 text-left font-medium text-foreground">Producto</th>
                                 <th class="px-4 py-3 text-left font-medium text-foreground">Cantidad</th>
                                 <th class="px-4 py-3 text-left font-medium text-foreground">Recibido</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Devuelto</th>
                                 <th class="px-4 py-3 text-right font-medium text-foreground">Coste sin IVA</th>
                                 <th class="px-4 py-3 text-right font-medium text-foreground">IVA</th>
                                 <th class="px-4 py-3 text-right font-medium text-foreground">Total</th>
@@ -49,6 +50,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidad) ?? $linea->cantidad }} {{ $linea->producto?->codigoUnidad() }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadRecibida()) ?? $linea->cantidadRecibida() }} {{ $linea->producto?->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadDevuelta()) ?? $linea->cantidadDevuelta() }} {{ $linea->producto?->codigoUnidad() }}</td>
                                     <td class="px-4 py-3 text-right text-foreground">{{ number_format((float) $linea->coste_unitario, 2, ',', '.') }} EUR</td>
                                     <td class="px-4 py-3 text-right text-muted-foreground">{{ number_format((float) $linea->iva_porcentaje, 2, ',', '.') }}%</td>
                                     <td class="px-4 py-3 text-right font-medium text-foreground">{{ number_format((float) $linea->total, 2, ',', '.') }} EUR</td>
@@ -88,6 +90,45 @@
                             @empty
                                 <tr>
                                     <td colspan="4" class="px-4 py-8 text-center text-sm text-muted-foreground">Todavia no hay recepciones registradas.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-card overflow-hidden">
+                <div class="border-b border-border p-4">
+                    <h2 class="text-base font-semibold text-foreground">Devoluciones</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Mercancia devuelta al proveedor con salida real de inventario.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/50">
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Numero</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Fecha</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Motivo</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Lineas</th>
+                                <th class="px-4 py-3 text-left font-medium text-foreground">Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($pedido->devoluciones as $devolucion)
+                                <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
+                                    <td class="px-4 py-3 font-medium text-foreground">{{ $devolucion->numero }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $devolucion->fecha_devolucion->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $devolucion->motivo }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">
+                                        @foreach ($devolucion->lineas as $lineaDevolucion)
+                                            <div>{{ $lineaDevolucion->producto?->nombre }} - {{ $lineaDevolucion->producto?->formatearCantidad($lineaDevolucion->cantidad) ?? $lineaDevolucion->cantidad }} {{ $lineaDevolucion->producto?->codigoUnidad() }} desde {{ $lineaDevolucion->ubicacion?->nombre }}</div>
+                                        @endforeach
+                                    </td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $devolucion->registrador?->nombre ?? 'Sin usuario' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-sm text-muted-foreground">Todavia no hay devoluciones registradas.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -184,6 +225,71 @@
                 </div>
                 <x-primary-button class="w-full justify-center">Actualizar estado</x-primary-button>
             </form>
+
+            @php
+                $lineasDevolvibles = $pedido->lineas->filter(fn ($linea) => $linea->cantidadDisponibleDevolucion() > 0.0005);
+            @endphp
+
+            @if ($lineasDevolvibles->isNotEmpty())
+                <form method="POST" action="{{ route('admin.compras.pedidos.devoluciones.store', $pedido) }}" class="admin-card space-y-4 p-4 lg:p-6">
+                    @csrf
+                    <h2 class="text-base font-semibold text-foreground">Registrar devolucion</h2>
+                    <p class="text-xs text-muted-foreground">Usalo cuando mercancia ya recibida vuelve al proveedor. Al guardar se crea una salida real de inventario.</p>
+                    <div>
+                        <x-input-label for="fecha_devolucion" value="Fecha devolucion" />
+                        <x-text-input id="fecha_devolucion" name="fecha_devolucion" type="date" class="mt-1 block h-10 w-full" :value="old('fecha_devolucion', now()->format('Y-m-d'))" required />
+                        <p class="mt-1 text-xs text-muted-foreground">Dia en el que sale la mercancia hacia el proveedor.</p>
+                        <x-input-error :messages="$errors->get('fecha_devolucion')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="devolucion_linea_pedido_compra_id" value="Linea devuelta" />
+                        <select id="devolucion_linea_pedido_compra_id" name="linea_pedido_compra_id" class="admin-input mt-1 block h-10 w-full" required>
+                            <option value="">Selecciona linea</option>
+                            @foreach ($lineasDevolvibles as $linea)
+                                <option value="{{ $linea->id }}" @selected(old('linea_pedido_compra_id') === $linea->id)>{{ $linea->descripcion }} - disponible {{ $linea->producto?->formatearCantidad($linea->cantidadDisponibleDevolucion()) ?? $linea->cantidadDisponibleDevolucion() }} {{ $linea->producto?->codigoUnidad() }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-muted-foreground">Solo aparecen productos recibidos y no devueltos por completo.</p>
+                        <x-input-error :messages="$errors->get('linea_pedido_compra_id')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="devolucion_ubicacion_inventario_id" value="Ubicacion" />
+                        <select id="devolucion_ubicacion_inventario_id" name="ubicacion_inventario_id" class="admin-input mt-1 block h-10 w-full" required>
+                            <option value="">Selecciona ubicacion</option>
+                            @foreach ($ubicaciones as $ubicacion)
+                                <option value="{{ $ubicacion->id }}" @selected(old('ubicacion_inventario_id') === $ubicacion->id)>{{ $ubicacion->nombre }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-muted-foreground">Lugar desde el que sale fisicamente el stock devuelto.</p>
+                        <x-input-error :messages="$errors->get('ubicacion_inventario_id')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="devolucion_cantidad" value="Cantidad" />
+                        <x-text-input id="devolucion_cantidad" name="cantidad" type="number" step="0.001" min="0.001" class="mt-1 block h-10 w-full" :value="old('cantidad')" required />
+                        <p class="mt-1 text-xs text-muted-foreground">Cantidad que se devuelve y que se descontara del inventario.</p>
+                        <x-input-error :messages="$errors->get('cantidad')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="devolucion_motivo" value="Motivo" />
+                        <x-text-input id="devolucion_motivo" name="motivo" class="mt-1 block h-10 w-full" :value="old('motivo')" maxlength="191" required />
+                        <p class="mt-1 text-xs text-muted-foreground">Ejemplo: producto roto, caducidad corta, error del proveedor o mal estado.</p>
+                        <x-input-error :messages="$errors->get('motivo')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="notas_devolucion" value="Notas" />
+                        <textarea id="notas_devolucion" name="notas" rows="3" class="admin-input mt-1 block w-full">{{ old('notas') }}</textarea>
+                        <p class="mt-1 text-xs text-muted-foreground">Notas generales de la devolucion para seguimiento con el proveedor.</p>
+                        <x-input-error :messages="$errors->get('notas')" class="mt-2" />
+                    </div>
+                    <div>
+                        <x-input-label for="notas_linea_devolucion" value="Notas linea" />
+                        <textarea id="notas_linea_devolucion" name="notas_linea" rows="3" class="admin-input mt-1 block w-full">{{ old('notas_linea') }}</textarea>
+                        <p class="mt-1 text-xs text-muted-foreground">Detalle concreto de la linea devuelta, si hace falta.</p>
+                        <x-input-error :messages="$errors->get('notas_linea')" class="mt-2" />
+                    </div>
+                    <x-primary-button class="w-full justify-center">Guardar devolucion</x-primary-button>
+                </form>
+            @endif
 
             <form method="POST" action="{{ route('admin.compras.pedidos.incidencias.store', $pedido) }}" class="admin-card space-y-4 p-4 lg:p-6">
                 @csrf

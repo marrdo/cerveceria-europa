@@ -2,9 +2,9 @@
 
 ## Estado
 
-Fase 2.2 implementada.
+Fase 2.3 implementada.
 
-El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia e incidencias operativas. Las recepciones crean entradas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
+El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, incidencias operativas y devoluciones a proveedor. Las recepciones crean entradas reales y las devoluciones crean salidas reales usando `RegistrarMovimientoInventarioAction`; el modulo no modifica stock directamente.
 
 ## Implementado
 
@@ -33,6 +33,8 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia e inc
 - Estado automatico `recibido_parcial` o `recibido`.
 - Incidencias de recepcion.
 - Cierre de pedidos parcialmente recibidos con motivo.
+- Devoluciones a proveedor.
+- Salidas reales de inventario asociadas a devoluciones.
 
 ## Tablas
 
@@ -42,6 +44,8 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia e inc
 - `recepciones_compra`
 - `lineas_recepcion_compra`
 - `incidencias_recepcion_compra`
+- `devoluciones_proveedor`
+- `lineas_devolucion_proveedor`
 
 ## Reglas de arquitectura
 
@@ -57,6 +61,9 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia e inc
 - Las incidencias documentan diferencias con proveedor, pero no cambian stock por si solas.
 - Un pedido `recibido_parcial` se puede cerrar con mercancia pendiente si se registra motivo.
 - Cerrar con pendiente no modifica inventario; solo cambia el estado del pedido a `cerrado` y registra evento.
+- Las devoluciones a proveedor si cambian inventario: cada devolucion confirmada crea una salida real.
+- No se puede devolver mas cantidad de la recibida pendiente de devolver.
+- La salida de devolucion respeta stock disponible y reglas de lotes/caducidad.
 - Todo cambio importante debe dejar evento en `eventos_pedido_compra`.
 - Los importes se recalculan desde las lineas, no se introducen manualmente.
 - Los nombres de tablas, modelos, controladores y vistas son espanoles.
@@ -74,6 +81,7 @@ Crear pedido en borrador
 -> Entrada real en inventario
 -> Registrar incidencias si hay diferencias
 -> Cerrar con pendiente si se decide no esperar el resto
+-> Registrar devolucion si mercancia recibida vuelve al proveedor
 -> Registrar eventos de cambios
 ```
 
@@ -105,10 +113,34 @@ Una incidencia puede vincularse a una recepcion concreta, a una linea del pedido
 
 El cierre con pendiente esta pensado para pedidos recibidos parcialmente cuando el bar decide no esperar lo que falta. No genera entradas ni salidas de stock; solo deja el pedido cerrado y registra el motivo en eventos.
 
+## Devoluciones a proveedor
+
+Una devolucion representa mercancia ya recibida que sale del bar y vuelve al proveedor. Por eso no es solo una nota administrativa: debe crear una salida real de inventario.
+
+Flujo:
+
+```text
+Pedido con mercancia recibida
+-> Registrar devolucion
+-> Elegir linea, ubicacion y cantidad
+-> RegistrarMovimientoInventarioAction como salida
+-> Stock descontado
+-> Evento en pedido
+```
+
+La devolucion queda trazada contra:
+
+- pedido de compra,
+- proveedor,
+- linea de pedido,
+- producto,
+- ubicacion de inventario,
+- movimiento de inventario.
+
 ## Siguiente fase
 
-Fase 2.3:
+Fase 2.4:
 
-- Devoluciones a proveedor.
-- Salidas reales de inventario asociadas a devoluciones confirmadas.
-- Trazabilidad entre devolucion, proveedor, producto y movimiento de inventario.
+- Propuestas de compra.
+- Agrupar necesidades por proveedor desde alertas de stock.
+- Generar borradores de pedido.

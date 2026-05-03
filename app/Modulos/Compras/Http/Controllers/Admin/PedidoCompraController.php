@@ -10,6 +10,7 @@ use App\Modulos\Compras\Http\Requests\GuardarPedidoCompraRequest;
 use App\Modulos\Compras\Models\PedidoCompra;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
+use App\Modulos\Inventario\Models\UbicacionInventario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -85,9 +86,10 @@ class PedidoCompraController extends Controller
     public function show(PedidoCompra $pedido): View
     {
         return view('modulos.compras.pedidos.show', [
-            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'lineas.recepciones', 'recepciones.lineas.producto.unidad', 'recepciones.lineas.ubicacion', 'recepciones.receptor', 'incidencias.recepcion', 'incidencias.lineaPedido.producto.unidad', 'incidencias.registrador', 'eventos.usuario', 'creador']),
+            'pedido' => $pedido->load(['proveedor', 'lineas.producto.unidad', 'lineas.recepciones', 'lineas.devoluciones', 'recepciones.lineas.producto.unidad', 'recepciones.lineas.ubicacion', 'recepciones.receptor', 'devoluciones.lineas.producto.unidad', 'devoluciones.lineas.ubicacion', 'devoluciones.registrador', 'incidencias.recepcion', 'incidencias.lineaPedido.producto.unidad', 'incidencias.registrador', 'eventos.usuario', 'creador']),
             'estadosCambioManual' => EstadoPedidoCompra::estadosCambioManual(),
             'tiposIncidencia' => TipoIncidenciaRecepcionCompra::cases(),
+            'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
         ]);
     }
 

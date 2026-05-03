@@ -582,6 +582,117 @@ class ComprasModuleTest extends TestCase
         ]);
     }
 
+    public function test_supplier_return_creates_inventory_output(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 5,
+                    ],
+                ],
+            ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.devoluciones.store', $pedido), [
+                'fecha_devolucion' => '2026-05-02',
+                'linea_pedido_compra_id' => $linea->id,
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 2,
+                'motivo' => 'Producto roto',
+                'notas' => 'Se avisa al proveedor.',
+                'notas_linea' => 'Dos botellas rotas.',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido));
+
+        $this->assertDatabaseHas('devoluciones_proveedor', [
+            'pedido_compra_id' => $pedido->id,
+            'proveedor_id' => $proveedor->id,
+            'motivo' => 'Producto roto',
+            'registrada_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseHas('lineas_devolucion_proveedor', [
+            'linea_pedido_compra_id' => $linea->id,
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 2,
+            'notas' => 'Dos botellas rotas.',
+        ]);
+        $this->assertDatabaseHas('stock_inventario', [
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 3,
+        ]);
+        $this->assertDatabaseHas('movimientos_inventario', [
+            'producto_id' => $producto->id,
+            'proveedor_id' => $proveedor->id,
+            'tipo' => 'salida',
+            'cantidad' => 2,
+            'creado_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseHas('eventos_pedido_compra', [
+            'pedido_compra_id' => $pedido->id,
+            'tipo' => 'devolucion_proveedor',
+            'usuario_id' => $usuario->id,
+        ]);
+        $this->assertSame(2.0, $linea->refresh()->cantidadDevuelta());
+        $this->assertSame(3.0, $linea->cantidadDisponibleDevolucion());
+    }
+
+    public function test_supplier_return_cannot_exceed_received_quantity_pending_return(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba();
+        $pedido = $this->crearPedidoBorrador($usuario, $proveedor, $producto, 5);
+        $pedido->update(['estado' => EstadoPedidoCompra::Pedido]);
+        $linea = $pedido->lineas()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.compras.pedidos.recepciones.store', $pedido), [
+                'fecha_recepcion' => '2026-05-01',
+                'lineas' => [
+                    [
+                        'linea_pedido_compra_id' => $linea->id,
+                        'ubicacion_inventario_id' => $ubicacion->id,
+                        'cantidad' => 1,
+                    ],
+                ],
+            ]);
+
+        $this->actingAs($usuario)
+            ->from(route('admin.compras.pedidos.show', $pedido))
+            ->post(route('admin.compras.pedidos.devoluciones.store', $pedido), [
+                'fecha_devolucion' => '2026-05-02',
+                'linea_pedido_compra_id' => $linea->id,
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'cantidad' => 2,
+                'motivo' => 'Producto roto',
+            ])
+            ->assertRedirect(route('admin.compras.pedidos.show', $pedido))
+            ->assertSessionHasErrors([
+                'cantidad' => "La cantidad devuelta de {$linea->descripcion} supera la cantidad recibida pendiente de devolver.",
+            ]);
+
+        $this->assertDatabaseMissing('devoluciones_proveedor', [
+            'pedido_compra_id' => $pedido->id,
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $sobrescribir
      */

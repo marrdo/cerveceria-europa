@@ -57,6 +57,12 @@ class LineaPedidoCompra extends Model
         return $this->hasMany(LineaRecepcionCompra::class, 'linea_pedido_compra_id');
     }
 
+    /** @return HasMany<LineaDevolucionProveedor> */
+    public function devoluciones(): HasMany
+    {
+        return $this->hasMany(LineaDevolucionProveedor::class, 'linea_pedido_compra_id');
+    }
+
     public function cantidadRecibida(): float
     {
         if ($this->relationLoaded('recepciones')) {
@@ -69,5 +75,25 @@ class LineaPedidoCompra extends Model
     public function cantidadPendiente(): float
     {
         return max(0, round((float) $this->cantidad - $this->cantidadRecibida(), 3));
+    }
+
+    /**
+     * Cantidad ya devuelta al proveedor para esta linea de pedido.
+     */
+    public function cantidadDevuelta(): float
+    {
+        if ($this->relationLoaded('devoluciones')) {
+            return round((float) $this->devoluciones->sum('cantidad'), 3);
+        }
+
+        return round((float) $this->devoluciones()->sum('cantidad'), 3);
+    }
+
+    /**
+     * Cantidad recibida que todavia puede devolverse.
+     */
+    public function cantidadDisponibleDevolucion(): float
+    {
+        return max(0, round($this->cantidadRecibida() - $this->cantidadDevuelta(), 3));
     }
 }

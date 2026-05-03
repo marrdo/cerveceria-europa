@@ -327,7 +327,7 @@ Implementado:
 
 ### FASE 2.3 - Devoluciones a proveedor
 
-Estado: pendiente.
+Estado: implementada.
 
 Objetivo:
 Permitir devolver mercancia y reflejarlo en inventario.
@@ -339,6 +339,17 @@ Tablas previstas:
 
 Regla:
 Una devolucion confirmada debe crear una salida real en `movimientos_inventario`.
+
+Implementado:
+
+- Nueva tabla `devoluciones_proveedor`.
+- Nueva tabla `lineas_devolucion_proveedor`.
+- Registro de devoluciones desde el detalle del pedido.
+- Cada devolucion crea una salida real en inventario mediante `RegistrarMovimientoInventarioAction`.
+- La devolucion queda vinculada a pedido, proveedor, linea de pedido, ubicacion y movimiento de inventario.
+- No se puede devolver mas cantidad de la recibida pendiente de devolver.
+- La salida respeta las mismas reglas de stock y lotes que una salida manual.
+- Historico de evento `devolucion_proveedor` en el pedido.
 
 ### FASE 2.4 - Propuestas de compra
 

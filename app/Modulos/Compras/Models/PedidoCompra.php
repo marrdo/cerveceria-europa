@@ -73,6 +73,12 @@ class PedidoCompra extends Model
         return $this->hasMany(IncidenciaRecepcionCompra::class, 'pedido_compra_id')->latest('created_at');
     }
 
+    /** @return HasMany<DevolucionProveedor> */
+    public function devoluciones(): HasMany
+    {
+        return $this->hasMany(DevolucionProveedor::class, 'pedido_compra_id')->latest('created_at');
+    }
+
     /** @return BelongsTo<Usuario, $this> */
     public function creador(): BelongsTo
     {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
 use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\RecepcionCompraController;
@@ -74,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');
         Route::patch('pedidos/{pedido}/cerrar-pendiente', [PedidoCompraController::class, 'cerrarPendiente'])->name('pedidos.cerrar-pendiente');
         Route::post('pedidos/{pedido}/incidencias', [IncidenciaRecepcionCompraController::class, 'store'])->name('pedidos.incidencias.store');
+        Route::post('pedidos/{pedido}/devoluciones', [DevolucionProveedorController::class, 'store'])->name('pedidos.devoluciones.store');
         Route::get('pedidos/{pedido}/recepciones/create', [RecepcionCompraController::class, 'create'])->name('pedidos.recepciones.create');
         Route::post('pedidos/{pedido}/recepciones', [RecepcionCompraController::class, 'store'])->name('pedidos.recepciones.store');
         Route::resource('pedidos', PedidoCompraController::class)
