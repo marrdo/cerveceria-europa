@@ -1,6 +1,18 @@
 # Cerveceria Europa
 
-Panel administrativo Laravel 12 para gestionar inventario y compras a proveedores de un bar en Sevilla.
+Panel administrativo Laravel 12 para Cerveceria Europa, un bar de Sevilla especializado en cervezas de importacion, artesanas y cocina de bar.
+
+El proyecto cubre:
+
+- Inventario.
+- Compras a proveedor.
+- Recepciones conectadas con stock.
+- Documentos de compra con trazabilidad.
+- Web publica gestionable opcional.
+- Carta publica editable por categorias, productos y tarifas.
+- Blog opcional como submodulo vendible.
+
+El panel privado vive en `/admin`. La web publica vive en `/` cuando el modulo `web_publica` esta activo.
 
 ## Stack objetivo
 
@@ -9,6 +21,54 @@ Panel administrativo Laravel 12 para gestionar inventario y compras a proveedore
 - MySQL 8.4
 - WAMP en Windows
 - Blade, Tailwind y Laravel Breeze para autenticacion inicial
+- Vite para assets frontend
+- PHPUnit/Pest runner de Laravel para tests
+
+## Arranque rapido
+
+Desde `C:\Proyectos\cerveceria-europa`:
+
+```powershell
+composer install
+npm.cmd install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm.cmd run build
+php artisan serve
+```
+
+URL local habitual:
+
+```text
+http://127.0.0.1:8000
+http://127.0.0.1:8000/admin
+```
+
+Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema de permisos de `esbuild`/Vite en el entorno. Ejecutarlo desde terminal normal de Windows o con permisos adecuados suele resolverlo.
+
+## Variables importantes
+
+Base recomendada para `.env` local:
+
+```env
+APP_NAME="Cerveceria Europa"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+
+APP_LOCALE=es
+APP_FAKER_LOCALE=es_ES
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=cerveceria_europa
+DB_USERNAME=root
+DB_PASSWORD=
+DB_CHARSET=utf8mb4
+DB_COLLATION=utf8mb4_es_0900_ai_ci
+```
 
 ## Codificacion
 
@@ -59,7 +119,113 @@ Documentacion por modulos:
 docs/modules/inventario.md
 docs/modules/compras.md
 docs/modules/web-publica.md
+docs/modules/modulos.md
 ```
+
+## Comandos utiles
+
+```powershell
+php artisan migrate
+php artisan migrate:fresh --seed
+php artisan db:seed --class=ModuloSeeder
+php artisan db:seed --class=WebPublicaSeeder
+php artisan test
+php artisan test --filter=WebPublicaTest
+php artisan route:list
+php artisan route:list --path=admin/web-publica
+php artisan view:cache
+php artisan view:clear
+npm.cmd run build
+php artisan serve
+```
+
+## Usuarios iniciales
+
+Usuario superadmin:
+
+```text
+admin@cerveceria-europa.local
+password
+```
+
+Usuarios demo por rol:
+
+```text
+camarero@cerveceria-europa.local / password
+encargado@cerveceria-europa.local / password
+propietario@cerveceria-europa.local / password
+```
+
+## Modulos contratables
+
+La activacion comercial de funcionalidades se guarda en la tabla general:
+
+```text
+modulos
+```
+
+Modelo:
+
+```text
+App\Models\Modulo
+```
+
+Campos principales:
+
+```text
+clave
+nombre
+descripcion
+grupo
+activo
+orden
+```
+
+Ejemplos de claves:
+
+```text
+inventario
+compras
+web_publica
+blog
+ventas
+reservas
+lectura_documentos
+```
+
+Reglas actuales:
+
+- `superadmin` ve en el dashboard la seccion `Modulos contratados`.
+- Solo `superadmin` puede activar/desactivar modulos.
+- Si `web_publica` esta inactivo, la web publica responde 404 y el propietario no ve el modulo.
+- Si `blog` esta inactivo, se ocultan rutas, enlaces y administracion del blog.
+- No se anaden columnas nuevas por modulo: cada modulo es una fila en `modulos`.
+
+## Estructura relevante
+
+```text
+app/Models
+app/Modulos/Inventario
+app/Modulos/Compras
+app/Modulos/WebPublica
+database/migrations
+database/seeders
+docs/modules
+resources/views/modulos
+resources/views/web-publica
+routes/web.php
+tests/Feature
+```
+
+## Criterios de trabajo
+
+- Todo en UTF-8.
+- Textos visibles y mensajes de validacion en espanol.
+- Tablas y dominio en espanol.
+- Codigo sin `n` con tilde; si hace falta, usar `ni`.
+- No actualizar inventario directamente desde compras: usar acciones de dominio.
+- No publicar contenido web sin pasar por tablas editables.
+- Las funcionalidades vendibles deben modelarse como modulos activables.
 
 ## Roadmap por fases
 
@@ -477,7 +643,7 @@ Reglas:
 
 ### FASE 5.0 - Web publica gestionable
 
-Estado: pendiente.
+Estado: iniciada.
 
 Objetivo:
 Crear la web publica de Cerveceria Europa dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
@@ -508,27 +674,30 @@ Contenido gestionable desde el panel:
 Regla:
 La web publica debe leer contenido publicado desde tablas propias y no desde textos fijos en Blade, salvo contenido estructural de diseno.
 
-## Arranque local
+Implementado:
 
-```powershell
-composer install
-npm.cmd install
-npm.cmd run build
-php artisan migrate --seed
-php artisan serve
-```
-
-Usuario inicial:
-
-```text
-admin@cerveceria-europa.local
-password
-```
-
-Usuarios demo por rol:
-
-```text
-camarero@cerveceria-europa.local / password
-encargado@cerveceria-europa.local / password
-propietario@cerveceria-europa.local / password
-```
+- Tabla general `modulos`.
+- Tabla `contenidos_web`.
+- Tabla `categorias_carta`.
+- Tabla `tarifas_contenido_web`.
+- Modelo `ContenidoWeb`.
+- Rutas publicas `/`, `/carta`, `/cervezas`, `/recomendaciones`, `/blog`, `/contacto`.
+- CRUD admin `/admin/web-publica/contenidos`.
+- CRUD admin `/admin/web-publica/carta-categorias`.
+- Contenido con tipo, titulo, descripcion, precio, alergenos, imagen, destacado, fuera de carta y publicado.
+- Carta publica organizada por categorias jerarquicas editables:
+  - categoria padre,
+  - secciones hijas,
+  - contenidos/productos publicados.
+- Tarifas multiples por contenido para formatos tipo `Tapa`, `Plato`, `25cl`, `50cl`, `Copa` o `Botella`.
+- Vinculacion opcional con productos de inventario.
+- Ocultacion automatica de contenidos vinculados a productos sin stock.
+- Modulos activables desde `modulos`, incluyendo `web_publica` y `blog`.
+- Modulo principal `web_publica` activable/desactivable por `superadmin`.
+- Si `web_publica` esta desactivado, la web publica responde 404 y el propietario no ve el modulo en el panel.
+- El `superadmin` puede acceder al panel de web publica aunque este desactivado para activar el modulo cuando se contrate.
+- Modulo blog separado con tabla `posts_blog`.
+- Activacion/desactivacion del blog desde administracion.
+- Categorias de blog con tabla `categorias_blog`.
+- Secciones editables con tabla `secciones_web`, empezando por contacto.
+- Seeder inicial con ejemplos de platos, cervezas y recomendaciones.

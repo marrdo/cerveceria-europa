@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RolUsuario;
+use App\Models\Modulo;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -75,12 +76,17 @@ class Usuario extends Authenticatable
      */
     public function puedeAccederModulo(string $modulo): bool
     {
-        if (in_array($this->rol, [RolUsuario::Superadmin, RolUsuario::Propietario], true)) {
+        if ($this->rol === RolUsuario::Superadmin) {
             return true;
+        }
+
+        if ($this->rol === RolUsuario::Propietario) {
+            return $modulo !== 'web_publica' || Modulo::activo('web_publica');
         }
 
         return match ($modulo) {
             'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
+            'web_publica' => false,
             'ventas' => $this->rol === RolUsuario::Camarero,
             default => false,
         };

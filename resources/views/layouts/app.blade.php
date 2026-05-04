@@ -34,7 +34,7 @@
         @php
             $moduloInicial = request()->routeIs('admin.compras.*')
                 ? 'compras'
-                : (request()->routeIs('admin.inventario.*') ? 'inventario' : '');
+                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : ''));
         @endphp
 
         <div x-data="{ sidebarOpen: false, moduloAbierto: '{{ $moduloInicial }}' }" class="flex h-screen overflow-hidden bg-background">
@@ -124,6 +124,32 @@
                                 <a href="{{ route('admin.compras.pedidos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.pedidos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Pedidos</a>
                                 <a href="{{ route('admin.compras.propuestas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.propuestas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Propuestas</a>
                                 <a href="{{ route('admin.compras.documentos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.documentos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Documentos</a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($usuario?->puedeAccederModulo('web_publica'))
+                        <div>
+                            <button type="button" class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'web_publica' ? '' : 'web_publica'" :aria-expanded="moduloAbierto === 'web_publica'">
+                                <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5h16M4 12h16M4 19h16" />
+                                    </svg>
+                                </span>
+                                <span class="flex-1">Web publica</span>
+                                <svg class="h-4 w-4 transition" :class="moduloAbierto === 'web_publica' ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                            <div x-show="moduloAbierto === 'web_publica'" x-transition class="space-y-1 pb-2 ps-14">
+                                <a href="{{ route('admin.web-publica.contenidos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.contenidos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Contenidos</a>
+                                <a href="{{ route('admin.web-publica.carta-categorias.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.carta-categorias.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Categorias carta</a>
+                                <a href="{{ route('admin.web-publica.secciones.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.secciones.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Secciones</a>
+                                @if (\App\Models\Modulo::activo('blog'))
+                                    <a href="{{ route('admin.web-publica.blog.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.blog.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Blog</a>
+                                    <a href="{{ route('admin.web-publica.blog-categorias.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.blog-categorias.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Categorias blog</a>
+                                @endif
+                                <a href="{{ route('web.inicio') }}" target="_blank" class="block rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">Ver web</a>
                             </div>
                         </div>
                     @endif

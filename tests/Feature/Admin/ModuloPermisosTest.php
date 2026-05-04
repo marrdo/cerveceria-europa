@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
+use App\Models\Modulo;
 use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,5 +53,87 @@ class ModuloPermisosTest extends TestCase
             ->assertSee('Compras a proveedor')
             ->assertSee('Productos')
             ->assertSee('Pedidos');
+    }
+
+    public function test_owner_only_sees_public_web_module_when_it_is_active(): void
+    {
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+
+        Modulo::query()->create([
+            'clave' => 'web_publica',
+            'nombre' => 'Modulo Web Publica',
+            'activo' => false,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Web publica');
+
+        Modulo::query()->where('clave', 'web_publica')->update(['activo' => true]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Web publica');
+    }
+
+    public function test_superadmin_sees_contract_module_controls_on_dashboard(): void
+    {
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Superadmin]);
+
+        Modulo::query()->create([
+            'clave' => 'web_publica',
+            'nombre' => 'Modulo Web Publica',
+            'descripcion' => 'Web gestionable.',
+            'activo' => true,
+        ]);
+        Modulo::query()->create([
+            'clave' => 'blog',
+            'nombre' => 'Modulo Blog',
+            'descripcion' => 'Blog opcional.',
+            'activo' => false,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Modulos contratados')
+            ->assertSee('Modulo Web Publica')
+            ->assertSee('Modulo Blog')
+            ->assertSee('Desactivar')
+            ->assertSee('Activar');
+    }
+
+    public function test_owner_does_not_see_contract_module_controls_on_dashboard(): void
+    {
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+
+        Modulo::query()->create([
+            'clave' => 'web_publica',
+            'nombre' => 'Modulo Web Publica',
+            'activo' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Modulos contratados');
+    }
+
+    public function test_superadmin_can_toggle_contract_module_from_dashboard_controls(): void
+    {
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Superadmin]);
+        $modulo = Modulo::query()->create([
+            'clave' => 'web_publica',
+            'nombre' => 'Modulo Web Publica',
+            'activo' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.modulos.toggle', $modulo))
+            ->assertRedirect();
+
+        $this->assertFalse($modulo->fresh()->activo);
     }
 }

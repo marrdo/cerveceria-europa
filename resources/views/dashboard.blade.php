@@ -26,6 +26,12 @@
                     @if (auth()->user()->puedeAccederModulo('compras'))
                         <a href="{{ route('admin.compras.pedidos.index') }}" class="admin-btn-outline">Pedidos de compra</a>
                     @endif
+                    @if (auth()->user()->puedeAccederModulo('web_publica'))
+                        <a href="{{ route('admin.web-publica.contenidos.index') }}" class="admin-btn-outline">Gestionar web</a>
+                        @if (\App\Models\Modulo::activo('web_publica'))
+                            <a href="{{ route('web.inicio') }}" class="admin-btn-outline">Ver web publica</a>
+                        @endif
+                    @endif
                 </div>
             </div>
         </section>
@@ -52,4 +58,46 @@
             </div>
         </section>
     </div>
+
+    @if (auth()->user()->rol === \App\Enums\RolUsuario::Superadmin)
+        <section class="mt-6">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-base font-semibold text-foreground">Modulos contratados</h2>
+            </div>
+            <div class="admin-card overflow-hidden">
+                <div class="border-b border-border p-4">
+                    <p class="text-sm text-muted-foreground">Zona tecnica solo para superadmin. Sirve para activar o desactivar partes vendibles del proyecto segun lo que tenga contratado el cliente.</p>
+                </div>
+
+                <div class="divide-y divide-border">
+                    @forelse (($modulos ?? collect()) as $modulo)
+                        <div class="flex flex-wrap items-center justify-between gap-4 p-4">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm font-semibold text-foreground">{{ $modulo->nombre }}</h3>
+                                    <x-admin.status-badge :variant="$modulo->activo ? 'success' : 'default'">{{ $modulo->activo ? 'Activo' : 'Inactivo' }}</x-admin.status-badge>
+                                </div>
+                                <p class="mt-1 text-sm text-muted-foreground">{{ $modulo->descripcion ?: 'Sin descripcion.' }}</p>
+                                @if ($modulo->clave === 'web_publica')
+                                    <p class="mt-1 text-xs text-muted-foreground">Al desactivarlo, la web publica devuelve 404 y el propietario deja de ver el modulo.</p>
+                                @elseif ($modulo->clave === 'blog')
+                                    <p class="mt-1 text-xs text-muted-foreground">Al desactivarlo, se ocultan enlace, rutas y administracion del blog.</p>
+                                @endif
+                            </div>
+
+                            <form method="POST" action="{{ route('admin.modulos.toggle', $modulo) }}">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="{{ $modulo->activo ? 'admin-btn-outline' : 'admin-btn-primary' }}">
+                                    {{ $modulo->activo ? 'Desactivar' : 'Activar' }}
+                                </button>
+                            </form>
+                        </div>
+                    @empty
+                        <div class="p-4 text-sm text-muted-foreground">No hay modulos configurables. Ejecuta `php artisan db:seed --class=ModuloSeeder`.</div>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+    @endif
 </x-app-layout>

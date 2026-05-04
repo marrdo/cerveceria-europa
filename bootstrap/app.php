@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'modulo' => \App\Http\Middleware\AsegurarAccesoModulo::class,
+            'web_publica.activa' => \App\Http\Middleware\AsegurarWebPublicaActiva::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

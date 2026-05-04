@@ -29,6 +29,12 @@
         --color-sidebar-foreground: 244 235 221;
         --color-sidebar-accent: 73 55 43;
         --color-sidebar-border: 100 75 58;
+        --color-public-background: 241 235 224;
+        --color-public-foreground: 42 33 25;
+        --color-public-surface: 255 249 238;
+        --color-public-muted: 103 88 70;
+        --color-public-primary: 160 93 32;
+        --color-public-border: 212 194 166;
     }
 
     .dark {
@@ -57,6 +63,12 @@
         --color-sidebar-foreground: 240 231 216;
         --color-sidebar-accent: 45 37 31;
         --color-sidebar-border: 58 48 40;
+        --color-public-background: 24 19 15;
+        --color-public-foreground: 248 239 224;
+        --color-public-surface: 36 28 22;
+        --color-public-muted: 216 197 167;
+        --color-public-primary: 227 161 58;
+        --color-public-border: 255 255 255;
     }
 
     html {

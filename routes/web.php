@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\ModuloController;
+use App\Models\Modulo;
 use App\Modulos\Compras\Http\Controllers\Admin\BorradorCompraDocumentoController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
 use App\Modulos\Compras\Http\Controllers\Admin\DocumentoCompraController;
@@ -16,10 +18,29 @@ use App\Modulos\Inventario\Http\Controllers\Admin\UbicacionInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UnidadInventarioController;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
+use App\Modulos\WebPublica\Http\Controllers\Admin\ContenidoWebController;
+use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaBlogController;
+use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaCartaController;
+use App\Modulos\WebPublica\Http\Controllers\Admin\PostBlogController;
+use App\Modulos\WebPublica\Http\Controllers\Admin\SeccionWebController;
+use App\Modulos\WebPublica\Http\Controllers\Publico\BlogPublicoController;
+use App\Modulos\WebPublica\Http\Controllers\Publico\CartaPublicaController;
+use App\Modulos\WebPublica\Http\Controllers\Publico\FueraCartaPublicaController;
+use App\Modulos\WebPublica\Http\Controllers\Publico\WebPublicaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('login');
+Route::middleware('web_publica.activa')->group(function (): void {
+    Route::get('/', function () {
+        return app(WebPublicaController::class)->inicio();
+    })->name('web.inicio');
+    Route::get('/carta', [CartaPublicaController::class, 'index'])->name('web.carta');
+    Route::get('/cervezas', [CartaPublicaController::class, 'cervezas'])->name('web.cervezas');
+    Route::get('/fuera-de-carta', [FueraCartaPublicaController::class, 'index'])->name('web.fuera-carta');
+    Route::get('/recomendaciones', [WebPublicaController::class, 'recomendaciones'])->name('web.recomendaciones');
+    Route::get('/blog', [BlogPublicoController::class, 'index'])->name('web.blog');
+    Route::get('/blog/categoria/{categoria:slug}', [BlogPublicoController::class, 'categoria'])->name('web.blog.categoria');
+    Route::get('/blog/{post:slug}', [BlogPublicoController::class, 'show'])->name('web.blog.show');
+    Route::get('/contacto', [WebPublicaController::class, 'contacto'])->name('web.contacto');
 });
 
 Route::get('/dashboard', function () {
@@ -33,6 +54,7 @@ Route::get('/admin', function () {
         'totalProductos' => $productos->count(),
         'productosBajoStock' => $productos->filter(fn (Producto $producto): bool => $producto->estadoStock()->value === 'bajo')->count(),
         'movimientosRecientes' => MovimientoInventario::query()->where('created_at', '>=', now()->subDays(7))->count(),
+        'modulos' => Modulo::query()->orderBy('grupo')->orderBy('orden')->orderBy('nombre')->get(),
     ]);
 })->middleware(['auth', 'verified'])->name('admin.dashboard');
 
@@ -40,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/admin/modulos/{modulo}/toggle', [ModuloController::class, 'toggle'])->name('admin.modulos.toggle');
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {
         Route::get('/', [ProductoController::class, 'index'])->name('index');
@@ -92,6 +115,26 @@ Route::middleware('auth')->group(function () {
         Route::resource('pedidos', PedidoCompraController::class)
             ->except(['destroy'])
             ->parameters(['pedidos' => 'pedido']);
+    });
+
+    Route::prefix('admin/web-publica')->name('admin.web-publica.')->middleware('modulo:web_publica')->group(function (): void {
+        Route::patch('contenidos/{contenido}/toggle/{campo}', [ContenidoWebController::class, 'toggle'])->name('contenidos.toggle');
+        Route::resource('contenidos', ContenidoWebController::class)
+            ->except(['show'])
+            ->parameters(['contenidos' => 'contenido']);
+        Route::resource('secciones', SeccionWebController::class)
+            ->only(['index', 'edit', 'update'])
+            ->parameters(['secciones' => 'seccion']);
+        Route::resource('carta-categorias', CategoriaCartaController::class)
+            ->except(['show'])
+            ->parameters(['carta-categorias' => 'categoria']);
+        Route::resource('blog-categorias', CategoriaBlogController::class)
+            ->except(['show'])
+            ->parameters(['blog-categorias' => 'categoria']);
+        Route::patch('blog/{post}/toggle/{campo}', [PostBlogController::class, 'toggle'])->name('blog.toggle');
+        Route::resource('blog', PostBlogController::class)
+            ->except(['show'])
+            ->parameters(['blog' => 'post']);
     });
 });
 
