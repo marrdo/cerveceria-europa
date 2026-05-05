@@ -56,7 +56,12 @@
                         <td class="px-4 py-3 text-muted-foreground">{{ $comanda->ubicacionInventario?->nombre ?? '-' }}</td>
                         <td class="px-4 py-3 text-right text-foreground">{{ number_format((float) $comanda->total, 2, ',', '.') }} EUR</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('admin.ventas.comandas.show', $comanda) }}" class="text-primary hover:underline">Ver</a>
+                            <a href="{{ route('admin.ventas.comandas.show', $comanda) }}" class="inline-flex rounded-md p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground" title="Ver comanda" aria-label="Ver comanda">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                </svg>
+                            </a>
                         </td>
                     </tr>
                 @empty

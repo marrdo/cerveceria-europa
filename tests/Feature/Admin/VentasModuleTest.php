@@ -13,8 +13,10 @@ use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Modulos\Ventas\Enums\EstadoComanda;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
+use App\Modulos\Ventas\Enums\MetodoPagoComanda;
 use App\Modulos\Ventas\Models\Comanda;
 use App\Modulos\WebPublica\Enums\TipoContenidoWeb;
+use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\TarifaContenidoWeb;
 use Database\Seeders\InventarioSeeder;
@@ -52,6 +54,37 @@ class VentasModuleTest extends TestCase
         $this->assertSame(1, $comanda->lineas->count());
         $this->assertSame('Cerveza Leffe (Botella)', $comanda->lineas->first()->nombre);
         $this->assertSame('7.00', (string) $comanda->total);
+    }
+
+    public function test_create_order_screen_groups_menu_by_parent_and_child_categories(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido] = $this->crearContenidoVendibleConStock(8);
+
+        $padre = CategoriaCarta::query()->create([
+            'nombre' => 'Cervezas',
+            'slug' => 'cervezas',
+            'activo' => true,
+            'orden' => 1,
+        ]);
+        $hija = CategoriaCarta::query()->create([
+            'categoria_padre_id' => $padre->id,
+            'nombre' => 'Gourmet',
+            'slug' => 'gourmet',
+            'activo' => true,
+            'orden' => 2,
+        ]);
+
+        $contenido->update(['categoria_carta_id' => $hija->id]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.comandas.create'))
+            ->assertOk()
+            ->assertSee('Cervezas')
+            ->assertSee('Gourmet')
+            ->assertSee('Sumar unidad')
+            ->assertSee('Restar unidad');
     }
 
     public function test_serving_order_line_deducts_inventory_stock_once(): void
@@ -106,6 +139,99 @@ class VentasModuleTest extends TestCase
             ->where('producto_id', $producto->id)
             ->where('ubicacion_inventario_id', $ubicacion->id)
             ->value('cantidad'));
+    }
+
+    public function test_open_order_cannot_be_paid_before_being_served(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => '2',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 1,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->from(route('admin.ventas.comandas.show', $comanda))
+            ->post(route('admin.ventas.comandas.pagos.store', $comanda), [
+                'metodo' => MetodoPagoComanda::Tarjeta->value,
+                'importe' => 3.50,
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda))
+            ->assertSessionHasErrors('estado');
+    }
+
+    public function test_partial_payment_keeps_order_served_and_final_cash_payment_marks_it_paid(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => 'Caja',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->with('lineas')->firstOrFail();
+        $linea = $comanda->lineas->first();
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.lineas.servir', [$comanda, $linea]));
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.pagos.store', $comanda), [
+                'metodo' => MetodoPagoComanda::Tarjeta->value,
+                'importe' => 3,
+                'referencia' => 'TPV-123',
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $this->assertDatabaseHas('comandas', [
+            'id' => $comanda->id,
+            'estado' => EstadoComanda::Servida->value,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.pagos.store', $comanda), [
+                'metodo' => MetodoPagoComanda::Efectivo->value,
+                'importe' => 4,
+                'recibido' => 5,
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $this->assertDatabaseHas('comandas', [
+            'id' => $comanda->id,
+            'estado' => EstadoComanda::Pagada->value,
+        ]);
+
+        $this->assertDatabaseHas('pagos_comanda', [
+            'comanda_id' => $comanda->id,
+            'metodo' => MetodoPagoComanda::Efectivo->value,
+            'importe' => 4,
+            'recibido' => 5,
+            'cambio' => 1,
+        ]);
+
+        $this->assertSame(7.0, Comanda::query()->with('pagos')->findOrFail($comanda->id)->totalPagado());
     }
 
     private function prepararModuloVentas(): void

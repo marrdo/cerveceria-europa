@@ -7,6 +7,7 @@ enum EstadoComanda: string
     case Abierta = 'abierta';
     case EnPreparacion = 'en_preparacion';
     case Servida = 'servida';
+    case Pagada = 'pagada';
     case Cancelada = 'cancelada';
 
     public function etiqueta(): string
@@ -15,6 +16,7 @@ enum EstadoComanda: string
             self::Abierta => 'Abierta',
             self::EnPreparacion => 'En preparacion',
             self::Servida => 'Servida',
+            self::Pagada => 'Pagada',
             self::Cancelada => 'Cancelada',
         };
     }
@@ -25,6 +27,7 @@ enum EstadoComanda: string
             self::Abierta => 'info',
             self::EnPreparacion => 'warning',
             self::Servida => 'success',
+            self::Pagada => 'success',
             self::Cancelada => 'danger',
         };
     }

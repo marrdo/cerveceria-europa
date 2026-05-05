@@ -5,10 +5,13 @@ namespace App\Modulos\Ventas\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Ventas\Actions\CrearComandaAction;
+use App\Modulos\Ventas\Actions\RegistrarPagoComandaAction;
 use App\Modulos\Ventas\Actions\ServirLineaComandaAction;
 use App\Modulos\Ventas\Enums\EstadoComanda;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
+use App\Modulos\Ventas\Enums\MetodoPagoComanda;
 use App\Modulos\Ventas\Http\Requests\GuardarComandaRequest;
+use App\Modulos\Ventas\Http\Requests\RegistrarPagoComandaRequest;
 use App\Modulos\Ventas\Models\Comanda;
 use App\Modulos\Ventas\Models\LineaComanda;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
@@ -55,16 +58,89 @@ class ComandaController extends Controller
      */
     public function create(): View
     {
+        $contenidos = ContenidoWeb::query()
+            ->publicado()
+            ->with(['categoriaCarta.padre', 'tarifas', 'producto.stock'])
+            ->orderBy('tipo')
+            ->orderBy('orden')
+            ->orderBy('titulo')
+            ->get();
+
         return view('modulos.ventas.comandas.create', [
             'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
-            'contenidos' => ContenidoWeb::query()
-                ->publicado()
-                ->with(['categoriaCarta.padre', 'tarifas', 'producto.stock'])
-                ->orderBy('tipo')
-                ->orderBy('orden')
-                ->orderBy('titulo')
-                ->get(),
+            'contenidos' => $contenidos,
+            'seccionesCarta' => $this->agruparCartaParaComanda($contenidos),
         ]);
+    }
+
+    /**
+     * Agrupa la carta en seccion padre y categoria hija para toma rapida en sala.
+     *
+     * @param \Illuminate\Support\Collection<int, ContenidoWeb> $contenidos
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function agruparCartaParaComanda($contenidos)
+    {
+        return $contenidos
+            ->groupBy(function (ContenidoWeb $contenido): string {
+                $categoria = $contenido->categoriaCarta;
+                $padre = $categoria?->padre;
+
+                return $padre?->id ?? $categoria?->id ?? 'sin-categoria';
+            })
+            ->map(function ($contenidosSeccion): array {
+                /** @var ContenidoWeb $primero */
+                $primero = $contenidosSeccion->first();
+                $categoria = $primero->categoriaCarta;
+                $padre = $categoria?->padre;
+                $seccion = $padre ?? $categoria;
+
+                $categorias = $contenidosSeccion
+                    ->groupBy(function (ContenidoWeb $contenido) use ($seccion): string {
+                        $categoria = $contenido->categoriaCarta;
+
+                        if (! $categoria) {
+                            return 'sin-categoria';
+                        }
+
+                        return $categoria->id === $seccion?->id ? 'general' : $categoria->id;
+                    })
+                    ->map(function ($contenidosCategoria): array {
+                        /** @var ContenidoWeb $primeroCategoria */
+                        $primeroCategoria = $contenidosCategoria->first();
+                        $categoria = $primeroCategoria->categoriaCarta;
+                        $nombre = $categoria && $categoria->padre
+                            ? $categoria->nombre
+                            : ($categoria ? 'General' : 'Sin categoria');
+
+                        return [
+                            'nombre' => $nombre,
+                            'orden' => $categoria?->orden ?? 9999,
+                            'contenidos' => $contenidosCategoria->sortBy([
+                                ['orden', 'asc'],
+                                ['titulo', 'asc'],
+                            ])->values(),
+                        ];
+                    })
+                    ->sortBy([
+                        ['orden', 'asc'],
+                        ['nombre', 'asc'],
+                    ])
+                    ->values();
+
+                return [
+                    'nombre' => $seccion?->nombre ?? 'Sin categoria',
+                    'descripcion' => $seccion?->descripcion,
+                    'orden' => $seccion?->orden ?? 9999,
+                    'categorias' => $categorias,
+                    'total' => $contenidosSeccion->count(),
+                ];
+            })
+            ->sortBy([
+                ['orden', 'asc'],
+                ['nombre', 'asc'],
+            ])
+            ->values();
     }
 
     /**
@@ -84,7 +160,8 @@ class ComandaController extends Controller
     public function show(Comanda $comanda): View
     {
         return view('modulos.ventas.comandas.show', [
-            'comanda' => $comanda->load(['lineas.producto.unidad', 'lineas.movimientoInventario', 'ubicacionInventario', 'creador']),
+            'comanda' => $comanda->load(['lineas.producto.unidad', 'lineas.movimientoInventario', 'pagos.cobrador', 'ubicacionInventario', 'creador']),
+            'metodosPago' => MetodoPagoComanda::cases(),
         ]);
     }
 
@@ -137,5 +214,16 @@ class ComandaController extends Controller
 
         return redirect()->route('admin.ventas.comandas.show', $comanda)
             ->with('status', 'Comanda cancelada correctamente.');
+    }
+
+    /**
+     * Registra un pago de la comanda.
+     */
+    public function cobrar(RegistrarPagoComandaRequest $request, Comanda $comanda, RegistrarPagoComandaAction $registrarPago): RedirectResponse
+    {
+        $registrarPago->execute($comanda, $request->datosPago(), (string) $request->user()?->id);
+
+        return redirect()->route('admin.ventas.comandas.show', $comanda)
+            ->with('status', 'Pago registrado correctamente.');
     }
 }

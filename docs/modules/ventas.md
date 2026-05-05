@@ -22,11 +22,37 @@ El stock no se descuenta al crear la comanda.
 
 Se descuenta al servir la linea porque una comanda puede corregirse, cancelarse o duplicarse antes de llegar al cliente. Esta es la forma mas segura para mantener inventario coherente.
 
+## Decision importante de ubicaciones
+
+La `ubicacion_inventario_id` de una comanda no representa donde esta sentado el cliente.
+
+Su unica responsabilidad es indicar de que ubicacion de stock se descuenta el producto cuando se sirve una linea. Ejemplos validos:
+
+```text
+Barra
+Almacen principal
+Camara fria
+```
+
+La zona o mesa del cliente debe modelarse aparte para no mezclar inventario con sala. Ejemplos de zonas reales:
+
+```text
+Terraza 1
+Terraza 2
+Salon alto
+Salon bajo
+Barra
+Salon de celebraciones
+```
+
+Esto se desarrollara como gestion de espacios/mesas en una fase posterior.
+
 ## Tablas
 
 ```text
 comandas
 lineas_comanda
+pagos_comanda
 ```
 
 ## Modelos
@@ -34,6 +60,7 @@ lineas_comanda
 ```text
 App\Modulos\Ventas\Models\Comanda
 App\Modulos\Ventas\Models\LineaComanda
+App\Modulos\Ventas\Models\PagoComanda
 ```
 
 ## Acciones
@@ -41,6 +68,7 @@ App\Modulos\Ventas\Models\LineaComanda
 ```text
 App\Modulos\Ventas\Actions\CrearComandaAction
 App\Modulos\Ventas\Actions\ServirLineaComandaAction
+App\Modulos\Ventas\Actions\RegistrarPagoComandaAction
 ```
 
 `ServirLineaComandaAction` reutiliza:
@@ -73,6 +101,7 @@ Comanda:
 abierta
 en_preparacion
 servida
+pagada
 cancelada
 ```
 
@@ -124,16 +153,28 @@ Estado: implementada.
 
 ### Fase 2 - Cobros
 
+Estado: implementada.
+
 Objetivo: diferenciar `servido` de `pagado`.
 
-- Estado `pagada` o `cerrada`.
+- Estado `pagada`.
 - Tabla `pagos_comanda`.
 - Metodo de pago: efectivo, tarjeta, bizum, invitacion u otro.
-- Importe recibido.
+- Importe cobrado.
+- Importe recibido en efectivo.
 - Cambio calculado.
+- Referencia opcional para tarjeta, bizum u otro metodo.
 - Usuario que cobra.
 - Fecha de cobro.
-- Pantalla de cobrar comanda.
+- Pantalla de cobrar comanda desde la ficha.
+
+Reglas:
+
+- Solo se cobra una comanda `servida`.
+- Una comanda puede tener varios pagos parciales.
+- El importe cobrado no puede superar el pendiente.
+- En efectivo, el recibido no puede ser menor que el importe.
+- Cuando el total pagado cubre el total de la comanda, pasa a `pagada`.
 
 ### Fase 3 - Edicion operativa
 
@@ -145,10 +186,26 @@ Objetivo: hacer la toma de comandas comoda para uso real.
 - Mover mesa.
 - Notas por linea.
 - Preparar estado `en_preparacion` para cocina/barra.
+- Preparar el cobro final por mesa o cuenta completa, no obligar a cobrar cada comanda aislada.
 
 Regla: una linea servida no se edita directamente; se corrige con anulacion o ajuste trazable.
 
-### Fase 4 - Caja y turnos
+### Fase 4 - Espacios y mesas
+
+Objetivo: separar sala de inventario y permitir una operativa real de bar/restaurante.
+
+- Zonas configurables.
+- Mesas configurables por zona.
+- Activar o desactivar zonas segun operativa diaria.
+- Activar o desactivar mesas.
+- Asignar comanda a zona y mesa.
+- Mover comanda entre mesas.
+- Consultar mesas abiertas, servidas y pendientes de cobro.
+- Agrupar comandas de una misma mesa en una cuenta final.
+
+Regla: una zona inactiva no debe aparecer para nuevas comandas, pero debe conservar historial.
+
+### Fase 5 - Caja y turnos
 
 Objetivo: control diario para encargados y propietario.
 
@@ -161,7 +218,7 @@ Objetivo: control diario para encargados y propietario.
 - Ventas por metodo de pago.
 - Ventas por camarero.
 
-### Fase 5 - Informes de ventas
+### Fase 6 - Informes de ventas
 
 Objetivo: explotar informacion de negocio.
 
@@ -173,7 +230,7 @@ Objetivo: explotar informacion de negocio.
 - Ventas por camarero.
 - Margen estimado si hay coste fiable.
 
-### Fase 6 - Escandallos / recetas
+### Fase 7 - Escandallos / recetas
 
 Objetivo: descontar ingredientes reales en platos de cocina.
 
@@ -182,7 +239,7 @@ Objetivo: descontar ingredientes reales en platos de cocina.
 - Cantidad por racion.
 - Descuento automatico al servir.
 
-### Fase 7 - Tickets e integraciones
+### Fase 8 - Tickets e integraciones
 
 Objetivo: acercarse a TPV formal si el negocio lo necesita.
 

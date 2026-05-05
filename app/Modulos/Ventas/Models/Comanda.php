@@ -17,6 +17,14 @@ class Comanda extends Model
 
     protected $table = 'comandas';
 
+    /**
+     * Usa el numero publico de comanda en URLs del panel en lugar del UUID interno.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'numero';
+    }
+
     protected $fillable = [
         'numero',
         'mesa',
@@ -51,6 +59,12 @@ class Comanda extends Model
         return $this->hasMany(LineaComanda::class, 'comanda_id')->orderBy('orden')->orderBy('created_at');
     }
 
+    /** @return HasMany<PagoComanda> */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(PagoComanda::class, 'comanda_id')->latest('cobrado_at')->latest('created_at');
+    }
+
     /** @return BelongsTo<UbicacionInventario, $this> */
     public function ubicacionInventario(): BelongsTo
     {
@@ -66,6 +80,34 @@ class Comanda extends Model
     public function puedeEditar(): bool
     {
         return in_array($this->estado, [EstadoComanda::Abierta, EstadoComanda::EnPreparacion], true);
+    }
+
+    /**
+     * Indica si la comanda puede recibir pagos.
+     */
+    public function puedeCobrar(): bool
+    {
+        return $this->estado === EstadoComanda::Servida && $this->pendientePago() > 0.005;
+    }
+
+    /**
+     * Total cobrado hasta ahora.
+     */
+    public function totalPagado(): float
+    {
+        if ($this->relationLoaded('pagos')) {
+            return round((float) $this->pagos->sum('importe'), 2);
+        }
+
+        return round((float) $this->pagos()->sum('importe'), 2);
+    }
+
+    /**
+     * Importe pendiente de cobro.
+     */
+    public function pendientePago(): float
+    {
+        return max(0, round((float) $this->total - $this->totalPagado(), 2));
     }
 
     public function recalcularTotales(): void
