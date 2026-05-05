@@ -3,6 +3,9 @@
 namespace App\Modulos\Ventas\Models;
 
 use App\Models\Usuario;
+use App\Modulos\Espacios\Models\Mesa;
+use App\Modulos\Espacios\Models\Recinto;
+use App\Modulos\Espacios\Models\Zona;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Ventas\Enums\EstadoComanda;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
@@ -30,6 +33,9 @@ class Comanda extends Model
         'numero',
         'mesa',
         'cliente_nombre',
+        'recinto_id',
+        'zona_id',
+        'mesa_id',
         'estado',
         'ubicacion_inventario_id',
         'subtotal',
@@ -70,6 +76,24 @@ class Comanda extends Model
     public function ubicacionInventario(): BelongsTo
     {
         return $this->belongsTo(UbicacionInventario::class, 'ubicacion_inventario_id')->withTrashed();
+    }
+
+    /** @return BelongsTo<Recinto, $this> */
+    public function recinto(): BelongsTo
+    {
+        return $this->belongsTo(Recinto::class, 'recinto_id')->withTrashed();
+    }
+
+    /** @return BelongsTo<Zona, $this> */
+    public function zona(): BelongsTo
+    {
+        return $this->belongsTo(Zona::class, 'zona_id')->withTrashed();
+    }
+
+    /** @return BelongsTo<Mesa, $this> */
+    public function mesaEspacio(): BelongsTo
+    {
+        return $this->belongsTo(Mesa::class, 'mesa_id')->withTrashed();
     }
 
     /** @return BelongsTo<Usuario, $this> */

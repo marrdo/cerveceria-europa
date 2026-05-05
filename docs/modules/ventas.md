@@ -208,6 +208,8 @@ Pendiente relacionado: el cobro final por mesa o cuenta completa se cerrara con 
 
 ### Fase 4 - Espacios y mesas
 
+Estado: primera version implementada.
+
 Objetivo: separar sala de inventario y permitir una operativa real de bar/restaurante.
 
 - Zonas configurables.
@@ -220,6 +222,19 @@ Objetivo: separar sala de inventario y permitir una operativa real de bar/restau
 - Agrupar comandas de una misma mesa en una cuenta final.
 
 Regla: una zona inactiva no debe aparecer para nuevas comandas, pero debe conservar historial.
+
+Implementado en esta fase:
+
+- Modulo `espacios` con recintos, zonas y mesas.
+- Administracion de espacios para propietario, encargado y superadmin.
+- Seleccion de recinto, zona y mesa en comandas.
+- Campo manual de mesa conservado como fallback.
+
+Pendiente de esta fase:
+
+- Vista operativa de sala con estado de mesas.
+- Modelo de cuenta para agrupar varias comandas de una misma mesa.
+- Cobro por cuenta completa.
 
 ### Fase 5 - Caja y turnos
 

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-admin.page-header :title="'Comanda '.$comanda->numero" :description="$comanda->mesa ? 'Mesa '.$comanda->mesa : 'Sin mesa asignada'">
+        <x-admin.page-header :title="'Comanda '.$comanda->numero" :description="$comanda->mesaEspacio ? 'Mesa '.$comanda->mesaEspacio->nombre : ($comanda->mesa ? 'Mesa '.$comanda->mesa : 'Sin mesa asignada')">
             <x-slot name="actions">
                 @if ($comanda->puedeEditar())
                     <form method="POST" action="{{ route('admin.ventas.comandas.servir', $comanda) }}">
@@ -192,6 +192,14 @@
                 <h2 class="text-base font-semibold text-foreground">Resumen</h2>
                 <dl class="mt-4 space-y-3 text-sm">
                     <div class="flex justify-between gap-4">
+                        <dt class="text-muted-foreground">Zona</dt>
+                        <dd class="text-right text-foreground">{{ $comanda->zona?->nombre ?? '-' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-muted-foreground">Mesa</dt>
+                        <dd class="text-right text-foreground">{{ $comanda->mesaEspacio?->nombre ?? $comanda->mesa ?? '-' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4">
                         <dt class="text-muted-foreground">Stock descontado de</dt>
                         <dd class="text-right text-foreground">{{ $comanda->ubicacionInventario?->nombre ?? '-' }}</dd>
                     </div>
@@ -227,7 +235,34 @@
 
                         <div class="grid gap-3">
                             <div>
-                                <x-input-label for="mesa" value="Mesa" />
+                                <x-input-label for="recinto_id" value="Recinto" />
+                                <select id="recinto_id" name="recinto_id" class="admin-input mt-1 block h-10 w-full">
+                                    <option value="">Sin recinto</option>
+                                    @foreach ($recintos as $recinto)
+                                        <option value="{{ $recinto->id }}" @selected(old('recinto_id', $comanda->recinto_id) === $recinto->id)>{{ $recinto->nombre_comercial }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="zona_id" value="Zona" />
+                                <select id="zona_id" name="zona_id" class="admin-input mt-1 block h-10 w-full">
+                                    <option value="">Sin zona</option>
+                                    @foreach ($zonas as $zona)
+                                        <option value="{{ $zona->id }}" @selected(old('zona_id', $comanda->zona_id) === $zona->id)>{{ $zona->recinto?->nombre_comercial }} - {{ $zona->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="mesa_id" value="Mesa configurada" />
+                                <select id="mesa_id" name="mesa_id" class="admin-input mt-1 block h-10 w-full">
+                                    <option value="">Sin mesa configurada</option>
+                                    @foreach ($mesas as $mesa)
+                                        <option value="{{ $mesa->id }}" @selected(old('mesa_id', $comanda->mesa_id) === $mesa->id)>{{ $mesa->zona?->nombre }} - {{ $mesa->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="mesa" value="Mesa manual" />
                                 <x-text-input id="mesa" name="mesa" class="mt-1 block h-10 w-full" :value="old('mesa', $comanda->mesa)" maxlength="50" />
                             </div>
                             <div>

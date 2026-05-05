@@ -11,6 +11,9 @@ use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraControll
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PropuestaCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\RecepcionCompraController;
+use App\Modulos\Espacios\Http\Controllers\Admin\MesaController;
+use App\Modulos\Espacios\Http\Controllers\Admin\RecintoController;
+use App\Modulos\Espacios\Http\Controllers\Admin\ZonaController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
@@ -139,6 +142,13 @@ Route::middleware('auth')->group(function () {
         Route::patch('comandas/{comanda}/lineas/{linea}/servir', [ComandaController::class, 'servirLinea'])->name('comandas.lineas.servir');
         Route::resource('comandas', ComandaController::class)
             ->only(['index', 'create', 'store', 'show']);
+    });
+
+    Route::prefix('admin/espacios')->name('admin.espacios.')->middleware('modulo:espacios')->group(function (): void {
+        Route::get('/', fn () => redirect()->route('admin.espacios.recintos.index'))->name('index');
+        Route::resource('recintos', RecintoController::class)->except(['show']);
+        Route::resource('zonas', ZonaController::class)->except(['show']);
+        Route::resource('mesas', MesaController::class)->except(['show']);
     });
 
     Route::prefix('admin/web-publica')->name('admin.web-publica.')->middleware('modulo:web_publica')->group(function (): void {

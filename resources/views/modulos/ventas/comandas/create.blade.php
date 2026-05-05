@@ -19,10 +19,38 @@
     <form method="POST" action="{{ route('admin.ventas.comandas.store') }}" class="space-y-4" x-data="{ busquedaCarta: '' }">
         @csrf
 
-        <section class="admin-card grid gap-4 p-4 md:grid-cols-4">
+        <section class="admin-card grid gap-4 p-4 md:grid-cols-3">
             <div>
-                <x-input-label for="mesa" value="Mesa" />
+                <x-input-label for="recinto_id" value="Recinto" />
+                <select id="recinto_id" name="recinto_id" class="admin-input mt-1 block h-10 w-full">
+                    <option value="">Sin recinto</option>
+                    @foreach ($recintos as $recinto)
+                        <option value="{{ $recinto->id }}" @selected(old('recinto_id') === $recinto->id)>{{ $recinto->nombre_comercial }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <x-input-label for="zona_id" value="Zona" />
+                <select id="zona_id" name="zona_id" class="admin-input mt-1 block h-10 w-full">
+                    <option value="">Sin zona</option>
+                    @foreach ($zonas as $zona)
+                        <option value="{{ $zona->id }}" @selected(old('zona_id') === $zona->id)>{{ $zona->recinto?->nombre_comercial }} - {{ $zona->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <x-input-label for="mesa_id" value="Mesa" />
+                <select id="mesa_id" name="mesa_id" class="admin-input mt-1 block h-10 w-full">
+                    <option value="">Sin mesa configurada</option>
+                    @foreach ($mesas as $mesa)
+                        <option value="{{ $mesa->id }}" @selected(old('mesa_id') === $mesa->id)>{{ $mesa->zona?->nombre }} - {{ $mesa->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <x-input-label for="mesa" value="Mesa manual" />
                 <x-text-input id="mesa" name="mesa" class="mt-1 block h-10 w-full" :value="old('mesa')" maxlength="50" placeholder="Barra, 4, terraza..." />
+                <p class="mt-1 text-xs text-muted-foreground">Usalo solo si aun no esta creada la mesa en Espacios.</p>
             </div>
             <div>
                 <x-input-label for="cliente_nombre" value="Cliente" />
@@ -38,7 +66,7 @@
                 </select>
                 <p class="mt-1 text-xs text-muted-foreground">Opcional. Indica de que ubicacion se descuenta stock al servir. Si no hay inventario cargado, deja esta opcion vacia.</p>
             </div>
-            <div>
+            <div class="md:col-span-3">
                 <x-input-label for="notas" value="Notas" />
                 <x-text-input id="notas" name="notas" class="mt-1 block h-10 w-full" :value="old('notas')" maxlength="1000" />
             </div>

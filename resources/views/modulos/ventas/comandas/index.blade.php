@@ -52,7 +52,15 @@
                 @forelse ($comandas as $comanda)
                     <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
                         <td class="px-4 py-3 font-medium text-foreground">{{ $comanda->numero }}</td>
-                        <td class="px-4 py-3 text-muted-foreground">{{ $comanda->mesa ?: '-' }}</td>
+                        <td class="px-4 py-3 text-muted-foreground">
+                            @if ($comanda->mesaEspacio)
+                                {{ $comanda->zona?->nombre }} - {{ $comanda->mesaEspacio->nombre }}
+                            @elseif ($comanda->zona)
+                                {{ $comanda->zona->nombre }}
+                            @else
+                                {{ $comanda->mesa ?: '-' }}
+                            @endif
+                        </td>
                         <td class="px-4 py-3"><x-admin.status-badge :variant="$comanda->estado->variante()">{{ $comanda->estado->etiqueta() }}</x-admin.status-badge></td>
                         <td class="px-4 py-3 text-muted-foreground">{{ $comanda->lineas_count }}</td>
                         <td class="px-4 py-3 text-muted-foreground">{{ $comanda->ubicacionInventario?->nombre ?? '-' }}</td>

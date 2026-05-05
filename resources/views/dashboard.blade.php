@@ -30,6 +30,10 @@
                         <a href="{{ route('admin.ventas.comandas.create') }}" class="admin-btn-outline">Nueva comanda</a>
                         <a href="{{ route('admin.ventas.comandas.index') }}" class="admin-btn-outline">Comandas abiertas</a>
                     @endif
+                    @if (auth()->user()->puedeAccederModulo('espacios'))
+                        <a href="{{ route('admin.espacios.recintos.index') }}" class="admin-btn-outline">Espacios</a>
+                        <a href="{{ route('admin.espacios.mesas.index') }}" class="admin-btn-outline">Mesas</a>
+                    @endif
                     @if (auth()->user()->puedeAccederModulo('personal'))
                         <a href="{{ route('admin.personal.usuarios.create') }}" class="admin-btn-outline">Anadir usuario</a>
                         <a href="{{ route('admin.personal.index') }}" class="admin-btn-outline">Personal</a>

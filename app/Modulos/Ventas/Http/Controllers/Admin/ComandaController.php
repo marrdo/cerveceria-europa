@@ -3,6 +3,9 @@
 namespace App\Modulos\Ventas\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modulos\Espacios\Models\Mesa;
+use App\Modulos\Espacios\Models\Recinto;
+use App\Modulos\Espacios\Models\Zona;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Ventas\Actions\ActualizarComandaOperativaAction;
 use App\Modulos\Ventas\Actions\AgregarLineasComandaAction;
@@ -39,7 +42,7 @@ class ComandaController extends Controller
         ];
 
         $comandas = Comanda::query()
-            ->with(['creador', 'ubicacionInventario'])
+            ->with(['creador', 'ubicacionInventario', 'zona', 'mesaEspacio'])
             ->withCount('lineas')
             ->when($filtros['busqueda'] !== '', function ($query) use ($filtros): void {
                 $query->where(function ($consulta) use ($filtros): void {
@@ -75,6 +78,9 @@ class ComandaController extends Controller
 
         return view('modulos.ventas.comandas.create', [
             'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
+            'recintos' => Recinto::query()->where('activo', true)->orderBy('nombre_comercial')->get(),
+            'zonas' => Zona::query()->with('recinto')->where('activa', true)->orderBy('orden')->orderBy('nombre')->get(),
+            'mesas' => Mesa::query()->with('zona.recinto')->where('activa', true)->orderBy('orden')->orderBy('nombre')->get(),
             'contenidos' => $contenidos,
             'seccionesCarta' => $this->agruparCartaParaComanda($contenidos),
         ]);
@@ -175,9 +181,12 @@ class ComandaController extends Controller
             ->get();
 
         return view('modulos.ventas.comandas.show', [
-            'comanda' => $comanda->load(['lineas.producto.unidad', 'lineas.movimientoInventario', 'pagos.cobrador', 'ubicacionInventario', 'creador']),
+            'comanda' => $comanda->load(['lineas.producto.unidad', 'lineas.movimientoInventario', 'pagos.cobrador', 'ubicacionInventario', 'recinto', 'zona', 'mesaEspacio', 'creador']),
             'metodosPago' => MetodoPagoComanda::cases(),
             'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
+            'recintos' => Recinto::query()->where('activo', true)->orWhere('id', $comanda->recinto_id)->orderBy('nombre_comercial')->get(),
+            'zonas' => Zona::query()->with('recinto')->where('activa', true)->orWhere('id', $comanda->zona_id)->orderBy('orden')->orderBy('nombre')->get(),
+            'mesas' => Mesa::query()->with('zona.recinto')->where('activa', true)->orWhere('id', $comanda->mesa_id)->orderBy('orden')->orderBy('nombre')->get(),
             'seccionesCarta' => $this->agruparCartaParaComanda($contenidos),
         ]);
     }

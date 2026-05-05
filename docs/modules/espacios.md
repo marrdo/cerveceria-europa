@@ -110,7 +110,29 @@ Responsabilidades:
 - `cuenta_id`: agrupacion de consumos que se cobraran juntos.
 - `ubicacion_inventario_id`: de donde se descuenta stock al servir.
 
-## Fase propuesta
+## Estado actual
+
+Primera version implementada.
+
+Incluye:
+
+- CRUD de recintos.
+- CRUD de zonas.
+- CRUD de mesas.
+- Activar/desactivar recintos, zonas y mesas.
+- Acceso de propietario, encargado y superadmin.
+- Bloqueo de camareros en administracion de espacios.
+- Vinculacion de comandas con `recinto_id`, `zona_id` y `mesa_id`.
+- Selector de recinto, zona y mesa al crear o editar una comanda.
+- Conservacion del campo manual `mesa` como fallback mientras se cargan todas las mesas.
+
+No incluye todavia:
+
+- Cuenta agrupadora.
+- Cobro final por mesa con varias comandas.
+- Vista tipo mapa/estado de sala.
+
+## Fase propuesta siguiente
 
 Este modulo debe implementarse despues de cerrar la toma de comandas basica y antes de cerrar definitivamente el cobro.
 

@@ -34,7 +34,7 @@
         @php
             $moduloInicial = request()->routeIs('admin.compras.*')
                 ? 'compras'
-                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : ''))));
+                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.espacios.*') ? 'espacios' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : '')))));
         @endphp
 
         <div x-data="{ sidebarOpen: false, moduloAbierto: '{{ $moduloInicial }}' }" class="flex h-screen overflow-hidden bg-background">
@@ -144,6 +144,27 @@
                             <div x-show="moduloAbierto === 'ventas'" x-transition class="space-y-1 pb-2 ps-14">
                                 <a href="{{ route('admin.ventas.comandas.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Nueva comanda</a>
                                 <a href="{{ route('admin.ventas.comandas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.index') || request()->routeIs('admin.ventas.comandas.show') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Comandas</a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($usuario?->puedeAccederModulo('espacios'))
+                        <div>
+                            <button type="button" class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'espacios' ? '' : 'espacios'" :aria-expanded="moduloAbierto === 'espacios'">
+                                <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01" />
+                                    </svg>
+                                </span>
+                                <span class="flex-1">Espacios</span>
+                                <svg class="h-4 w-4 transition" :class="moduloAbierto === 'espacios' ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                            <div x-show="moduloAbierto === 'espacios'" x-transition class="space-y-1 pb-2 ps-14">
+                                <a href="{{ route('admin.espacios.recintos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.recintos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Recintos</a>
+                                <a href="{{ route('admin.espacios.zonas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.zonas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Zonas</a>
+                                <a href="{{ route('admin.espacios.mesas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.mesas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Mesas</a>
                             </div>
                         </div>
                     @endif

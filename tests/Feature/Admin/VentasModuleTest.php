@@ -5,6 +5,9 @@ namespace Tests\Feature\Admin;
 use App\Enums\RolUsuario;
 use App\Models\Modulo;
 use App\Models\Usuario;
+use App\Modulos\Espacios\Models\Mesa;
+use App\Modulos\Espacios\Models\Recinto;
+use App\Modulos\Espacios\Models\Zona;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
@@ -120,6 +123,50 @@ class VentasModuleTest extends TestCase
             ->assertSee('COM-TEST-ABIERTA')
             ->assertSee('COM-TEST-PREPARACION')
             ->assertDontSee('COM-TEST-PAGADA');
+    }
+
+    public function test_waiter_can_assign_configured_table_to_order(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $recinto = Recinto::query()->create([
+            'nombre_comercial' => 'Cerveceria Europa',
+            'activo' => true,
+        ]);
+        $zona = Zona::query()->create([
+            'recinto_id' => $recinto->id,
+            'nombre' => 'Terraza 1',
+            'activa' => true,
+        ]);
+        $mesa = Mesa::query()->create([
+            'zona_id' => $zona->id,
+            'nombre' => 'Mesa 4',
+            'activa' => true,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'recinto_id' => $recinto->id,
+                'zona_id' => $zona->id,
+                'mesa_id' => $mesa->id,
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 1,
+                    ],
+                ],
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('comandas', [
+            'recinto_id' => $recinto->id,
+            'zona_id' => $zona->id,
+            'mesa_id' => $mesa->id,
+        ]);
     }
 
     public function test_serving_order_line_deducts_inventory_stock_once(): void

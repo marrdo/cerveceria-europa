@@ -30,6 +30,9 @@ class ActualizarComandaOperativaAction
             $comanda->fill([
                 'mesa' => $datos['mesa'] ?? null,
                 'cliente_nombre' => $datos['cliente_nombre'] ?? null,
+                'recinto_id' => $datos['recinto_id'] ?? null,
+                'zona_id' => $datos['zona_id'] ?? null,
+                'mesa_id' => $datos['mesa_id'] ?? null,
                 'ubicacion_inventario_id' => $datos['ubicacion_inventario_id'] ?? null,
                 'notas' => $datos['notas'] ?? null,
                 'actualizado_por' => $usuarioId,

@@ -67,6 +67,14 @@ class ModuloSeeder extends Seeder
                 'orden' => 50,
             ],
             [
+                'clave' => 'espacios',
+                'nombre' => 'Espacios y mesas',
+                'descripcion' => 'Gestion de recintos, zonas y mesas para separar sala de inventario.',
+                'grupo' => 'panel',
+                'activo' => true,
+                'orden' => 52,
+            ],
+            [
                 'clave' => 'personal',
                 'nombre' => 'Gestion de personal',
                 'descripcion' => 'Alta de usuarios operativos y permisos por rol.',

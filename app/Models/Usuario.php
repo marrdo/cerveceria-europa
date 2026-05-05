@@ -95,6 +95,7 @@ class Usuario extends Authenticatable
             'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
             'web_publica' => false,
             'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
+            'espacios' => $this->rol === RolUsuario::Encargado,
             'personal' => in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario], true),
             default => false,
         };
