@@ -18,6 +18,7 @@ use App\Modulos\Inventario\Http\Controllers\Admin\UbicacionInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UnidadInventarioController;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
+use App\Modulos\Ventas\Http\Controllers\Admin\ComandaController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\ContenidoWebController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaBlogController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaCartaController;
@@ -115,6 +116,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('pedidos', PedidoCompraController::class)
             ->except(['destroy'])
             ->parameters(['pedidos' => 'pedido']);
+    });
+
+    Route::prefix('admin/ventas')->name('admin.ventas.')->middleware('modulo:ventas')->group(function (): void {
+        Route::get('/', [ComandaController::class, 'index'])->name('index');
+        Route::patch('comandas/{comanda}/servir', [ComandaController::class, 'servir'])->name('comandas.servir');
+        Route::patch('comandas/{comanda}/cancelar', [ComandaController::class, 'cancelar'])->name('comandas.cancelar');
+        Route::patch('comandas/{comanda}/lineas/{linea}/servir', [ComandaController::class, 'servirLinea'])->name('comandas.lineas.servir');
+        Route::resource('comandas', ComandaController::class)
+            ->only(['index', 'create', 'store', 'show']);
     });
 
     Route::prefix('admin/web-publica')->name('admin.web-publica.')->middleware('modulo:web_publica')->group(function (): void {

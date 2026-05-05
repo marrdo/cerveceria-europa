@@ -61,9 +61,9 @@ class ModuloSeeder extends Seeder
             [
                 'clave' => 'ventas',
                 'nombre' => 'Ventas',
-                'descripcion' => 'Modulo futuro para ventas, consumos o TPV.',
+                'descripcion' => 'Comandas de sala/barra conectadas con carta e inventario.',
                 'grupo' => 'panel',
-                'activo' => false,
+                'activo' => true,
                 'orden' => 50,
             ],
             [

@@ -26,6 +26,10 @@
                     @if (auth()->user()->puedeAccederModulo('compras'))
                         <a href="{{ route('admin.compras.pedidos.index') }}" class="admin-btn-outline">Pedidos de compra</a>
                     @endif
+                    @if (auth()->user()->puedeAccederModulo('ventas'))
+                        <a href="{{ route('admin.ventas.comandas.create') }}" class="admin-btn-outline">Nueva comanda</a>
+                        <a href="{{ route('admin.ventas.comandas.index') }}" class="admin-btn-outline">Comandas abiertas</a>
+                    @endif
                     @if (auth()->user()->puedeAccederModulo('web_publica'))
                         <a href="{{ route('admin.web-publica.contenidos.index') }}" class="admin-btn-outline">Gestionar web</a>
                         @if (\App\Models\Modulo::activo('web_publica'))

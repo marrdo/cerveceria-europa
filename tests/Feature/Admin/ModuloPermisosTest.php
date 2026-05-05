@@ -41,6 +41,37 @@ class ModuloPermisosTest extends TestCase
             ->assertOk();
     }
 
+    public function test_waiter_manager_and_owner_can_access_sales_when_module_is_active(): void
+    {
+        Modulo::query()->create([
+            'clave' => 'ventas',
+            'nombre' => 'Ventas',
+            'activo' => true,
+        ]);
+
+        foreach ([RolUsuario::Camarero, RolUsuario::Encargado, RolUsuario::Propietario] as $rol) {
+            $usuario = Usuario::factory()->create(['rol' => $rol]);
+
+            $this->actingAs($usuario)
+                ->get(route('admin.ventas.comandas.index'))
+                ->assertOk();
+        }
+    }
+
+    public function test_waiter_cannot_access_sales_when_module_is_disabled(): void
+    {
+        Modulo::query()->create([
+            'clave' => 'ventas',
+            'nombre' => 'Ventas',
+            'activo' => false,
+        ]);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.comandas.index'))
+            ->assertForbidden();
+    }
+
     public function test_sidebar_groups_available_modules_for_manager(): void
     {
         $this->seed(InventarioSeeder::class);

@@ -68,8 +68,8 @@ lectura_documentos
 
 - `superadmin`: puede ver y cambiar todos los modulos desde el dashboard.
 - `propietario`: ve los modulos activos que le correspondan.
-- `encargado`: accede a operativa interna permitida por rol.
-- `camarero`: queda preparado para futuro modulo de ventas.
+- `encargado`: accede a operativa interna permitida por rol, incluyendo ventas.
+- `camarero`: accede al modulo de ventas cuando esta activo.
 
 ## Comandos utiles
 
@@ -90,4 +90,5 @@ Cliente compra modulo
 
 - `web_publica` desactivado hace que la web publica responda 404.
 - `blog` desactivado oculta rutas y administracion del blog.
+- `ventas` desactivado oculta comandas y bloquea el acceso operativo a camareros y encargados.
 - Nuevos modulos deben registrarse en `ModuloSeeder`.

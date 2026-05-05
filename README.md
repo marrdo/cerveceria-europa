@@ -8,6 +8,7 @@ El proyecto cubre:
 - Compras a proveedor.
 - Recepciones conectadas con stock.
 - Documentos de compra con trazabilidad.
+- Ventas y comandas conectadas con carta e inventario.
 - Web publica gestionable opcional.
 - Carta publica editable por categorias, productos y tarifas.
 - Blog opcional como submodulo vendible.
@@ -102,15 +103,16 @@ COLLATE utf8mb4_es_0900_ai_ci;
 
 ## Permisos iniciales por modulo
 
-- `camarero`: futuro modulo `Ventas`.
-- `encargado`: `Inventario` y `Compras`.
+- `camarero`: `Ventas`.
+- `encargado`: `Inventario`, `Compras` y `Ventas`.
 - `propietario`: acceso completo.
 - `superadmin`: acceso completo tecnico.
 
 ## Modulos previstos
 
 - `Inventario`: productos, categorias, unidades, ubicaciones, stock y movimientos.
-- `Compras`: futuro modulo de proveedores, pedidos, recepciones y entradas reales en inventario.
+- `Compras`: proveedores, pedidos, recepciones y entradas reales en inventario.
+- `Ventas`: comandas de sala/barra tomadas desde la carta publicada.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
 Documentacion por modulos:
@@ -118,6 +120,7 @@ Documentacion por modulos:
 ```text
 docs/modules/inventario.md
 docs/modules/compras.md
+docs/modules/ventas.md
 docs/modules/web-publica.md
 docs/modules/modulos.md
 ```
@@ -130,8 +133,10 @@ php artisan migrate:fresh --seed
 php artisan db:seed --class=ModuloSeeder
 php artisan db:seed --class=WebPublicaSeeder
 php artisan test
+php artisan test --filter=VentasModuleTest
 php artisan test --filter=WebPublicaTest
 php artisan route:list
+php artisan route:list --path=admin/ventas
 php artisan route:list --path=admin/web-publica
 php artisan view:cache
 php artisan view:clear

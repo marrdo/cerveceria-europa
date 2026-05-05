@@ -80,14 +80,20 @@ class Usuario extends Authenticatable
             return true;
         }
 
+        $moduloActivo = Modulo::query()->where('clave', $modulo)->value('activo');
+
+        if ($moduloActivo !== null && ! (bool) $moduloActivo) {
+            return false;
+        }
+
         if ($this->rol === RolUsuario::Propietario) {
-            return $modulo !== 'web_publica' || Modulo::activo('web_publica');
+            return true;
         }
 
         return match ($modulo) {
             'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
             'web_publica' => false,
-            'ventas' => $this->rol === RolUsuario::Camarero,
+            'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
             default => false,
         };
     }
