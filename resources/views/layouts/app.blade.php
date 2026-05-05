@@ -34,7 +34,7 @@
         @php
             $moduloInicial = request()->routeIs('admin.compras.*')
                 ? 'compras'
-                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : '')));
+                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : ''))));
         @endphp
 
         <div x-data="{ sidebarOpen: false, moduloAbierto: '{{ $moduloInicial }}' }" class="flex h-screen overflow-hidden bg-background">
@@ -144,6 +144,26 @@
                             <div x-show="moduloAbierto === 'ventas'" x-transition class="space-y-1 pb-2 ps-14">
                                 <a href="{{ route('admin.ventas.comandas.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Nueva comanda</a>
                                 <a href="{{ route('admin.ventas.comandas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.index') || request()->routeIs('admin.ventas.comandas.show') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Comandas</a>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($usuario?->puedeAccederModulo('personal'))
+                        <div>
+                            <button type="button" class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'personal' ? '' : 'personal'" :aria-expanded="moduloAbierto === 'personal'">
+                                <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 14a4 4 0 10-8 0M4 21a8 8 0 0116 0M18 8h4M20 6v4" />
+                                    </svg>
+                                </span>
+                                <span class="flex-1">Personal</span>
+                                <svg class="h-4 w-4 transition" :class="moduloAbierto === 'personal' ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                            <div x-show="moduloAbierto === 'personal'" x-transition class="space-y-1 pb-2 ps-14">
+                                <a href="{{ route('admin.personal.usuarios.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.personal.usuarios.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Anadir usuario</a>
+                                <a href="{{ route('admin.personal.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.personal.index') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Usuarios</a>
                             </div>
                         </div>
                     @endif

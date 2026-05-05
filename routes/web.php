@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ModuloController;
+use App\Http\Controllers\Admin\PersonalController;
 use App\Models\Modulo;
 use App\Modulos\Compras\Http\Controllers\Admin\BorradorCompraDocumentoController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
@@ -64,6 +65,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::patch('/admin/modulos/{modulo}/toggle', [ModuloController::class, 'toggle'])->name('admin.modulos.toggle');
+
+    Route::prefix('admin/personal')->name('admin.personal.')->middleware('modulo:personal')->group(function (): void {
+        Route::get('/', [PersonalController::class, 'index'])->name('index');
+        Route::get('usuarios/create', [PersonalController::class, 'create'])->name('usuarios.create');
+        Route::post('usuarios', [PersonalController::class, 'store'])->name('usuarios.store');
+        Route::get('usuarios/{usuario}', [PersonalController::class, 'show'])->name('usuarios.show');
+        Route::get('usuarios/{usuario}/edit', [PersonalController::class, 'edit'])->name('usuarios.edit');
+        Route::put('usuarios/{usuario}', [PersonalController::class, 'update'])->name('usuarios.update');
+        Route::delete('usuarios/{usuario}', [PersonalController::class, 'destroy'])->name('usuarios.destroy');
+    });
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {
         Route::get('/', [ProductoController::class, 'index'])->name('index');

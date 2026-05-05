@@ -108,3 +108,87 @@ Papas aliniadas
 ```
 
 Para botellas o productos unitarios, la vinculacion directa `contenido_web -> producto` es suficiente.
+
+## Faseado de desarrollo
+
+### Fase 1 - Comandas base
+
+Estado: implementada.
+
+- Crear comanda desde carta.
+- Crear lineas de comanda.
+- Estados basicos de comanda y linea.
+- Servir linea.
+- Descontar stock al servir.
+- Permisos para camarero, encargado, propietario y superadmin.
+
+### Fase 2 - Cobros
+
+Objetivo: diferenciar `servido` de `pagado`.
+
+- Estado `pagada` o `cerrada`.
+- Tabla `pagos_comanda`.
+- Metodo de pago: efectivo, tarjeta, bizum, invitacion u otro.
+- Importe recibido.
+- Cambio calculado.
+- Usuario que cobra.
+- Fecha de cobro.
+- Pantalla de cobrar comanda.
+
+### Fase 3 - Edicion operativa
+
+Objetivo: hacer la toma de comandas comoda para uso real.
+
+- Anadir lineas a una comanda abierta.
+- Modificar cantidades antes de servir.
+- Cancelar lineas no servidas.
+- Mover mesa.
+- Notas por linea.
+- Preparar estado `en_preparacion` para cocina/barra.
+
+Regla: una linea servida no se edita directamente; se corrige con anulacion o ajuste trazable.
+
+### Fase 4 - Caja y turnos
+
+Objetivo: control diario para encargados y propietario.
+
+- Apertura de caja.
+- Cierre de caja.
+- Saldo inicial.
+- Efectivo esperado.
+- Efectivo contado.
+- Descuadre.
+- Ventas por metodo de pago.
+- Ventas por camarero.
+
+### Fase 5 - Informes de ventas
+
+Objetivo: explotar informacion de negocio.
+
+- Ventas por dia.
+- Productos mas vendidos.
+- Ventas por categoria.
+- Ticket medio.
+- Comandas canceladas.
+- Ventas por camarero.
+- Margen estimado si hay coste fiable.
+
+### Fase 6 - Escandallos / recetas
+
+Objetivo: descontar ingredientes reales en platos de cocina.
+
+- Receta por plato.
+- Ingredientes vinculados a productos de inventario.
+- Cantidad por racion.
+- Descuento automatico al servir.
+
+### Fase 7 - Tickets e integraciones
+
+Objetivo: acercarse a TPV formal si el negocio lo necesita.
+
+- Ticket imprimible.
+- Numeracion de tickets.
+- Impresion en cocina/barra.
+- Exportacion diaria.
+- Integracion con impresora termica.
+- Integracion fiscal si procede.

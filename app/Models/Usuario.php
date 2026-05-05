@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 class Usuario extends Authenticatable
 {
@@ -94,7 +95,44 @@ class Usuario extends Authenticatable
             'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
             'web_publica' => false,
             'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
+            'personal' => in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario], true),
             default => false,
         };
+    }
+
+    /**
+     * Indica si el usuario puede crear y consultar personal desde el panel.
+     */
+    public function puedeGestionarPersonal(): bool
+    {
+        return $this->rolesGestionables()->isNotEmpty();
+    }
+
+    /**
+     * Indica si este usuario puede gestionar a otro usuario concreto.
+     */
+    public function puedeGestionarUsuario(Usuario $usuario): bool
+    {
+        if ($this->id === $usuario->id || $usuario->esProtegido()) {
+            return false;
+        }
+
+        return $this->rolesGestionables()
+            ->contains(fn (RolUsuario $rol): bool => $rol === $usuario->rol);
+    }
+
+    /**
+     * Roles que este usuario puede crear desde gestion de personal.
+     *
+     * @return Collection<int, RolUsuario>
+     */
+    public function rolesGestionables(): Collection
+    {
+        return collect(match ($this->rol) {
+            RolUsuario::Superadmin => RolUsuario::cases(),
+            RolUsuario::Propietario => [RolUsuario::Camarero, RolUsuario::Encargado],
+            RolUsuario::Encargado => [RolUsuario::Camarero],
+            default => [],
+        });
     }
 }

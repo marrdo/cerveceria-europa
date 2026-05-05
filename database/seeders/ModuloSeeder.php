@@ -67,6 +67,14 @@ class ModuloSeeder extends Seeder
                 'orden' => 50,
             ],
             [
+                'clave' => 'personal',
+                'nombre' => 'Gestion de personal',
+                'descripcion' => 'Alta de usuarios operativos y permisos por rol.',
+                'grupo' => 'panel',
+                'activo' => true,
+                'orden' => 55,
+            ],
+            [
                 'clave' => 'reservas',
                 'nombre' => 'Reservas',
                 'descripcion' => 'Modulo futuro para gestionar reservas desde la web.',

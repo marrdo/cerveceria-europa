@@ -9,6 +9,7 @@ El proyecto cubre:
 - Recepciones conectadas con stock.
 - Documentos de compra con trazabilidad.
 - Ventas y comandas conectadas con carta e inventario.
+- Gestion de personal operativo.
 - Web publica gestionable opcional.
 - Carta publica editable por categorias, productos y tarifas.
 - Blog opcional como submodulo vendible.
@@ -104,7 +105,7 @@ COLLATE utf8mb4_es_0900_ai_ci;
 ## Permisos iniciales por modulo
 
 - `camarero`: `Ventas`.
-- `encargado`: `Inventario`, `Compras` y `Ventas`.
+- `encargado`: `Inventario`, `Compras`, `Ventas` y alta de camareros.
 - `propietario`: acceso completo.
 - `superadmin`: acceso completo tecnico.
 
@@ -113,6 +114,7 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - `Inventario`: productos, categorias, unidades, ubicaciones, stock y movimientos.
 - `Compras`: proveedores, pedidos, recepciones y entradas reales en inventario.
 - `Ventas`: comandas de sala/barra tomadas desde la carta publicada.
+- `Personal`: alta de usuarios operativos segun permisos de rol.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
 Documentacion por modulos:

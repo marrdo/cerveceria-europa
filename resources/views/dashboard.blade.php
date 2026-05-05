@@ -30,6 +30,10 @@
                         <a href="{{ route('admin.ventas.comandas.create') }}" class="admin-btn-outline">Nueva comanda</a>
                         <a href="{{ route('admin.ventas.comandas.index') }}" class="admin-btn-outline">Comandas abiertas</a>
                     @endif
+                    @if (auth()->user()->puedeAccederModulo('personal'))
+                        <a href="{{ route('admin.personal.usuarios.create') }}" class="admin-btn-outline">Anadir usuario</a>
+                        <a href="{{ route('admin.personal.index') }}" class="admin-btn-outline">Personal</a>
+                    @endif
                     @if (auth()->user()->puedeAccederModulo('web_publica'))
                         <a href="{{ route('admin.web-publica.contenidos.index') }}" class="admin-btn-outline">Gestionar web</a>
                         @if (\App\Models\Modulo::activo('web_publica'))
