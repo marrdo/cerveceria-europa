@@ -64,11 +64,14 @@ class ServirLineaComandaAction
             $linea->servida_at = now();
             $linea->save();
 
+            $tienePendientes = $comanda->lineas()
+                ->where('id', '!=', $linea->id)
+                ->whereNotIn('estado', [EstadoLineaComanda::Servida->value, EstadoLineaComanda::Cancelada->value])
+                ->exists();
+
             $comanda->update([
-                'estado' => $comanda->lineas()->where('id', '!=', $linea->id)->where('estado', '!=', EstadoLineaComanda::Servida->value)->exists()
-                    ? EstadoComanda::EnPreparacion
-                    : EstadoComanda::Servida,
-                'servida_at' => now(),
+                'estado' => $tienePendientes ? EstadoComanda::EnPreparacion : EstadoComanda::Servida,
+                'servida_at' => $tienePendientes ? null : now(),
                 'actualizado_por' => $usuarioId,
             ]);
 

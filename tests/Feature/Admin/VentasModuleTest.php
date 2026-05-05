@@ -87,6 +87,41 @@ class VentasModuleTest extends TestCase
             ->assertSee('Restar unidad');
     }
 
+    public function test_order_index_can_filter_by_multiple_states(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+
+        Comanda::query()->create([
+            'numero' => 'COM-TEST-ABIERTA',
+            'estado' => EstadoComanda::Abierta,
+            'total' => 1,
+        ]);
+        Comanda::query()->create([
+            'numero' => 'COM-TEST-PREPARACION',
+            'estado' => EstadoComanda::EnPreparacion,
+            'total' => 2,
+        ]);
+        Comanda::query()->create([
+            'numero' => 'COM-TEST-PAGADA',
+            'estado' => EstadoComanda::Pagada,
+            'total' => 3,
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.comandas.index', [
+                'estado' => [
+                    EstadoComanda::Abierta->value,
+                    EstadoComanda::EnPreparacion->value,
+                ],
+            ]))
+            ->assertOk()
+            ->assertSee('name="estado[]"', false)
+            ->assertSee('COM-TEST-ABIERTA')
+            ->assertSee('COM-TEST-PREPARACION')
+            ->assertDontSee('COM-TEST-PAGADA');
+    }
+
     public function test_serving_order_line_deducts_inventory_stock_once(): void
     {
         $this->prepararModuloVentas();
@@ -232,6 +267,130 @@ class VentasModuleTest extends TestCase
         ]);
 
         $this->assertSame(7.0, Comanda::query()->with('pagos')->findOrFail($comanda->id)->totalPagado());
+    }
+
+    public function test_pending_order_lines_can_be_updated_and_cancelled_operatively(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => '3',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->with('lineas')->firstOrFail();
+        $linea = $comanda->lineas->first();
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.operativa.update', $comanda), [
+                'mesa' => 'Barra',
+                'ubicacion_inventario_id' => '',
+                'lineas' => [
+                    $linea->id => [
+                        'cantidad' => 3,
+                        'notas' => 'Sin vaso frio',
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $linea->refresh();
+        $comanda->refresh();
+
+        $this->assertSame('Barra', $comanda->mesa);
+        $this->assertNull($comanda->ubicacion_inventario_id);
+        $this->assertSame('3.000', (string) $linea->cantidad);
+        $this->assertSame('Sin vaso frio', $linea->notas);
+        $this->assertSame('10.50', (string) $comanda->total);
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.operativa.update', $comanda), [
+                'mesa' => 'Barra',
+                'lineas' => [
+                    $linea->id => [
+                        'cantidad' => 3,
+                        'cancelar' => 1,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $this->assertDatabaseHas('lineas_comanda', [
+            'id' => $linea->id,
+            'estado' => EstadoLineaComanda::Cancelada->value,
+        ]);
+        $this->assertDatabaseHas('comandas', [
+            'id' => $comanda->id,
+            'estado' => EstadoComanda::Cancelada->value,
+            'total' => 0,
+        ]);
+    }
+
+    public function test_served_order_can_receive_more_lines_before_payment(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $extra = ContenidoWeb::query()->create([
+            'tipo' => TipoContenidoWeb::Cerveza,
+            'titulo' => 'Cerveza Extra',
+            'slug' => 'cerveza-extra',
+            'precio' => 2.50,
+            'publicado' => true,
+            'orden' => 2,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => '5',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 1,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->with('lineas')->firstOrFail();
+        $linea = $comanda->lineas->first();
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.lineas.servir', [$comanda, $linea]));
+
+        $this->assertDatabaseHas('comandas', [
+            'id' => $comanda->id,
+            'estado' => EstadoComanda::Servida->value,
+        ]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.lineas.store', $comanda), [
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $extra->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $comanda->refresh();
+
+        $this->assertSame(2, $comanda->lineas()->count());
+        $this->assertSame(EstadoComanda::EnPreparacion, $comanda->estado);
+        $this->assertSame('8.50', (string) $comanda->total);
     }
 
     private function prepararModuloVentas(): void

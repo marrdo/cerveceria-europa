@@ -24,7 +24,7 @@ enum EstadoComanda: string
     public function variante(): string
     {
         return match ($this) {
-            self::Abierta => 'info',
+            self::Abierta => 'default',
             self::EnPreparacion => 'warning',
             self::Servida => 'success',
             self::Pagada => 'success',

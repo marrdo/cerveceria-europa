@@ -4,12 +4,16 @@ namespace App\Modulos\Ventas\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modulos\Inventario\Models\UbicacionInventario;
+use App\Modulos\Ventas\Actions\ActualizarComandaOperativaAction;
+use App\Modulos\Ventas\Actions\AgregarLineasComandaAction;
 use App\Modulos\Ventas\Actions\CrearComandaAction;
 use App\Modulos\Ventas\Actions\RegistrarPagoComandaAction;
 use App\Modulos\Ventas\Actions\ServirLineaComandaAction;
 use App\Modulos\Ventas\Enums\EstadoComanda;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
 use App\Modulos\Ventas\Enums\MetodoPagoComanda;
+use App\Modulos\Ventas\Http\Requests\ActualizarComandaOperativaRequest;
+use App\Modulos\Ventas\Http\Requests\AgregarLineasComandaRequest;
 use App\Modulos\Ventas\Http\Requests\GuardarComandaRequest;
 use App\Modulos\Ventas\Http\Requests\RegistrarPagoComandaRequest;
 use App\Modulos\Ventas\Models\Comanda;
@@ -28,7 +32,10 @@ class ComandaController extends Controller
     {
         $filtros = [
             'busqueda' => trim((string) $request->query('busqueda', '')),
-            'estado' => (string) $request->query('estado', ''),
+            'estados' => collect((array) $request->query('estado', []))
+                ->filter(fn (string $estado): bool => EstadoComanda::tryFrom($estado) !== null)
+                ->values()
+                ->all(),
         ];
 
         $comandas = Comanda::query()
@@ -41,7 +48,7 @@ class ComandaController extends Controller
                         ->orWhere('cliente_nombre', 'like', '%'.$filtros['busqueda'].'%');
                 });
             })
-            ->when($filtros['estado'] !== '', fn ($query) => $query->where('estado', $filtros['estado']))
+            ->when($filtros['estados'] !== [], fn ($query) => $query->whereIn('estado', $filtros['estados']))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -159,10 +166,42 @@ class ComandaController extends Controller
      */
     public function show(Comanda $comanda): View
     {
+        $contenidos = ContenidoWeb::query()
+            ->publicado()
+            ->with(['categoriaCarta.padre', 'tarifas', 'producto.stock'])
+            ->orderBy('tipo')
+            ->orderBy('orden')
+            ->orderBy('titulo')
+            ->get();
+
         return view('modulos.ventas.comandas.show', [
             'comanda' => $comanda->load(['lineas.producto.unidad', 'lineas.movimientoInventario', 'pagos.cobrador', 'ubicacionInventario', 'creador']),
             'metodosPago' => MetodoPagoComanda::cases(),
+            'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
+            'seccionesCarta' => $this->agruparCartaParaComanda($contenidos),
         ]);
+    }
+
+    /**
+     * Actualiza datos operativos y lineas no servidas.
+     */
+    public function actualizarOperativa(ActualizarComandaOperativaRequest $request, Comanda $comanda, ActualizarComandaOperativaAction $actualizar): RedirectResponse
+    {
+        $actualizar->execute($comanda, $request->datosOperativos(), (string) $request->user()?->id);
+
+        return redirect()->route('admin.ventas.comandas.show', $comanda)
+            ->with('status', 'Comanda actualizada correctamente.');
+    }
+
+    /**
+     * Agrega nuevos productos a una comanda existente.
+     */
+    public function agregarLineas(AgregarLineasComandaRequest $request, Comanda $comanda, AgregarLineasComandaAction $agregarLineas): RedirectResponse
+    {
+        $agregarLineas->execute($comanda, $request->datosLineas(), (string) $request->user()?->id);
+
+        return redirect()->route('admin.ventas.comandas.show', $comanda)
+            ->with('status', 'Productos anadidos a la comanda.');
     }
 
     /**

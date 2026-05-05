@@ -69,6 +69,8 @@ App\Modulos\Ventas\Models\PagoComanda
 App\Modulos\Ventas\Actions\CrearComandaAction
 App\Modulos\Ventas\Actions\ServirLineaComandaAction
 App\Modulos\Ventas\Actions\RegistrarPagoComandaAction
+App\Modulos\Ventas\Actions\ActualizarComandaOperativaAction
+App\Modulos\Ventas\Actions\AgregarLineasComandaAction
 ```
 
 `ServirLineaComandaAction` reutiliza:
@@ -178,6 +180,8 @@ Reglas:
 
 ### Fase 3 - Edicion operativa
 
+Estado: implementada.
+
 Objetivo: hacer la toma de comandas comoda para uso real.
 
 - Anadir lineas a una comanda abierta.
@@ -186,9 +190,21 @@ Objetivo: hacer la toma de comandas comoda para uso real.
 - Mover mesa.
 - Notas por linea.
 - Preparar estado `en_preparacion` para cocina/barra.
-- Preparar el cobro final por mesa o cuenta completa, no obligar a cobrar cada comanda aislada.
+
+Reglas implementadas:
+
+- Las lineas servidas no se editan directamente.
+- Las lineas no servidas pueden cambiar cantidad y notas.
+- Una linea no servida con cantidad cero se cancela.
+- Una linea no servida puede cancelarse manualmente.
+- Las lineas canceladas no suman en el total.
+- Una comanda servida puede recibir nuevos productos antes de pagarse.
+- Si una comanda servida recibe nuevos productos, vuelve a `en_preparacion`.
+- Una comanda pagada o cancelada no acepta edicion operativa.
 
 Regla: una linea servida no se edita directamente; se corrige con anulacion o ajuste trazable.
+
+Pendiente relacionado: el cobro final por mesa o cuenta completa se cerrara con el modulo de espacios/mesas, porque necesita `zona`, `mesa` y `cuenta` para agrupar consumos.
 
 ### Fase 4 - Espacios y mesas
 

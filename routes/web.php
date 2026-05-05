@@ -133,6 +133,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ComandaController::class, 'index'])->name('index');
         Route::patch('comandas/{comanda}/servir', [ComandaController::class, 'servir'])->name('comandas.servir');
         Route::patch('comandas/{comanda}/cancelar', [ComandaController::class, 'cancelar'])->name('comandas.cancelar');
+        Route::patch('comandas/{comanda}/operativa', [ComandaController::class, 'actualizarOperativa'])->name('comandas.operativa.update');
+        Route::post('comandas/{comanda}/lineas', [ComandaController::class, 'agregarLineas'])->name('comandas.lineas.store');
         Route::post('comandas/{comanda}/pagos', [ComandaController::class, 'cobrar'])->name('comandas.pagos.store');
         Route::patch('comandas/{comanda}/lineas/{linea}/servir', [ComandaController::class, 'servirLinea'])->name('comandas.lineas.servir');
         Route::resource('comandas', ComandaController::class)

@@ -5,6 +5,7 @@ namespace App\Modulos\Ventas\Models;
 use App\Models\Usuario;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Ventas\Enums\EstadoComanda;
+use App\Modulos\Ventas\Enums\EstadoLineaComanda;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -83,6 +84,22 @@ class Comanda extends Model
     }
 
     /**
+     * Permite cambios de datos operativos mientras la comanda no este cerrada.
+     */
+    public function puedeEditarOperativa(): bool
+    {
+        return ! in_array($this->estado, [EstadoComanda::Pagada, EstadoComanda::Cancelada], true);
+    }
+
+    /**
+     * Permite anadir consumos mientras la cuenta no este pagada o cancelada.
+     */
+    public function puedeRecibirLineas(): bool
+    {
+        return in_array($this->estado, [EstadoComanda::Abierta, EstadoComanda::EnPreparacion, EstadoComanda::Servida], true);
+    }
+
+    /**
      * Indica si la comanda puede recibir pagos.
      */
     public function puedeCobrar(): bool
@@ -114,8 +131,10 @@ class Comanda extends Model
     {
         $this->loadMissing('lineas');
 
-        $subtotal = round((float) $this->lineas->sum('subtotal'), 2);
-        $impuestos = round((float) $this->lineas->sum('impuestos'), 2);
+        $lineasActivas = $this->lineas->reject(fn (LineaComanda $linea): bool => $linea->estado === EstadoLineaComanda::Cancelada);
+
+        $subtotal = round((float) $lineasActivas->sum('subtotal'), 2);
+        $impuestos = round((float) $lineasActivas->sum('impuestos'), 2);
 
         $this->update([
             'subtotal' => $subtotal,

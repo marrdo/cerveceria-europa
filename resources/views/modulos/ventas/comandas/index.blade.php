@@ -13,21 +13,23 @@
         <div class="mb-4 rounded-md border border-success/25 bg-success/10 p-4 text-sm text-success">{{ session('status') }}</div>
     @endif
 
-    <form method="GET" action="{{ route('admin.ventas.comandas.index') }}" class="admin-card mb-4 grid gap-3 p-4 lg:grid-cols-4">
+    <form method="GET" action="{{ route('admin.ventas.comandas.index') }}" class="admin-card mb-4 grid gap-4 p-4 lg:grid-cols-[1fr_2fr_auto]">
         <div>
             <x-input-label for="busqueda" value="Numero, mesa o cliente" />
             <x-text-input id="busqueda" name="busqueda" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" maxlength="100" />
         </div>
         <div>
-            <x-input-label for="estado" value="Estado" />
-            <select id="estado" name="estado" class="admin-input mt-1 block h-10 w-full">
-                <option value="">Todos</option>
+            <x-input-label value="Estados" />
+            <div class="mt-1 flex flex-wrap gap-2">
                 @foreach ($estados as $estado)
-                    <option value="{{ $estado->value }}" @selected($filtros['estado'] === $estado->value)>{{ $estado->etiqueta() }}</option>
+                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition {{ in_array($estado->value, $filtros['estados'], true) ? 'border-primary bg-primary/15 text-foreground' : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground' }}">
+                        <input type="checkbox" name="estado[]" value="{{ $estado->value }}" class="rounded border-input bg-background text-primary focus:ring-ring" @checked(in_array($estado->value, $filtros['estados'], true))>
+                        <span>{{ $estado->etiqueta() }}</span>
+                    </label>
                 @endforeach
-            </select>
+            </div>
         </div>
-        <div class="flex items-end gap-2 lg:col-span-2">
+        <div class="flex items-end gap-2">
             <button type="submit" class="admin-btn-primary">Filtrar</button>
             <a href="{{ route('admin.ventas.comandas.index') }}" class="admin-btn-outline">Limpiar</a>
         </div>
