@@ -29,6 +29,9 @@
                     @if (auth()->user()->puedeAccederModulo('ventas'))
                         <a href="{{ route('admin.ventas.comandas.create') }}" class="admin-btn-outline">Nueva comanda</a>
                         <a href="{{ route('admin.ventas.comandas.index') }}" class="admin-btn-outline">Comandas abiertas</a>
+                        @if (auth()->user()->puedeGestionarCaja())
+                            <a href="{{ route('admin.ventas.caja.index') }}" class="admin-btn-outline">Caja</a>
+                        @endif
                     @endif
                     @if (auth()->user()->puedeAccederModulo('espacios'))
                         <a href="{{ route('admin.espacios.recintos.index') }}" class="admin-btn-outline">Espacios</a>

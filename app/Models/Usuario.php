@@ -110,6 +110,15 @@ class Usuario extends Authenticatable
     }
 
     /**
+     * Indica si el usuario puede abrir, cerrar y revisar caja.
+     */
+    public function puedeGestionarCaja(): bool
+    {
+        return in_array($this->rol, [RolUsuario::Superadmin, RolUsuario::Propietario, RolUsuario::Encargado], true)
+            && $this->puedeAccederModulo('ventas');
+    }
+
+    /**
      * Indica si este usuario puede gestionar a otro usuario concreto.
      */
     public function puedeGestionarUsuario(Usuario $usuario): bool

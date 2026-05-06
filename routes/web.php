@@ -23,6 +23,7 @@ use App\Modulos\Inventario\Http\Controllers\Admin\UnidadInventarioController;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Ventas\Http\Controllers\Admin\ComandaController;
+use App\Modulos\Ventas\Http\Controllers\Admin\TurnoCajaController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\ContenidoWebController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaBlogController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaCartaController;
@@ -134,6 +135,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/ventas')->name('admin.ventas.')->middleware('modulo:ventas')->group(function (): void {
         Route::get('/', [ComandaController::class, 'index'])->name('index');
+        Route::get('caja', [TurnoCajaController::class, 'index'])->name('caja.index');
+        Route::post('caja', [TurnoCajaController::class, 'store'])->name('caja.store');
+        Route::get('caja/{caja}', [TurnoCajaController::class, 'show'])->name('caja.show');
+        Route::patch('caja/{caja}/cerrar', [TurnoCajaController::class, 'cerrar'])->name('caja.cerrar');
         Route::patch('comandas/{comanda}/servir', [ComandaController::class, 'servir'])->name('comandas.servir');
         Route::patch('comandas/{comanda}/cancelar', [ComandaController::class, 'cancelar'])->name('comandas.cancelar');
         Route::patch('comandas/{comanda}/operativa', [ComandaController::class, 'actualizarOperativa'])->name('comandas.operativa.update');

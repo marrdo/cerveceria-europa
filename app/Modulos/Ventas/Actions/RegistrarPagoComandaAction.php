@@ -3,9 +3,11 @@
 namespace App\Modulos\Ventas\Actions;
 
 use App\Modulos\Ventas\Enums\EstadoComanda;
+use App\Modulos\Ventas\Enums\EstadoTurnoCaja;
 use App\Modulos\Ventas\Enums\MetodoPagoComanda;
 use App\Modulos\Ventas\Models\Comanda;
 use App\Modulos\Ventas\Models\PagoComanda;
+use App\Modulos\Ventas\Models\TurnoCaja;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -58,6 +60,7 @@ class RegistrarPagoComandaAction
             }
 
             $pago = $comanda->pagos()->create([
+                'caja_turno_id' => $this->turnoAbiertoId($comanda),
                 'metodo' => $metodo,
                 'importe' => $importe,
                 'recibido' => $recibido,
@@ -80,5 +83,26 @@ class RegistrarPagoComandaAction
 
             return $pago;
         });
+    }
+
+    /**
+     * Localiza una caja abierta compatible con la comanda.
+     *
+     * En esta primera fase no se bloquea el cobro si no hay caja abierta. Esto
+     * evita romper la operativa actual y permite activar caja de forma gradual.
+     */
+    private function turnoAbiertoId(Comanda $comanda): ?string
+    {
+        return TurnoCaja::query()
+            ->where('estado', EstadoTurnoCaja::Abierta)
+            ->when(
+                $comanda->recinto_id,
+                fn ($query) => $query->where(function ($consulta) use ($comanda): void {
+                    $consulta->where('recinto_id', $comanda->recinto_id)
+                        ->orWhereNull('recinto_id');
+                }),
+            )
+            ->latest('abierta_at')
+            ->value('id');
     }
 }

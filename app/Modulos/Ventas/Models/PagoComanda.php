@@ -16,6 +16,7 @@ class PagoComanda extends Model
 
     protected $fillable = [
         'comanda_id',
+        'caja_turno_id',
         'metodo',
         'importe',
         'recibido',
@@ -41,6 +42,12 @@ class PagoComanda extends Model
     public function comanda(): BelongsTo
     {
         return $this->belongsTo(Comanda::class, 'comanda_id');
+    }
+
+    /** @return BelongsTo<TurnoCaja, $this> */
+    public function turnoCaja(): BelongsTo
+    {
+        return $this->belongsTo(TurnoCaja::class, 'caja_turno_id');
     }
 
     /** @return BelongsTo<Usuario, $this> */

@@ -144,6 +144,9 @@
                             <div x-show="moduloAbierto === 'ventas'" x-transition class="space-y-1 pb-2 ps-14">
                                 <a href="{{ route('admin.ventas.comandas.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Nueva comanda</a>
                                 <a href="{{ route('admin.ventas.comandas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.index') || request()->routeIs('admin.ventas.comandas.show') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Comandas</a>
+                                @if ($usuario?->puedeGestionarCaja())
+                                    <a href="{{ route('admin.ventas.caja.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.caja.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Caja</a>
+                                @endif
                             </div>
                         </div>
                     @endif

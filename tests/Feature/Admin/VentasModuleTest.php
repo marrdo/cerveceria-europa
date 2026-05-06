@@ -16,8 +16,10 @@ use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
 use App\Modulos\Ventas\Enums\EstadoComanda;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
+use App\Modulos\Ventas\Enums\EstadoTurnoCaja;
 use App\Modulos\Ventas\Enums\MetodoPagoComanda;
 use App\Modulos\Ventas\Models\Comanda;
+use App\Modulos\Ventas\Models\TurnoCaja;
 use App\Modulos\WebPublica\Enums\TipoContenidoWeb;
 use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
@@ -314,6 +316,78 @@ class VentasModuleTest extends TestCase
         ]);
 
         $this->assertSame(7.0, Comanda::query()->with('pagos')->findOrFail($comanda->id)->totalPagado());
+    }
+
+    public function test_manager_can_open_cash_shift_link_payments_and_close_it(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.caja.store'), [
+                'saldo_inicial' => 100,
+                'notas_apertura' => 'Inicio de turno',
+            ])
+            ->assertRedirect();
+
+        $turno = TurnoCaja::query()->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => 'Caja',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->with('lineas')->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.lineas.servir', [$comanda, $comanda->lineas->first()]));
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.pagos.store', $comanda), [
+                'metodo' => MetodoPagoComanda::Efectivo->value,
+                'importe' => 7,
+                'recibido' => 10,
+            ])
+            ->assertRedirect(route('admin.ventas.comandas.show', $comanda));
+
+        $this->assertDatabaseHas('pagos_comanda', [
+            'caja_turno_id' => $turno->id,
+            'importe' => 7,
+            'cambio' => 3,
+        ]);
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.caja.cerrar', $turno), [
+                'efectivo_contado' => 104,
+                'notas_cierre' => 'Cierre correcto',
+            ])
+            ->assertRedirect(route('admin.ventas.caja.show', $turno));
+
+        $turno->refresh();
+
+        $this->assertSame(EstadoTurnoCaja::Cerrada, $turno->estado);
+        $this->assertSame('104.00', (string) $turno->efectivo_esperado);
+        $this->assertSame('0.00', (string) $turno->descuadre);
+        $this->assertSame('7.00', (string) $turno->total_ventas);
+    }
+
+    public function test_waiter_cannot_manage_cash_shift(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.caja.index'))
+            ->assertForbidden();
     }
 
     public function test_pending_order_lines_can_be_updated_and_cancelled_operatively(): void

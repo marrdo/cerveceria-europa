@@ -61,6 +61,7 @@ pagos_comanda
 App\Modulos\Ventas\Models\Comanda
 App\Modulos\Ventas\Models\LineaComanda
 App\Modulos\Ventas\Models\PagoComanda
+App\Modulos\Ventas\Models\TurnoCaja
 ```
 
 ## Acciones
@@ -71,6 +72,8 @@ App\Modulos\Ventas\Actions\ServirLineaComandaAction
 App\Modulos\Ventas\Actions\RegistrarPagoComandaAction
 App\Modulos\Ventas\Actions\ActualizarComandaOperativaAction
 App\Modulos\Ventas\Actions\AgregarLineasComandaAction
+App\Modulos\Ventas\Actions\AbrirTurnoCajaAction
+App\Modulos\Ventas\Actions\CerrarTurnoCajaAction
 ```
 
 `ServirLineaComandaAction` reutiliza:
@@ -238,6 +241,8 @@ Pendiente de esta fase:
 
 ### Fase 5 - Caja y turnos
 
+Estado: primera version implementada.
+
 Objetivo: control diario para encargados y propietario.
 
 - Apertura de caja.
@@ -248,6 +253,34 @@ Objetivo: control diario para encargados y propietario.
 - Descuadre.
 - Ventas por metodo de pago.
 - Ventas por camarero.
+
+Implementado en esta fase:
+
+- Tabla `turnos_caja`.
+- Vinculacion nullable `pagos_comanda.caja_turno_id`.
+- Apertura de caja desde el panel de ventas.
+- Cierre de caja con calculo de:
+  - total vendido,
+  - efectivo cobrado,
+  - cambio entregado,
+  - efectivo esperado,
+  - efectivo contado,
+  - descuadre,
+  - ventas por metodo de pago.
+- Pantalla de detalle con pagos del turno.
+- Acceso restringido a encargado, propietario y superadmin.
+
+Decision operativa:
+
+En esta primera version el sistema no bloquea el cobro si no hay caja abierta. Si hay caja abierta, el pago queda vinculado automaticamente. Esto permite activar el control de caja sin romper la operativa actual de los camareros.
+
+Pendiente de esta fase:
+
+- Exigir caja abierta antes de cobrar cuando el negocio valide el flujo.
+- Ventas por camarero dentro del cierre.
+- Reapertura/anulacion trazable de cierre.
+- Exportacion del cierre diario.
+- Movimientos manuales de caja: retirada, ingreso, propina o ajuste.
 
 ### Fase 6 - Informes de ventas
 
