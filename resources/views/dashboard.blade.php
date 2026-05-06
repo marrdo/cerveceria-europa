@@ -32,6 +32,9 @@
                         @if (auth()->user()->puedeGestionarCaja())
                             <a href="{{ route('admin.ventas.caja.index') }}" class="admin-btn-outline">Caja</a>
                         @endif
+                        @if (auth()->user()->puedeConsultarInformesVentas())
+                            <a href="{{ route('admin.ventas.informes.index') }}" class="admin-btn-outline">Informes ventas</a>
+                        @endif
                     @endif
                     @if (auth()->user()->puedeAccederModulo('espacios'))
                         <a href="{{ route('admin.espacios.recintos.index') }}" class="admin-btn-outline">Espacios</a>

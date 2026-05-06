@@ -390,6 +390,69 @@ class VentasModuleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_manager_can_view_sales_reports(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
+
+        $categoria = CategoriaCarta::query()->create([
+            'nombre' => 'Cervezas',
+            'slug' => 'cervezas',
+            'activo' => true,
+            'orden' => 1,
+        ]);
+        $contenido->update(['categoria_carta_id' => $categoria->id]);
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.store'), [
+                'mesa' => 'Informes',
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'lineas' => [
+                    [
+                        'contenido_web_id' => $contenido->id,
+                        'tarifa_contenido_web_id' => $tarifa->id,
+                        'cantidad' => 2,
+                    ],
+                ],
+            ]);
+
+        $comanda = Comanda::query()->with('lineas')->firstOrFail();
+
+        $this->actingAs($usuario)
+            ->patch(route('admin.ventas.comandas.lineas.servir', [$comanda, $comanda->lineas->first()]));
+
+        $this->actingAs($usuario)
+            ->post(route('admin.ventas.comandas.pagos.store', $comanda), [
+                'metodo' => MetodoPagoComanda::Tarjeta->value,
+                'importe' => 7,
+                'referencia' => 'TPV-INF',
+            ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.informes.index', [
+                'fecha_desde' => now()->toDateString(),
+                'fecha_hasta' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Analisis comercial del periodo seleccionado.')
+            ->assertSee('Ventas cobradas')
+            ->assertSee('7,00 EUR')
+            ->assertSee('Cerveza Leffe')
+            ->assertSee('Cervezas')
+            ->assertSee($usuario->nombre);
+    }
+
+    public function test_waiter_cannot_view_sales_reports(): void
+    {
+        $this->prepararModuloVentas();
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Camarero]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.ventas.informes.index'))
+            ->assertForbidden();
+    }
+
     public function test_pending_order_lines_can_be_updated_and_cancelled_operatively(): void
     {
         $this->prepararModuloVentas();

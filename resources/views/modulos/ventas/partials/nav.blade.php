@@ -4,4 +4,7 @@
     @if (Auth::user()?->puedeGestionarCaja())
         <a href="{{ route('admin.ventas.caja.index') }}" class="{{ request()->routeIs('admin.ventas.caja.*') ? 'admin-btn-primary' : 'admin-btn-outline' }}">Caja</a>
     @endif
+    @if (Auth::user()?->puedeConsultarInformesVentas())
+        <a href="{{ route('admin.ventas.informes.index') }}" class="{{ request()->routeIs('admin.ventas.informes.*') ? 'admin-btn-primary' : 'admin-btn-outline' }}">Informes</a>
+    @endif
 </div>

@@ -147,6 +147,9 @@
                                 @if ($usuario?->puedeGestionarCaja())
                                     <a href="{{ route('admin.ventas.caja.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.caja.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Caja</a>
                                 @endif
+                                @if ($usuario?->puedeConsultarInformesVentas())
+                                    <a href="{{ route('admin.ventas.informes.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.informes.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Informes</a>
+                                @endif
                             </div>
                         </div>
                     @endif

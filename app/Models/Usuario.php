@@ -119,6 +119,14 @@ class Usuario extends Authenticatable
     }
 
     /**
+     * Indica si el usuario puede consultar informes comerciales.
+     */
+    public function puedeConsultarInformesVentas(): bool
+    {
+        return $this->puedeGestionarCaja();
+    }
+
+    /**
      * Indica si este usuario puede gestionar a otro usuario concreto.
      */
     public function puedeGestionarUsuario(Usuario $usuario): bool

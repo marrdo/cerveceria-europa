@@ -284,6 +284,8 @@ Pendiente de esta fase:
 
 ### Fase 6 - Informes de ventas
 
+Estado: primera version implementada.
+
 Objetivo: explotar informacion de negocio.
 
 - Ventas por dia.
@@ -293,6 +295,37 @@ Objetivo: explotar informacion de negocio.
 - Comandas canceladas.
 - Ventas por camarero.
 - Margen estimado si hay coste fiable.
+
+Implementado en esta fase:
+
+- Pantalla `Ventas > Informes`.
+- Filtro por rango de fechas.
+- KPIs de:
+  - ventas cobradas,
+  - comandas pagadas,
+  - ticket medio,
+  - comandas canceladas.
+- Ventas cobradas por dia.
+- Ventas cobradas por metodo de pago.
+- Productos mas vendidos.
+- Ventas por categoria padre de carta.
+- Ventas por usuario que cobra.
+- Ultimas comandas canceladas del periodo.
+- Acceso restringido a encargado, propietario y superadmin.
+
+Decision de calculo:
+
+- El dinero se calcula desde `pagos_comanda.cobrado_at`, porque representa el cobro real.
+- Los productos y categorias se calculan desde lineas de `comandas` pagadas en el rango, usando `comandas.cerrada_at`.
+- Las comandas servidas pero no cobradas no cuentan como venta cerrada en informes comerciales.
+
+Pendiente de esta fase:
+
+- Exportacion CSV/Excel de informes.
+- Comparativas entre periodos.
+- Graficas.
+- Margen real cuando exista coste fiable o escandallo.
+- Separar informes por recinto, zona o mesa.
 
 ### Fase 7 - Escandallos / recetas
 
