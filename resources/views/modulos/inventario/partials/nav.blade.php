@@ -1,4 +1,5 @@
-<div class="mb-6 flex flex-wrap gap-2">
+<nav class="mb-6 flex flex-wrap gap-2">
+    <a href="{{ route('admin.inventario.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.index') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Dashboard</a>
     <a href="{{ route('admin.inventario.productos.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.productos.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Productos</a>
     <a href="{{ route('admin.inventario.proveedores.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.proveedores.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Proveedores</a>
     <a href="{{ route('admin.inventario.categorias.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.categorias.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Categorias</a>
@@ -6,4 +7,4 @@
     <a href="{{ route('admin.inventario.ubicaciones.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.ubicaciones.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Ubicaciones</a>
     <a href="{{ route('admin.inventario.alertas.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.alertas.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Alertas</a>
     <a href="{{ route('admin.inventario.movimientos.index') }}" class="rounded-md border px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.inventario.movimientos.*') ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-muted' }}">Movimientos</a>
-</div>
+</nav>

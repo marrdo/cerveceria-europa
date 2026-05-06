@@ -83,7 +83,7 @@
                     </a>
 
                     @if ($usuario?->puedeAccederModulo('inventario'))
-                        <div>
+                        <nav>
                             <button type="button" class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'inventario' ? '' : 'inventario'" :aria-expanded="moduloAbierto === 'inventario'">
                                 <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -95,7 +95,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'inventario'" x-transition class="space-y-1 pb-2 ps-14">
+                            <section x-show="moduloAbierto === 'inventario'" x-transition class="space-y-1 pb-2 ps-14">
+                                <a href="{{ route('admin.inventario.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.index') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Dashboard</a>
                                 <a href="{{ route('admin.inventario.productos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.productos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Productos</a>
                                 <a href="{{ route('admin.inventario.proveedores.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.proveedores.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Proveedores</a>
                                 <a href="{{ route('admin.inventario.alertas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.alertas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Alertas</a>
@@ -103,8 +104,8 @@
                                 <a href="{{ route('admin.inventario.ubicaciones.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.ubicaciones.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Ubicaciones</a>
                                 <a href="{{ route('admin.inventario.categorias.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.categorias.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Categorias</a>
                                 <a href="{{ route('admin.inventario.unidades.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.unidades.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Unidades</a>
-                            </div>
-                        </div>
+                            </section>
+                        </nav>
                     @endif
 
                     @if ($usuario?->puedeAccederModulo('compras'))

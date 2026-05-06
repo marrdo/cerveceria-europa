@@ -15,6 +15,7 @@ use App\Modulos\Espacios\Http\Controllers\Admin\MesaController;
 use App\Modulos\Espacios\Http\Controllers\Admin\RecintoController;
 use App\Modulos\Espacios\Http\Controllers\Admin\ZonaController;
 use App\Modulos\Inventario\Http\Controllers\Admin\CategoriaProductoController;
+use App\Modulos\Inventario\Http\Controllers\Admin\DashboardInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\InformeInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProductoController;
 use App\Modulos\Inventario\Http\Controllers\Admin\ProveedorController;
@@ -82,7 +83,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {
-        Route::get('/', [ProductoController::class, 'index'])->name('index');
+        Route::get('/', DashboardInventarioController::class)->name('index');
 
         Route::get('alertas', [InformeInventarioController::class, 'alertas'])->name('alertas.index');
         Route::get('alertas/exportar', [InformeInventarioController::class, 'exportarAlertas'])->name('alertas.exportar');

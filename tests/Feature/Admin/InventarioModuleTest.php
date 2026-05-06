@@ -31,6 +31,19 @@ class InventarioModuleTest extends TestCase
             ->assertSee('Productos');
     }
 
+    public function test_inventory_dashboard_can_be_rendered(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.index'))
+            ->assertOk()
+            ->assertSee('Acciones rapidas')
+            ->assertSee('Productos activos')
+            ->assertSee('Ultimos movimientos');
+    }
+
     public function test_product_can_be_created(): void
     {
         $this->seed(InventarioSeeder::class);
