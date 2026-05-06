@@ -8,17 +8,41 @@
     </section>
 
     <section class="bg-public-background py-12">
-        <div class="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
+        <div
+            class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8"
+            x-data="{ seccionActiva: '{{ $categoriasPadre->first()?->slug }}' }"
+        >
             @if ($categoriasPadre->isNotEmpty())
-                <nav class="flex flex-wrap gap-2" aria-label="Secciones de carta">
-                    @foreach ($categoriasPadre as $categoriaPadre)
-                        <a href="#{{ $categoriaPadre->slug }}" class="rounded-md border border-public-border/20 bg-public-surface px-3 py-2 text-sm font-bold text-public-foreground transition hover:border-public-primary hover:text-public-primary">{{ $categoriaPadre->nombre }}</a>
-                    @endforeach
-                </nav>
+                <div class="sticky top-[73px] z-30 border-y border-public-border/15 bg-public-background/95 py-3 backdrop-blur">
+                    <nav class="flex gap-2 overflow-x-auto" aria-label="Secciones principales de carta">
+                        @foreach ($categoriasPadre as $categoriaPadre)
+                            @php
+                                $totalCategoria = $categoriaPadre->contenidos->count()
+                                    + $categoriaPadre->hijas->sum(fn ($hija) => $hija->contenidos->count());
+                            @endphp
+                            <button
+                                type="button"
+                                class="flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm font-black uppercase tracking-wide transition"
+                                :class="seccionActiva === '{{ $categoriaPadre->slug }}' ? 'border-public-primary bg-public-primary text-[#23180f]' : 'border-public-border/20 bg-public-surface text-public-foreground hover:border-public-primary hover:text-public-primary'"
+                                @click="seccionActiva = '{{ $categoriaPadre->slug }}'"
+                                title="Ver {{ $categoriaPadre->nombre }}"
+                                aria-controls="seccion-{{ $categoriaPadre->slug }}"
+                            >
+                                <span>{{ $categoriaPadre->nombre }}</span>
+                                <span class="rounded bg-public-background/70 px-2 py-0.5 text-xs text-public-muted">{{ $totalCategoria }}</span>
+                            </button>
+                        @endforeach
+                    </nav>
+                </div>
             @endif
 
             @forelse ($categoriasPadre as $categoriaPadre)
-                <section id="{{ $categoriaPadre->slug }}" class="scroll-mt-24">
+                <section
+                    id="seccion-{{ $categoriaPadre->slug }}"
+                    class="scroll-mt-32"
+                    x-show="seccionActiva === '{{ $categoriaPadre->slug }}'"
+                    x-cloak
+                >
                     <div class="mb-6">
                         <p class="text-sm font-black uppercase tracking-[0.18em] text-public-primary">Carta</p>
                         <h2 class="mt-2 text-3xl font-black text-public-foreground">{{ $categoriaPadre->nombre }}</h2>
@@ -35,24 +59,38 @@
                         </div>
                     @endif
 
-                    <div class="space-y-10">
+                    <div class="space-y-3">
                         @forelse ($categoriaPadre->hijas as $categoriaHija)
-                            <div>
-                                <div class="mb-4 border-b border-public-border/15 pb-3">
-                                    <h3 class="text-2xl font-black text-public-foreground">{{ $categoriaHija->nombre }}</h3>
-                                    @if ($categoriaHija->descripcion)
-                                        <p class="mt-1 text-public-muted">{{ $categoriaHija->descripcion }}</p>
-                                    @endif
-                                </div>
+                            @if ($categoriaHija->contenidos->isNotEmpty())
+                                <div x-data="{ abierta: false }" class="overflow-hidden rounded-lg border border-public-border/15 bg-public-surface">
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-public-background/60"
+                                        @click="abierta = ! abierta"
+                                        :aria-expanded="abierta"
+                                        title="Abrir o cerrar {{ $categoriaHija->nombre }}"
+                                    >
+                                        <span class="min-w-0">
+                                            <span class="block text-lg font-black text-public-foreground">{{ $categoriaHija->nombre }}</span>
+                                            @if ($categoriaHija->descripcion)
+                                                <span class="mt-1 block text-sm text-public-muted">{{ $categoriaHija->descripcion }}</span>
+                                            @endif
+                                        </span>
+                                        <span class="flex shrink-0 items-center gap-3">
+                                            <span class="rounded-md border border-public-border/20 bg-public-background px-2 py-1 text-xs font-black text-public-muted">{{ $categoriaHija->contenidos->count() }}</span>
+                                            <svg class="h-5 w-5 text-public-primary transition" :class="abierta ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </span>
+                                    </button>
 
-                                <div class="space-y-3">
-                                    @forelse ($categoriaHija->contenidos as $contenido)
-                                        <x-web-publica.fila-contenido :contenido="$contenido" />
-                                    @empty
-                                        <div class="rounded-lg border border-public-border/15 bg-public-surface p-8 text-public-muted md:col-span-3">Todavia no hay productos publicados en esta seccion.</div>
-                                    @endforelse
+                                    <div x-show="abierta" x-transition class="space-y-3 border-t border-public-border/15 bg-public-background/35 p-3">
+                                        @foreach ($categoriaHija->contenidos as $contenido)
+                                            <x-web-publica.fila-contenido :contenido="$contenido" />
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         @empty
                             @if ($categoriaPadre->contenidos->isEmpty())
                                 <div class="rounded-lg border border-public-border/15 bg-public-surface p-8 text-public-muted">Todavia no hay productos publicados en esta categoria.</div>

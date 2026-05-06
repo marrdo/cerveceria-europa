@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cerveceria Europa">
+    <rect width="64" height="64" rx="14" fill="#23180f"/>
+    <circle cx="32" cy="32" r="26" fill="#d08a24"/>
+    <path d="M20 25h25v23a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6V25Z" fill="#f4dfb8"/>
+    <path d="M45 31h3a7 7 0 0 1 0 14h-3v-5h3a2 2 0 0 0 0-4h-3v-5Z" fill="#f4dfb8"/>
+    <path d="M20 25c0-5 4-9 9-9 2 0 4 1 6 2 2-2 5-3 8-2 4 1 7 5 7 9H20Z" fill="#fff7e6"/>
+    <path d="M26 29v17M33 29v17M40 29v17" stroke="#23180f" stroke-width="4" stroke-linecap="round"/>
+    <path d="M20 25h25" stroke="#23180f" stroke-width="4" stroke-linecap="round"/>
+</svg>
