@@ -44,7 +44,7 @@ class WebPublicaTest extends TestCase
         $this->get(route('web.inicio'))
             ->assertOk()
             ->assertSee('Cerveceria Europa')
-            ->assertSee('Leffe Blonde');
+            ->assertSee('FOUNDERS KBS IMPERIAL STOUT');
     }
 
     public function test_public_web_hides_unpublished_content(): void

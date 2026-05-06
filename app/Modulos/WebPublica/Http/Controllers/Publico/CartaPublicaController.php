@@ -11,17 +11,29 @@ use Illuminate\View\View;
 class CartaPublicaController extends Controller
 {
     /**
-     * Carta completa: cocina y cervezas publicadas.
+     * Tipos visibles dentro de la carta publica general.
+     *
+     * @return array<int, TipoContenidoWeb>
+     */
+    private function tiposCarta(): array
+    {
+        return [TipoContenidoWeb::Plato, TipoContenidoWeb::Cerveza, TipoContenidoWeb::Bebida];
+    }
+
+    /**
+     * Carta completa: cocina, cervezas y bebidas publicadas.
      */
     public function index(): View
     {
+        $tiposCarta = $this->tiposCarta();
+
         $categoriasPadre = CategoriaCarta::query()
             ->whereNull('categoria_padre_id')
             ->where('activo', true)
             ->with([
-                'contenidos' => fn ($query) => $query->with(['producto.stock', 'tarifas'])->publicado()->whereIn('tipo', [TipoContenidoWeb::Plato, TipoContenidoWeb::Cerveza]),
+                'contenidos' => fn ($query) => $query->with(['producto.stock', 'tarifas'])->publicado()->whereIn('tipo', $tiposCarta),
                 'hijas' => fn ($query) => $query->where('activo', true)->with([
-                    'contenidos' => fn ($contenidos) => $contenidos->with(['producto.stock', 'tarifas'])->publicado()->whereIn('tipo', [TipoContenidoWeb::Plato, TipoContenidoWeb::Cerveza]),
+                    'contenidos' => fn ($contenidos) => $contenidos->with(['producto.stock', 'tarifas'])->publicado()->whereIn('tipo', $tiposCarta),
                 ]),
             ])
             ->orderBy('orden')
@@ -31,7 +43,7 @@ class CartaPublicaController extends Controller
         return view('web-publica.carta', [
             'categoriasPadre' => $categoriasPadre,
             'sinCategoria' => $this->contenidos()
-                ->whereIn('tipo', [TipoContenidoWeb::Plato, TipoContenidoWeb::Cerveza])
+                ->whereIn('tipo', $tiposCarta)
                 ->whereNull('categoria_carta_id')
                 ->get(),
         ]);

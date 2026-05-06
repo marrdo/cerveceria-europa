@@ -6,6 +6,7 @@ enum TipoContenidoWeb: string
 {
     case Plato = 'plato';
     case Cerveza = 'cerveza';
+    case Bebida = 'bebida';
     case RecomendacionChef = 'recomendacion_chef';
     case RecomendacionCerveza = 'recomendacion_cerveza';
 
@@ -14,6 +15,7 @@ enum TipoContenidoWeb: string
         return match ($this) {
             self::Plato => 'Plato',
             self::Cerveza => 'Cerveza',
+            self::Bebida => 'Bebida',
             self::RecomendacionChef => 'Recomendacion del chef',
             self::RecomendacionCerveza => 'Recomendacion de cerveza',
         };
