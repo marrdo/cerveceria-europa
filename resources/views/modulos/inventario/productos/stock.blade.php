@@ -5,11 +5,39 @@
 
     @include('modulos.inventario.partials.nav')
 
+    @php
+        $stockPorUbicacion = $producto->stock->sortByDesc(fn ($stock) => (float) $stock->cantidad)->values();
+        $stockTotal = max(0, (float) $stockPorUbicacion->sum('cantidad'));
+        $stockMaximo = max(1, (float) $stockPorUbicacion->max('cantidad'));
+        $movimientosPorDia = $producto->movimientos
+            ->filter(fn ($movimiento): bool => $movimiento->created_at?->gte(now()->subDays(13)) ?? false)
+            ->groupBy(fn ($movimiento): string => $movimiento->created_at->toDateString());
+        $serieMovimientos = collect(range(13, 0))->map(function (int $dias) use ($movimientosPorDia): array {
+            $fecha = now()->subDays($dias);
+            $grupo = $movimientosPorDia->get($fecha->toDateString(), collect());
+            $entradas = (float) $grupo->where('tipo.value', 'entrada')->sum('cantidad');
+            $salidas = (float) $grupo->where('tipo.value', 'salida')->sum('cantidad');
+
+            return [
+                'fecha' => $fecha->toDateString(),
+                'etiqueta' => $fecha->format('d/m'),
+                'entradas' => $entradas,
+                'salidas' => $salidas,
+                'maximo' => max($entradas, $salidas),
+            ];
+        });
+        $maxMovimiento = max(1, (float) $serieMovimientos->max('maximo'));
+        $cantidadStep = $producto->unidad?->permite_decimal ? '0.001' : '1';
+        $cantidadMin = $producto->unidad?->permite_decimal ? '0.001' : '1';
+    @endphp
+
     <x-admin.page-header
         titulo="Stock de {{ $producto->nombre }}"
         subtitulo="Consulta existencias por ubicacion y registra entradas, salidas, ajustes o transferencias."
     >
-        <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="admin-btn-outline">Editar producto</a>
+        <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-warning/40 bg-warning/20 text-warning-foreground transition hover:bg-warning/30" title="Editar" aria-label="Editar {{ $producto->nombre }}">
+            <x-admin.icon name="edit" />
+        </a>
         <a href="{{ route('admin.inventario.productos.index') }}" class="admin-btn-outline">Volver</a>
     </x-admin.page-header>
 
@@ -37,11 +65,31 @@
                     </x-admin.status-badge>
                 </div>
 
+                <figure class="mb-5 rounded-lg border border-border bg-muted/20 p-4">
+                    <figcaption class="mb-3 flex items-center justify-between gap-3 text-sm">
+                        <span class="font-medium text-foreground">Distribucion visual</span>
+                        <span class="font-semibold text-foreground">{{ $producto->formatearCantidadConUnidad($stockTotal) }}</span>
+                    </figcaption>
+                    <div class="space-y-3">
+                        @forelse ($stockPorUbicacion as $stock)
+                            <div class="grid gap-2 md:grid-cols-[8rem_1fr_5rem] md:items-center">
+                                <span class="truncate text-xs font-medium text-muted-foreground">{{ $stock->ubicacion?->nombre }}</span>
+                                <div class="h-3 overflow-hidden rounded-full bg-muted">
+                                    <div class="h-full rounded-full bg-primary" style="width: {{ ((float) $stock->cantidad / $stockMaximo) * 100 }}%"></div>
+                                </div>
+                                <span class="text-xs font-semibold text-foreground md:text-right">{{ $producto->formatearCantidad($stock->cantidad) }}</span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-muted-foreground">Todavia no hay stock registrado.</p>
+                        @endforelse
+                    </div>
+                </figure>
+
                 <div class="divide-y divide-border">
-                    @forelse ($producto->stock as $stock)
+                    @forelse ($stockPorUbicacion as $stock)
                         <div class="flex items-center justify-between gap-4 py-3 text-sm">
                             <span class="text-muted-foreground">{{ $stock->ubicacion?->nombre }}</span>
-                            <span class="font-semibold text-foreground">{{ $producto->formatearCantidad($stock->cantidad) }} {{ $producto->codigoUnidad() }}</span>
+                            <span class="font-semibold text-foreground">{{ $producto->formatearCantidadConUnidad($stock->cantidad) }}</span>
                         </div>
                     @empty
                         <p class="text-sm text-muted-foreground">Todavia no hay stock registrado.</p>
@@ -51,12 +99,30 @@
 
             <section class="admin-card p-4 lg:p-6">
                 <h3 class="mb-4 text-base font-semibold text-foreground">Ultimos movimientos</h3>
+                <figure class="mb-5 rounded-lg border border-border bg-muted/20 p-4">
+                    <figcaption class="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                        <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-success"></span>Entradas</span>
+                        <span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-destructive"></span>Salidas</span>
+                    </figcaption>
+                    <ol class="grid grid-cols-7 gap-2 lg:grid-cols-[repeat(14,minmax(0,1fr))]" aria-label="Movimientos diarios de los ultimos 14 dias">
+                        @foreach ($serieMovimientos as $dia)
+                            <li class="flex min-h-28 flex-col justify-end gap-1">
+                                <div class="flex h-20 items-end justify-center gap-1">
+                                    <span class="w-2 rounded-t bg-success" style="height: {{ max(3, ($dia['entradas'] / $maxMovimiento) * 80) }}%" title="Entradas {{ $producto->formatearCantidad($dia['entradas']) }}"></span>
+                                    <span class="w-2 rounded-t bg-destructive" style="height: {{ max(3, ($dia['salidas'] / $maxMovimiento) * 80) }}%" title="Salidas {{ $producto->formatearCantidad($dia['salidas']) }}"></span>
+                                </div>
+                                <time datetime="{{ $dia['fecha'] }}" class="text-center text-[0.65rem] text-muted-foreground">{{ $dia['etiqueta'] }}</time>
+                            </li>
+                        @endforeach
+                    </ol>
+                </figure>
+
                 <div class="divide-y divide-border">
                     @forelse ($producto->movimientos->take(20) as $movimiento)
                         <div class="py-3 text-sm">
                             <div class="flex items-center justify-between gap-4">
                                 <span class="font-medium text-foreground">{{ $movimiento->tipo->etiqueta() }} - {{ $movimiento->motivo }}</span>
-                                <span class="whitespace-nowrap font-semibold text-foreground">{{ $producto->formatearCantidad($movimiento->cantidad) }} {{ $producto->codigoUnidad() }}</span>
+                                <span class="whitespace-nowrap font-semibold text-foreground">{{ $producto->formatearCantidadConUnidad($movimiento->cantidad) }}</span>
                             </div>
                             <p class="mt-1 text-muted-foreground">{{ $movimiento->created_at->format('d/m/Y H:i') }} - Stock: {{ $producto->formatearCantidad($movimiento->stock_antes) }} -> {{ $producto->formatearCantidad($movimiento->stock_despues) }}</p>
                         </div>
@@ -90,7 +156,7 @@
                                 <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
                                     <td class="px-3 py-2 text-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
                                     <td class="px-3 py-2 text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</td>
-                                    <td class="px-3 py-2 text-foreground">{{ $producto->formatearCantidad($lote->cantidad_disponible) }} {{ $producto->codigoUnidad() }}</td>
+                                    <td class="px-3 py-2 text-foreground">{{ $producto->formatearCantidadConUnidad($lote->cantidad_disponible) }}</td>
                                     <td class="px-3 py-2">
                                         @if ($lote->caduca_el)
                                             <x-admin.status-badge :variant="$caducidadVariant">{{ $lote->caduca_el->format('d/m/Y') }}</x-admin.status-badge>
@@ -110,7 +176,7 @@
             </section>
         </div>
 
-        <form method="POST" action="{{ route('admin.inventario.productos.stock.movimientos.store', $producto) }}" class="admin-card space-y-4 p-4 lg:p-6">
+        <form method="POST" action="{{ route('admin.inventario.productos.stock.movimientos.store', $producto->sku ?: $producto->id) }}" class="admin-card space-y-4 p-4 lg:p-6">
             @csrf
             <h3 class="text-base font-semibold text-foreground">Registrar movimiento</h3>
 
@@ -175,7 +241,7 @@
 
             <div>
                 <x-input-label for="cantidad" value="Cantidad" />
-                <x-text-input id="cantidad" name="cantidad" type="number" step="0.001" min="0.001" class="mt-1 block h-10 w-full" required />
+                <x-text-input id="cantidad" name="cantidad" type="number" :step="$cantidadStep" :min="$cantidadMin" inputmode="{{ $producto->unidad?->permite_decimal ? 'decimal' : 'numeric' }}" class="mt-1 block h-10 w-full" required />
                 <p class="mt-1 text-xs text-muted-foreground">Numero de unidades que entran, salen, se ajustan o se transfieren.</p>
                 <x-input-error :messages="$errors->get('cantidad')" class="mt-2" />
             </div>

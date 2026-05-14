@@ -14,7 +14,7 @@
                 <div class="mb-4 rounded-md border border-success/30 bg-success/10 p-4 text-sm text-success">{{ session('status') }}</div>
             @endif
 
-            <form method="GET" action="{{ route('admin.inventario.productos.index') }}" class="admin-card mb-4 grid gap-3 p-4 lg:grid-cols-6">
+            <form method="GET" action="{{ route('admin.inventario.productos.index') }}" class="admin-card mb-4 grid gap-3 p-4 lg:grid-cols-7">
                 <div class="lg:col-span-2">
                     <x-input-label for="busqueda" value="Busqueda" />
                     <x-text-input id="busqueda" name="busqueda" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" placeholder="Nombre, SKU o codigo" maxlength="191" />
@@ -41,6 +41,16 @@
                 </div>
 
                 <div>
+                    <x-input-label for="ubicacion_inventario_id" value="Ubicacion" />
+                    <select id="ubicacion_inventario_id" name="ubicacion_inventario_id" class="admin-input mt-1 block h-10 w-full">
+                        <option value="">Todas</option>
+                        @foreach ($ubicaciones as $ubicacion)
+                            <option value="{{ $ubicacion->id }}" @selected($filtros['ubicacion_inventario_id'] === $ubicacion->id)>{{ $ubicacion->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
                     <x-input-label for="estado_stock" value="Estado stock" />
                     <select id="estado_stock" name="estado_stock" class="admin-input mt-1 block h-10 w-full">
                         <option value="">Todos</option>
@@ -59,7 +69,7 @@
                     </select>
                 </div>
 
-                <div class="flex items-end gap-2 lg:col-span-6">
+                <div class="flex items-end gap-2 lg:col-span-7">
                     <button type="submit" class="admin-btn-primary">Filtrar</button>
                     <a href="{{ route('admin.inventario.productos.index') }}" class="admin-btn-outline">Limpiar</a>
                 </div>
@@ -84,7 +94,7 @@
                                     <div class="text-xs text-muted-foreground">{{ $producto->sku ?? 'Sin SKU' }}</div>
                                 </td>
                                 <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">{{ $producto->categoria?->nombre }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $producto->formatearCantidad($producto->cantidadStock()) }} {{ $producto->codigoUnidad() }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $producto->formatearCantidadConUnidad($producto->cantidadStock()) }}</td>
                                 <td class="px-4 py-3">
                                     @php
                                         $estado = $producto->estadoStock();
@@ -98,8 +108,14 @@
                                     <x-admin.status-badge :variant="$variant">{{ $estado->etiqueta() }}</x-admin.status-badge>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.inventario.productos.stock', $producto) }}" class="text-primary hover:underline">Stock</a>
-                                    <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="ms-3 text-primary hover:underline">Editar</a>
+                                    <div class="flex justify-end gap-2">
+                                        <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Stock" aria-label="Stock de {{ $producto->nombre }}">
+                                            <x-admin.icon name="stock" />
+                                        </a>
+                                        <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Editar" aria-label="Editar {{ $producto->nombre }}">
+                                            <x-admin.icon name="edit" />
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

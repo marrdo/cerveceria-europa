@@ -9,6 +9,7 @@ use App\Modulos\Inventario\Models\LoteInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
+use App\Modulos\Inventario\Services\DashboardInventarioMetricas;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ class DashboardInventarioController extends Controller
     /**
      * Muestra el panel operativo principal del modulo de inventario.
      */
-    public function __invoke(): View
+    public function __invoke(DashboardInventarioMetricas $metricas): View
     {
         $productos = Producto::query()
             ->with(['categoria', 'proveedor', 'unidad', 'stock'])
@@ -38,7 +39,9 @@ class DashboardInventarioController extends Controller
         return view('modulos.inventario.dashboard', [
             'kpis' => [
                 'productos_activos' => $productos->count(),
-                'productos_control_stock' => $productosConStock->count(),
+                'productos_con_existencias' => $productosConStock
+                    ->filter(fn (Producto $producto): bool => $producto->cantidadStock() > 0)
+                    ->count(),
                 'productos_sin_stock' => $productosConEstado->where('estado_stock_calculado', EstadoStockProducto::SinStock)->count(),
                 'productos_bajo_stock' => $productosConEstado->where('estado_stock_calculado', EstadoStockProducto::Bajo)->count(),
                 'movimientos_hoy' => MovimientoInventario::query()->whereDate('created_at', today())->count(),
@@ -60,6 +63,10 @@ class DashboardInventarioController extends Controller
                 ->take(8)
                 ->get(),
             'topSalidas' => $this->topProductosConSalidas(),
+            'graficaEntradasSalidas' => $metricas->entradasSalidasPorDia(14),
+            'graficaMovimientosPorTipo' => $metricas->movimientosPorTipo(30),
+            'graficaSalidasPorCategoria' => $metricas->salidasPorCategoria(30),
+            'graficaStockPorUbicacion' => $metricas->stockPorUbicacion(),
         ]);
     }
 
@@ -114,9 +121,6 @@ class DashboardInventarioController extends Controller
             ->get();
     }
 
-    /**
-     * Consulta base de lotes disponibles con caducidad.
-     */
     /**
      * @return Builder<LoteInventario>
      */

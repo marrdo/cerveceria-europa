@@ -13,6 +13,7 @@ use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,6 +29,7 @@ class ProductoController extends Controller
             'busqueda' => trim((string) $request->query('busqueda', '')),
             'categoria_producto_id' => (string) $request->query('categoria_producto_id', ''),
             'proveedor_id' => (string) $request->query('proveedor_id', ''),
+            'ubicacion_inventario_id' => (string) $request->query('ubicacion_inventario_id', ''),
             'estado_stock' => (string) $request->query('estado_stock', ''),
             'activo' => (string) $request->query('activo', ''),
         ];
@@ -48,6 +50,11 @@ class ProductoController extends Controller
             })
             ->when($filtros['categoria_producto_id'] !== '', fn ($query) => $query->where('categoria_producto_id', $filtros['categoria_producto_id']))
             ->when($filtros['proveedor_id'] !== '', fn ($query) => $query->where('proveedor_id', $filtros['proveedor_id']))
+            ->when($filtros['ubicacion_inventario_id'] !== '', fn ($query) => $query->whereHas('stock', function (Builder $stockQuery) use ($filtros): void {
+                $stockQuery
+                    ->where('ubicacion_inventario_id', $filtros['ubicacion_inventario_id'])
+                    ->where('cantidad', '>', 0);
+            }))
             ->when($filtros['activo'] !== '', fn ($query) => $query->where('activo', $filtros['activo'] === '1'))
             ->when($filtros['estado_stock'] !== '', fn ($query) => $this->aplicarFiltroEstadoStock($query, $filtros['estado_stock']))
             ->orderBy('nombre')
@@ -58,6 +65,7 @@ class ProductoController extends Controller
             'productos' => $productos,
             'categorias' => CategoriaProducto::query()->where('activo', true)->orderBy('nombre')->get(),
             'proveedores' => Proveedor::query()->where('activo', true)->orderBy('nombre')->get(),
+            'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
             'estadosStock' => EstadoStockProducto::cases(),
             'filtros' => $filtros,
         ]);
@@ -118,8 +126,10 @@ class ProductoController extends Controller
     /**
      * Muestra stock y movimientos de un producto.
      */
-    public function stock(Producto $producto): View
+    public function stock(string $producto): View
     {
+        $producto = $this->resolverProductoPorReferencia($producto);
+
         return view('modulos.inventario.productos.stock', [
             'producto' => $producto->load(['categoria', 'unidad', 'stock.ubicacion', 'lotes.ubicacion', 'movimientos.ubicacion', 'movimientos.proveedor']),
             'ubicaciones' => UbicacionInventario::query()->where('activo', true)->orderBy('nombre')->get(),
@@ -133,12 +143,15 @@ class ProductoController extends Controller
      */
     public function storeMovimiento(
         GuardarMovimientoInventarioRequest $request,
-        Producto $producto,
+        string $producto,
         RegistrarMovimientoInventarioAction $registrarMovimiento,
     ): RedirectResponse {
+        $referenciaRuta = $producto;
+        $producto = $this->resolverProductoPorReferencia($producto);
+
         $registrarMovimiento->execute($producto, $request->validated(), $request->user()?->id);
 
-        return redirect()->route('admin.inventario.productos.stock', $producto)
+        return redirect()->route('admin.inventario.productos.stock', $referenciaRuta)
             ->with('status', 'Movimiento registrado correctamente.');
     }
 
@@ -180,4 +193,19 @@ class ProductoController extends Controller
             default => null,
         };
     }
+
+    /**
+     * Resuelve la URL de stock por SKU visible y mantiene UUID como compatibilidad.
+     */
+    private function resolverProductoPorReferencia(string $referencia): Producto
+    {
+        return Producto::query()
+            ->where(function (Builder $query) use ($referencia): void {
+                $query
+                    ->where('sku', $referencia)
+                    ->orWhere('id', $referencia);
+            })
+            ->firstOrFail();
+    }
+
 }

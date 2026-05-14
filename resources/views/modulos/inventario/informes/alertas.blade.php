@@ -36,10 +36,12 @@
                                 <td class="px-4 py-3 text-muted-foreground">{{ $producto->proveedor?->nombre ?? 'Sin proveedor' }}</td>
                                 <td class="px-4 py-3">
                                     <x-admin.status-badge variant="danger">Sin stock</x-admin.status-badge>
-                                    <div class="mt-1 text-xs text-muted-foreground">Minimo {{ $producto->formatearCantidad($producto->cantidad_alerta_stock) }} {{ $producto->codigoUnidad() }}</div>
+                                    <div class="mt-1 text-xs text-muted-foreground">Minimo {{ $producto->formatearCantidadConUnidad($producto->cantidad_alerta_stock) }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.inventario.productos.stock', $producto) }}" class="text-primary hover:underline">Ver stock</a>
+                                    <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Stock" aria-label="Stock de {{ $producto->nombre }}">
+                                        <x-admin.icon name="stock" />
+                                    </a>
                                 </td>
                             </tr>
                         @empty
@@ -77,11 +79,13 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <x-admin.status-badge variant="warning">Stock bajo</x-admin.status-badge>
-                                    <div class="mt-1 text-xs text-muted-foreground">{{ $producto->formatearCantidad($producto->cantidadStock()) }} / {{ $producto->formatearCantidad($producto->cantidad_alerta_stock) }} {{ $producto->codigoUnidad() }}</div>
+                                    <div class="mt-1 text-xs text-muted-foreground">{{ $producto->formatearCantidadConUnidad($producto->cantidadStock()) }} / {{ $producto->formatearCantidadConUnidad($producto->cantidad_alerta_stock) }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $producto->proveedor?->nombre ?? 'Sin proveedor' }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ route('admin.inventario.productos.stock', $producto) }}" class="text-primary hover:underline">Ver stock</a>
+                                    <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Stock" aria-label="Stock de {{ $producto->nombre }}">
+                                        <x-admin.icon name="stock" />
+                                    </a>
                                 </td>
                             </tr>
                         @empty
@@ -120,7 +124,7 @@
                                     <div class="text-xs text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }} {{ $lote->producto?->codigoUnidad() }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }}</td>
                                 <td class="px-4 py-3"><x-admin.status-badge variant="danger">{{ $lote->caduca_el?->format('d/m/Y') }}</x-admin.status-badge></td>
                             </tr>
                         @empty
@@ -157,7 +161,7 @@
                                     <div class="text-xs text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }} {{ $lote->producto?->codigoUnidad() }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }}</td>
                                 <td class="px-4 py-3"><x-admin.status-badge variant="warning">{{ $lote->caduca_el?->format('d/m/Y') }}</x-admin.status-badge></td>
                             </tr>
                         @empty

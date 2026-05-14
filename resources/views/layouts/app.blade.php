@@ -83,20 +83,23 @@
                     </a>
 
                     @if ($usuario?->puedeAccederModulo('inventario'))
-                        <nav>
-                            <button type="button" class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'inventario' ? '' : 'inventario'" :aria-expanded="moduloAbierto === 'inventario'">
-                                <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0H4m16 0l-2-3H6L4 7m4 4h8m-8 4h5" />
+                        <div>
+                            <div class="flex items-center gap-1 rounded-md transition {{ $inventarioActivo ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent' }}">
+                                <a href="{{ route('admin.inventario.index') }}" class="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-sm font-semibold">
+                                    <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0H4m16 0l-2-3H6L4 7m4 4h8m-8 4h5" />
+                                        </svg>
+                                    </span>
+                                    <span class="truncate">Inventario</span>
+                                </a>
+                                <button type="button" class="me-2 rounded-md p-1.5 hover:bg-sidebar-accent" @click="moduloAbierto = moduloAbierto === 'inventario' ? '' : 'inventario'" :aria-expanded="moduloAbierto === 'inventario'" aria-label="Mostrar secciones de inventario">
+                                    <svg class="h-4 w-4 transition" :class="moduloAbierto === 'inventario' ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                     </svg>
-                                </span>
-                                <span class="flex-1">Inventario</span>
-                                <svg class="h-4 w-4 transition" :class="moduloAbierto === 'inventario' ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
-                                </svg>
-                            </button>
-                            <section x-show="moduloAbierto === 'inventario'" x-transition class="space-y-1 pb-2 ps-14">
-                                <a href="{{ route('admin.inventario.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.index') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Dashboard</a>
+                                </button>
+                            </div>
+                            <section x-show="moduloAbierto === 'inventario'" x-transition class="space-y-1 pb-2 pt-2 ps-14">
                                 <a href="{{ route('admin.inventario.productos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.productos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Productos</a>
                                 <a href="{{ route('admin.inventario.proveedores.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.proveedores.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Proveedores</a>
                                 <a href="{{ route('admin.inventario.alertas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.alertas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Alertas</a>
@@ -105,7 +108,7 @@
                                 <a href="{{ route('admin.inventario.categorias.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.categorias.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Categorias</a>
                                 <a href="{{ route('admin.inventario.unidades.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.inventario.unidades.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Unidades</a>
                             </section>
-                        </nav>
+                        </div>
                     @endif
 
                     @if ($usuario?->puedeAccederModulo('compras'))
@@ -121,7 +124,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'compras'" x-transition class="space-y-1 pb-2 ps-14">
+                            <div x-show="moduloAbierto === 'compras'" x-transition class="space-y-1 pb-2 ps-14 pt-1">
                                 <a href="{{ route('admin.compras.pedidos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.pedidos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Pedidos</a>
                                 <a href="{{ route('admin.compras.propuestas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.propuestas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Propuestas</a>
                                 <a href="{{ route('admin.compras.documentos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.compras.documentos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Documentos</a>
@@ -142,7 +145,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'ventas'" x-transition class="space-y-1 pb-2 ps-14">
+                            <div x-show="moduloAbierto === 'ventas'" x-transition class="space-y-1 pb-2 ps-14 pt-1">
                                 <a href="{{ route('admin.ventas.comandas.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Nueva comanda</a>
                                 <a href="{{ route('admin.ventas.comandas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.ventas.comandas.index') || request()->routeIs('admin.ventas.comandas.show') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Comandas</a>
                                 @if ($usuario?->puedeGestionarCaja())
@@ -168,7 +171,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'espacios'" x-transition class="space-y-1 pb-2 ps-14">
+                            <div x-show="moduloAbierto === 'espacios'" x-transition class="space-y-1 pb-2 ps-14 pt-1">
                                 <a href="{{ route('admin.espacios.recintos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.recintos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Recintos</a>
                                 <a href="{{ route('admin.espacios.zonas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.zonas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Zonas</a>
                                 <a href="{{ route('admin.espacios.mesas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.mesas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Mesas</a>
@@ -189,7 +192,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'personal'" x-transition class="space-y-1 pb-2 ps-14">
+                            <div x-show="moduloAbierto === 'personal'" x-transition class="space-y-1 pb-2 ps-14 pt-1">
                                 <a href="{{ route('admin.personal.usuarios.create') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.personal.usuarios.create') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Anadir usuario</a>
                                 <a href="{{ route('admin.personal.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.personal.index') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Usuarios</a>
                             </div>
@@ -209,7 +212,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 18 6-6-6-6" />
                                 </svg>
                             </button>
-                            <div x-show="moduloAbierto === 'web_publica'" x-transition class="space-y-1 pb-2 ps-14">
+                            <div x-show="moduloAbierto === 'web_publica'" x-transition class="space-y-1 pb-2 ps-14 pt-1">
                                 <a href="{{ route('admin.web-publica.contenidos.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.contenidos.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Contenidos</a>
                                 <a href="{{ route('admin.web-publica.carta-categorias.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.carta-categorias.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Categorias carta</a>
                                 <a href="{{ route('admin.web-publica.secciones.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.web-publica.secciones.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Secciones</a>

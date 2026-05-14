@@ -265,7 +265,7 @@ class RegistrarMovimientoInventarioAction
     {
         if ($cantidad - $stockAntes > 0.0005) {
             throw ValidationException::withMessages([
-                'cantidad' => "No puedes sacar {$producto->formatearCantidad($cantidad)} {$producto->codigoUnidad()} de {$producto->nombre}; solo hay {$producto->formatearCantidad($stockAntes)}.",
+                'cantidad' => "No puedes sacar {$producto->formatearCantidadConUnidad($cantidad)} de {$producto->nombre}; solo hay {$producto->formatearCantidadConUnidad($stockAntes)}.",
             ]);
         }
 

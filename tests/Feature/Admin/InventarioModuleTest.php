@@ -41,6 +41,10 @@ class InventarioModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Acciones rapidas')
             ->assertSee('Productos activos')
+            ->assertSee('Entradas vs salidas')
+            ->assertSee('Movimientos por tipo')
+            ->assertSee('Salidas por categoria')
+            ->assertSee('Stock por ubicacion')
             ->assertSee('Ultimos movimientos');
     }
 
@@ -126,10 +130,31 @@ class InventarioModuleTest extends TestCase
         ]);
 
         $this->actingAs($usuario)
-            ->get(route('admin.inventario.productos.stock', $producto))
+            ->get(route('admin.inventario.productos.stock', $producto->sku))
             ->assertOk()
             ->assertSee('Stock de Tomates')
             ->assertSee('Sin stock');
+    }
+
+    public function test_product_quantities_use_readable_unit_names(): void
+    {
+        $this->seed(InventarioSeeder::class);
+
+        $producto = Producto::query()->create([
+            'categoria_producto_id' => CategoriaProducto::query()->firstOrFail()->id,
+            'unidad_inventario_id' => UnidadInventario::query()->where('codigo', 'botella')->firstOrFail()->id,
+            'nombre' => 'Botella prueba plural',
+            'sku' => 'BOT-PLURAL',
+            'precio_venta' => 3.50,
+            'precio_coste' => 1.20,
+            'cantidad_alerta_stock' => 6,
+            'controla_stock' => true,
+            'controla_caducidad' => false,
+            'activo' => true,
+        ])->load('unidad');
+
+        $this->assertSame('1 botella', $producto->formatearCantidadConUnidad(1));
+        $this->assertSame('2 botellas', $producto->formatearCantidadConUnidad(2));
     }
 
     public function test_supplier_document_must_be_valid_spanish_dni_nie_or_cif(): void

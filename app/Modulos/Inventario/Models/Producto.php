@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Producto extends Model
 {
@@ -119,6 +120,38 @@ class Producto extends Model
         $formateada = number_format((float) ($cantidad ?? 0), $decimales, ',', '.');
 
         return $decimales === 0 ? $formateada : rtrim(rtrim($formateada, '0'), ',');
+    }
+
+    /**
+     * Formatea una cantidad con una unidad legible en singular o plural.
+     */
+    public function formatearCantidadConUnidad(float|string|null $cantidad): string
+    {
+        return $this->formatearCantidad($cantidad).' '.$this->nombreUnidadParaCantidad($cantidad);
+    }
+
+    /**
+     * Devuelve el nombre visible de unidad adaptado a la cantidad.
+     */
+    public function nombreUnidadParaCantidad(float|string|null $cantidad): string
+    {
+        $valor = abs((float) ($cantidad ?? 0));
+        $esSingular = abs($valor - 1.0) < 0.0005;
+        $codigo = $this->codigoUnidad();
+
+        if ($esSingular) {
+            return $this->unidad?->nombre ? Str::lower($this->unidad->nombre) : $codigo;
+        }
+
+        return match ($codigo) {
+            'ud' => 'unidades',
+            'caja' => 'cajas',
+            'botella' => 'botellas',
+            'barril' => 'barriles',
+            'l' => 'litros',
+            'kg' => 'kg',
+            default => Str::endsWith($codigo, 's') ? $codigo : $codigo.'s',
+        };
     }
 
     /**

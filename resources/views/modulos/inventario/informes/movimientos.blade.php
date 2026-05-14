@@ -112,7 +112,7 @@
                         </td>
                         <td class="px-4 py-3 text-foreground">
                             {{ $movimiento->producto?->formatearCantidad($movimiento->cantidad) ?? $movimiento->cantidad }}
-                            {{ $movimiento->producto?->codigoUnidad() }}
+                            {{ $movimiento->producto?->nombreUnidadParaCantidad($movimiento->cantidad) }}
                         </td>
                         <td class="hidden px-4 py-3 text-muted-foreground lg:table-cell">{{ $ubicacionTexto }}</td>
                         <td class="hidden px-4 py-3 text-muted-foreground 2xl:table-cell">{{ $movimiento->proveedor?->nombre ?? 'Sin proveedor' }}</td>

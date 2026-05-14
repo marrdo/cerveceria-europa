@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.1 implementada.
+Fase 2.2 implementada.
 
 Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
 
@@ -31,8 +31,21 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Resumen critico de productos sin stock, stock bajo y caducidades.
 - Top de productos con mas salidas en los ultimos 30 dias.
 - Ultimos movimientos visibles desde la entrada del modulo.
+- Grafica de entradas vs salidas por dia en el dashboard.
+- Representacion lineal SVG para entradas vs salidas sin dependencia externa.
+- Grafica de movimientos por tipo en el dashboard.
+- Grafica de salidas por categoria en el dashboard.
+- Grafica de stock por ubicacion en el dashboard.
+- Servicio reusable para metricas agregadas del dashboard de inventario.
 - Soft deletes en entidades principales.
 - Seeders iniciales orientados a un bar.
+- Seeder demo de cervezas reales importadas desde `Cartasdesdenumier.txt`.
+- Stock demo repartido entre Almacen, Camara fria y Barra, con productos con stock, bajo minimo y sin stock.
+- Movimientos demo de entrada, salida, ajuste y transferencia para validar graficas.
+- Acciones de productos con iconos reutilizables y `title` accesible.
+- URLs de ficha de stock por SKU cuando existe, manteniendo UUID solo como respaldo tecnico.
+- Ficha de stock de producto con visualizacion por ubicacion y actividad reciente.
+- Filtro de productos por ubicacion desde el listado y desde el dashboard.
 
 ## Tablas
 
@@ -136,6 +149,8 @@ Bloques operativos:
 
 Anadir graficas al dashboard usando datos agregados de `movimientos_inventario`.
 
+Estado: implementada.
+
 Graficas recomendadas:
 
 - Entradas vs salidas por dia en los ultimos 14 o 30 dias.
@@ -143,6 +158,8 @@ Graficas recomendadas:
 - Salidas por categoria de producto.
 - Top productos con mas salidas.
 - Stock por ubicacion.
+
+La grafica filtrable de productos concretos por ubicacion se ha retirado porque aportaba poco al flujo real del encargado y anadia complejidad visual. El dashboard mantiene la lectura agregada por ubicacion y los productos sin stock se revisan desde las alertas/KPIs.
 
 Lectura esperada:
 
@@ -197,6 +214,13 @@ Mejoras recomendadas:
   - crear propuesta de compra,
   - revisar movimientos.
 
+Mejoras ya aplicadas durante la fase de correccion:
+
+- En la tabla de productos, las acciones principales usan iconos reutilizables con `title` y `aria-label`.
+- La pantalla de stock usa SKU en la URL siempre que exista para evitar exponer UUID en el flujo normal.
+- El campo cantidad usa incrementos enteros cuando la unidad no permite decimales.
+- El dashboard enlaza cada ubicacion de stock con el listado de productos filtrado por esa ubicacion.
+
 ### Fase 2.5 - Integracion avanzada con compras y ventas
 
 Esta fase conecta el dashboard con la operativa completa del negocio.
@@ -212,7 +236,7 @@ Mejoras recomendadas:
 
 ## Siguiente fase recomendada
 
-1. Anadir primera grafica de entradas vs salidas por dia usando `movimientos_inventario`.
-2. Anadir grafica de movimientos por tipo: entrada, salida, ajuste y transferencia.
-3. Anadir salidas por categoria y stock por ubicacion.
-4. Extraer las consultas agregadas a una clase reusable para futuros informes.
+1. Empezar Fase 2.3 con consumo medio diario, dias estimados restantes y reposicion urgente.
+2. Cruzar productos de carta con productos de inventario para detectar ventas sin descuento de stock.
+3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
+4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.

@@ -3,6 +3,7 @@
 namespace App\Modulos\Inventario\Http\Requests;
 
 use App\Modulos\Inventario\Enums\TipoMovimientoInventario;
+use App\Modulos\Inventario\Models\Producto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -74,7 +75,7 @@ class GuardarMovimientoInventarioRequest extends FormRequest
                     }
                 }
 
-                $producto = $this->route('producto');
+                $producto = $this->productoRuta();
 
                 if (
                     $producto?->controla_caducidad
@@ -88,5 +89,29 @@ class GuardarMovimientoInventarioRequest extends FormRequest
                 }
             },
         ];
+    }
+
+    /**
+     * Resuelve el producto de la ruta cuando llega por SKU visible o por UUID heredado.
+     */
+    private function productoRuta(): ?Producto
+    {
+        $producto = $this->route('producto');
+
+        if ($producto instanceof Producto) {
+            return $producto;
+        }
+
+        if (! is_string($producto) || $producto === '') {
+            return null;
+        }
+
+        return Producto::query()
+            ->where(function ($query) use ($producto): void {
+                $query
+                    ->where('sku', $producto)
+                    ->orWhere('id', $producto);
+            })
+            ->first();
     }
 }
