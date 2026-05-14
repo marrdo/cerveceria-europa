@@ -21,6 +21,18 @@
         </svg>
         @break
 
+    @case('plus')
+        <svg {{ $attributes->merge(['class' => 'h-4 w-4']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 5v14m7-7H5" />
+        </svg>
+        @break
+
+    @case('minus')
+        <svg {{ $attributes->merge(['class' => 'h-4 w-4']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 12H5" />
+        </svg>
+        @break
+
     @default
         <svg {{ $attributes->merge(['class' => 'h-4 w-4']) }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6l4 2" />

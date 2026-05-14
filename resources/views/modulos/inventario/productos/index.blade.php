@@ -17,7 +17,8 @@
             <form method="GET" action="{{ route('admin.inventario.productos.index') }}" class="admin-card mb-4 grid gap-3 p-4 lg:grid-cols-7">
                 <div class="lg:col-span-2">
                     <x-input-label for="busqueda" value="Busqueda" />
-                    <x-text-input id="busqueda" name="busqueda" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" placeholder="Nombre, SKU o codigo" maxlength="191" />
+                    <x-text-input id="busqueda" name="busqueda" type="search" class="mt-1 block h-10 w-full" :value="$filtros['busqueda']" placeholder="Escanea codigo, SKU o busca por nombre" maxlength="191" autocomplete="off" enterkeyhint="search" autofocus />
+                    <p class="mt-1 text-xs text-muted-foreground">El lector de codigo funciona como teclado: escanea y pulsa filtrar.</p>
                 </div>
 
                 <div>

@@ -135,7 +135,10 @@ class InventarioModuleTest extends TestCase
             ->get(route('admin.inventario.productos.stock', $producto->sku))
             ->assertOk()
             ->assertSee('Stock de Tomates')
-            ->assertSee('Sin stock');
+            ->assertSee('Sin stock')
+            ->assertSee('Acciones rapidas de stock')
+            ->assertSee('Restar cantidad')
+            ->assertSee('Sumar cantidad');
     }
 
     public function test_product_quantities_use_readable_unit_names(): void
@@ -256,6 +259,7 @@ class InventarioModuleTest extends TestCase
             'unidad_inventario_id' => $unidad->id,
             'nombre' => 'Lupulo Amarillo Especial',
             'sku' => 'LUP-AMARILLO',
+            'codigo_barras' => '8412345678901',
             'precio_venta' => 4.20,
             'cantidad_alerta_stock' => 10,
             'controla_stock' => true,
@@ -295,6 +299,22 @@ class InventarioModuleTest extends TestCase
                 'proveedor_id' => $proveedorNorte->id,
                 'estado_stock' => 'bajo',
                 'activo' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee('Lupulo Amarillo Especial')
+            ->assertDontSee('Malta Negra Reserva');
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.productos.index', [
+                'busqueda' => '8412345678901',
+            ]))
+            ->assertOk()
+            ->assertSee('Lupulo Amarillo Especial')
+            ->assertDontSee('Malta Negra Reserva');
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.productos.index', [
+                'busqueda' => 'Distribuidor Norte',
             ]))
             ->assertOk()
             ->assertSee('Lupulo Amarillo Especial')

@@ -39,14 +39,28 @@ class ProductoController extends Controller
             ->withSum('stock as cantidad_stock_total', 'cantidad')
             ->when($filtros['busqueda'] !== '', function ($query) use ($filtros): void {
                 $busqueda = $filtros['busqueda'];
+                $busquedaParcial = "%{$busqueda}%";
 
                 $query->where(function ($subquery) use ($busqueda): void {
                     $subquery
                         ->where('nombre', 'like', "%{$busqueda}%")
                         ->orWhere('sku', 'like', "%{$busqueda}%")
                         ->orWhere('codigo_barras', 'like', "%{$busqueda}%")
-                        ->orWhere('referencia_proveedor', 'like', "%{$busqueda}%");
-                });
+                        ->orWhere('referencia_proveedor', 'like', "%{$busqueda}%")
+                        ->orWhereHas('proveedor', function (Builder $proveedorQuery) use ($busqueda): void {
+                            $proveedorQuery->where('nombre', 'like', "%{$busqueda}%");
+                        });
+                })
+                    ->orderByRaw(
+                        'case
+                            when sku = ? then 0
+                            when codigo_barras = ? then 1
+                            when referencia_proveedor = ? then 2
+                            when nombre like ? then 3
+                            else 4
+                        end',
+                        [$busqueda, $busqueda, $busqueda, $busquedaParcial],
+                    );
             })
             ->when($filtros['categoria_producto_id'] !== '', fn ($query) => $query->where('categoria_producto_id', $filtros['categoria_producto_id']))
             ->when($filtros['proveedor_id'] !== '', fn ($query) => $query->where('proveedor_id', $filtros['proveedor_id']))

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.3 implementada.
+Fase 2.4 implementada.
 
 Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
 
@@ -52,6 +52,12 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Reposicion urgente por stock actual, umbral minimo y consumo medio diario.
 - Estimacion de dias restantes de stock cuando hay salidas recientes.
 - Deteccion de stock parado con unidades disponibles y sin movimiento reciente.
+- Busqueda operativa de productos preparada para lector de codigo, SKU, codigo de barras, referencia de proveedor o nombre.
+- Priorizacion de resultados por coincidencia exacta de SKU, codigo de barras o referencia de proveedor.
+- Acciones rapidas de entrada, salida, ajuste y transferencia desde la ficha de stock.
+- Formulario de movimientos adaptado a PDA/movil con selector visual de tipo y control de cantidad con botones `-` y `+`.
+- Cantidades rapidas configuradas segun si la unidad permite decimales.
+- Persistencia de valores del formulario cuando hay errores de validacion.
 
 ## Tablas
 
@@ -216,6 +222,8 @@ Implementacion actual:
 
 Optimizar el uso operativo del modulo en movil, tablet o PDA.
 
+Estado: implementada.
+
 Mejoras recomendadas:
 
 - Buscador rapido por nombre, SKU, codigo de barras o proveedor.
@@ -236,6 +244,17 @@ Mejoras ya aplicadas durante la fase de correccion:
 - El campo cantidad usa incrementos enteros cuando la unidad no permite decimales.
 - El dashboard enlaza cada ubicacion de stock con el listado de productos filtrado por esa ubicacion.
 
+Implementacion actual:
+
+- El listado de productos tiene un buscador preparado para escanear codigo de barras o buscar por SKU, referencia de proveedor y nombre.
+- Cuando se busca, el listado ordena primero coincidencias exactas de SKU, codigo de barras y referencia de proveedor antes que coincidencias parciales por nombre.
+- La ficha de stock incorpora accesos rapidos para abrir el formulario con el tipo de movimiento ya seleccionado.
+- El formulario de movimiento usa botones grandes para elegir entrada, salida, ajuste o transferencia.
+- Los campos de transferencia se muestran solo cuando el tipo seleccionado es `transferencia`; las ubicaciones normales se usan para entradas, salidas y ajustes.
+- La cantidad se puede ajustar con botones circulares `-` y `+`, manteniendo incrementos enteros para unidades no decimales.
+- Las cantidades rapidas facilitan recepciones habituales: `1`, `6`, `12` y `24` para unidades enteras; `0,25`, `0,5`, `1` y `2` para unidades decimales.
+- El campo motivo incluye sugerencias frecuentes para reducir escritura en PDA.
+
 ### Fase 2.5 - Integracion avanzada con compras y ventas
 
 Esta fase conecta el dashboard con la operativa completa del negocio.
@@ -251,7 +270,7 @@ Mejoras recomendadas:
 
 ## Siguiente fase recomendada
 
-1. Empezar Fase 2.4 con flujo rapido para encargado/PDA: buscador rapido, formularios mas compactos y acciones grandes.
-2. Cruzar productos de carta con productos de inventario para detectar ventas sin descuento de stock.
+1. Empezar Fase 2.5 cruzando productos de carta con productos de inventario para detectar ventas sin descuento de stock.
+2. Crear propuestas automaticas de compra desde productos bajo minimo o con dias restantes criticos.
 3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
 4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
