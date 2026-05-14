@@ -51,12 +51,18 @@
                         <td class="px-4 py-3 text-muted-foreground">{{ $recinto->zonas_count }}</td>
                         <td class="px-4 py-3"><x-admin.status-badge :variant="$recinto->activo ? 'success' : 'default'">{{ $recinto->activo ? 'Activo' : 'Inactivo' }}</x-admin.status-badge></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('admin.espacios.recintos.edit', $recinto) }}" class="text-primary hover:underline">Editar</a>
-                            <form method="POST" action="{{ route('admin.espacios.recintos.destroy', $recinto) }}" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button class="ms-3 text-destructive hover:underline">Eliminar</button>
-                            </form>
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route('admin.espacios.recintos.edit', $recinto) }}" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Editar" aria-label="Editar {{ $recinto->nombre_comercial }}">
+                                    <x-admin.icon name="edit" />
+                                </a>
+                                <form method="POST" action="{{ route('admin.espacios.recintos.destroy', $recinto) }}" class="inline" onsubmit="return confirm('Seguro que deseas eliminar este registro?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-destructive transition hover:bg-destructive/10" title="Eliminar" aria-label="Eliminar {{ $recinto->nombre_comercial }}">
+                                        <x-admin.icon name="trash" />
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

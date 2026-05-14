@@ -15,7 +15,7 @@
     >Eliminar cuenta</x-danger-button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" class="bg-card p-6">
+        <form method="post" action="{{ route('profile.destroy') }}" class="bg-card p-6" onsubmit="return confirm('Seguro que deseas eliminar tu cuenta?');">
             @csrf
             @method('delete')
 

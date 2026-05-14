@@ -4,6 +4,7 @@ namespace App\Modulos\Inventario\Services;
 
 use App\Modulos\Inventario\Enums\TipoMovimientoInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
+use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -182,6 +183,133 @@ class DashboardInventarioMetricas
         return $serie->map(fn (array $ubicacion): array => array_merge($ubicacion, [
             'porcentaje' => round(((float) $ubicacion['cantidad'] / $maximo) * 100, 2),
         ]));
+    }
+
+    /**
+     * Calcula productos que deberian revisarse para reposicion.
+     *
+     * La regla combina stock bajo, productos sin stock y dias estimados restantes
+     * segun salidas recientes. Es una metrica orientativa para decidir, no una orden
+     * automatica de compra.
+     *
+     * @return Collection<int, array{
+     *     producto: Producto,
+     *     stock_actual: float,
+     *     salidas_periodo: float,
+     *     consumo_medio_diario: float,
+     *     dias_restantes: float|null,
+     *     motivo: string,
+     *     urgencia: int
+     * }>
+     */
+    public function reposicionUrgente(int $dias = 30, int $limite = 8, int $umbralDias = 7): Collection
+    {
+        $salidas = $this->salidasPorProducto($dias);
+
+        return Producto::query()
+            ->with(['categoria', 'proveedor', 'unidad', 'stock'])
+            ->where('activo', true)
+            ->where('controla_stock', true)
+            ->orderBy('nombre')
+            ->get()
+            ->map(function (Producto $producto) use ($salidas, $dias, $umbralDias): array {
+                $stockActual = $producto->cantidadStock();
+                $salidasPeriodo = round((float) ($salidas[$producto->id]['cantidad'] ?? 0), 3);
+                $consumoMedioDiario = $salidasPeriodo > 0 ? round($salidasPeriodo / max(1, $dias), 3) : 0.0;
+                $diasRestantes = $consumoMedioDiario > 0 ? round($stockActual / $consumoMedioDiario, 1) : null;
+                $alerta = (float) $producto->cantidad_alerta_stock;
+
+                [$motivo, $urgencia] = match (true) {
+                    $stockActual <= 0 => ['Sin stock disponible', 0],
+                    $alerta > 0 && $stockActual <= $alerta => ['Por debajo del minimo', 1],
+                    $diasRestantes !== null && $diasRestantes <= $umbralDias => ['Se agota pronto', 2],
+                    default => ['Stock suficiente', 9],
+                };
+
+                return [
+                    'producto' => $producto,
+                    'stock_actual' => $stockActual,
+                    'salidas_periodo' => $salidasPeriodo,
+                    'consumo_medio_diario' => $consumoMedioDiario,
+                    'dias_restantes' => $diasRestantes,
+                    'motivo' => $motivo,
+                    'urgencia' => $urgencia,
+                ];
+            })
+            ->filter(fn (array $fila): bool => $fila['urgencia'] < 9)
+            ->sortBy([
+                ['urgencia', 'asc'],
+                ['dias_restantes', 'asc'],
+                ['salidas_periodo', 'desc'],
+            ])
+            ->take($limite)
+            ->values();
+    }
+
+    /**
+     * Detecta productos con stock disponible pero sin movimientos recientes.
+     *
+     * @return Collection<int, array{
+     *     producto: Producto,
+     *     stock_actual: float,
+     *     ultimo_movimiento: string|null,
+     *     dias_sin_movimiento: int|null
+     * }>
+     */
+    public function stockSinMovimientoReciente(int $dias = 30, int $limite = 8): Collection
+    {
+        $ultimoMovimiento = MovimientoInventario::query()
+            ->select('producto_id')
+            ->selectRaw('max(created_at) as ultimo_movimiento')
+            ->whereNotNull('producto_id')
+            ->groupBy('producto_id')
+            ->get()
+            ->keyBy('producto_id');
+
+        return Producto::query()
+            ->with(['categoria', 'proveedor', 'unidad', 'stock'])
+            ->where('activo', true)
+            ->where('controla_stock', true)
+            ->orderBy('nombre')
+            ->get()
+            ->map(function (Producto $producto) use ($ultimoMovimiento): array {
+                $stockActual = $producto->cantidadStock();
+                $ultimo = $ultimoMovimiento[$producto->id]['ultimo_movimiento'] ?? null;
+                $diasSinMovimiento = $ultimo ? now()->diffInDays($ultimo) : null;
+
+                return [
+                    'producto' => $producto,
+                    'stock_actual' => $stockActual,
+                    'ultimo_movimiento' => $ultimo,
+                    'dias_sin_movimiento' => $diasSinMovimiento,
+                ];
+            })
+            ->filter(fn (array $fila): bool => $fila['stock_actual'] > 0 && ($fila['dias_sin_movimiento'] === null || $fila['dias_sin_movimiento'] >= $dias))
+            ->sortByDesc('stock_actual')
+            ->take($limite)
+            ->values();
+    }
+
+    /**
+     * Suma salidas por producto para un periodo reciente.
+     *
+     * @return Collection<string, array{cantidad: float}>
+     */
+    private function salidasPorProducto(int $dias): Collection
+    {
+        return MovimientoInventario::query()
+            ->select('producto_id')
+            ->selectRaw('sum(cantidad) as cantidad')
+            ->where('tipo', TipoMovimientoInventario::Salida->value)
+            ->where('created_at', '>=', now()->subDays(max(1, $dias)))
+            ->whereNotNull('producto_id')
+            ->groupBy('producto_id')
+            ->get()
+            ->mapWithKeys(fn (MovimientoInventario $movimiento): array => [
+                (string) $movimiento->producto_id => [
+                    'cantidad' => round((float) $movimiento->cantidad, 3),
+                ],
+            ]);
     }
 
 }

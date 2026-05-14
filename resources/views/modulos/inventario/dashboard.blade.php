@@ -190,6 +190,75 @@
         </article>
     </section>
 
+    <section class="mt-6 grid gap-4 xl:grid-cols-2" aria-label="Control inteligente de stock">
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Reposicion urgente</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Productos que conviene revisar por stock, minimo o consumo reciente.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @forelse ($reposicionUrgente as $fila)
+                    @php
+                        $producto = $fila['producto'];
+                        $diasRestantes = $fila['dias_restantes'];
+                    @endphp
+                    <div class="grid gap-3 p-4 sm:grid-cols-[1fr_auto]">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $producto->nombre }}</p>
+                                <x-admin.status-badge :variant="$fila['urgencia'] === 0 ? 'danger' : 'warning'">{{ $fila['motivo'] }}</x-admin.status-badge>
+                            </div>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Stock {{ $producto->formatearCantidadConUnidad($fila['stock_actual']) }}
+                                &middot; Salidas 30 dias {{ $producto->formatearCantidadConUnidad($fila['salidas_periodo']) }}
+                            </p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Media diaria {{ $producto->formatearCantidadConUnidad($fila['consumo_medio_diario']) }}
+                                &middot; {{ $diasRestantes === null ? 'Sin consumo reciente' : $diasRestantes.' dias estimados' }}
+                            </p>
+                        </div>
+                        <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Stock" aria-label="Stock de {{ $producto->nombre }}">
+                            <x-admin.icon name="stock" />
+                        </a>
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">No hay productos con reposicion urgente segun la regla actual.</p>
+                @endforelse
+            </div>
+        </article>
+
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Stock parado</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Productos con unidades disponibles y sin movimiento reciente.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @forelse ($stockSinMovimiento as $fila)
+                    @php
+                        $producto = $fila['producto'];
+                    @endphp
+                    <div class="grid gap-3 p-4 sm:grid-cols-[1fr_auto]">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-foreground">{{ $producto->nombre }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Stock {{ $producto->formatearCantidadConUnidad($fila['stock_actual']) }}
+                                &middot; {{ $fila['dias_sin_movimiento'] === null ? 'Sin movimientos registrados' : $fila['dias_sin_movimiento'].' dias sin movimiento' }}
+                            </p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ $producto->categoria?->nombre ?? 'Sin categoria' }} &middot; {{ $producto->proveedor?->nombre ?? 'Sin proveedor' }}</p>
+                        </div>
+                        <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Stock" aria-label="Stock de {{ $producto->nombre }}">
+                            <x-admin.icon name="stock" />
+                        </a>
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">No hay stock parado con el umbral actual.</p>
+                @endforelse
+            </div>
+        </article>
+    </section>
+
     <section class="mt-6 grid gap-4 xl:grid-cols-[1.1fr_.9fr]" aria-label="Acciones y alertas de inventario">
         <article class="admin-card p-4 lg:p-6">
             <header class="mb-4">

@@ -45,6 +45,8 @@ class InventarioModuleTest extends TestCase
             ->assertSee('Movimientos por tipo')
             ->assertSee('Salidas por categoria')
             ->assertSee('Stock por ubicacion')
+            ->assertSee('Reposicion urgente')
+            ->assertSee('Stock parado')
             ->assertSee('Ultimos movimientos');
     }
 

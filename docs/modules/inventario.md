@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.2 implementada.
+Fase 2.3 implementada.
 
 Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
 
@@ -43,9 +43,15 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Stock demo repartido entre Almacen, Camara fria y Barra, con productos con stock, bajo minimo y sin stock.
 - Movimientos demo de entrada, salida, ajuste y transferencia para validar graficas.
 - Acciones de productos con iconos reutilizables y `title` accesible.
+- Acciones de catalogos de inventario con iconos reutilizables para editar y eliminar.
+- Confirmacion previa en borrados de catalogos para evitar eliminaciones accidentales.
 - URLs de ficha de stock por SKU cuando existe, manteniendo UUID solo como respaldo tecnico.
 - Ficha de stock de producto con visualizacion por ubicacion y actividad reciente.
 - Filtro de productos por ubicacion desde el listado y desde el dashboard.
+- Control inteligente de stock en dashboard.
+- Reposicion urgente por stock actual, umbral minimo y consumo medio diario.
+- Estimacion de dias restantes de stock cuando hay salidas recientes.
+- Deteccion de stock parado con unidades disponibles y sin movimiento reciente.
 
 ## Tablas
 
@@ -172,6 +178,8 @@ Lectura esperada:
 
 Convertir el dashboard en una herramienta de decision, no solo en un panel de datos.
 
+Estado: implementada.
+
 Metricas recomendadas:
 
 - Consumo medio diario por producto.
@@ -196,6 +204,13 @@ Regla recomendada:
 - Si `dias_estimados_restantes` es menor que un umbral configurable, marcar el producto como reposicion urgente.
 - Si no hay salidas recientes y hay mucho stock, marcar como posible exceso.
 - Si el producto tiene lotes proximos a caducar, priorizar su salida en informes y alertas.
+
+Implementacion actual:
+
+- `DashboardInventarioMetricas::reposicionUrgente()` calcula stock actual, salidas de los ultimos 30 dias, consumo medio diario y dias estimados restantes.
+- La reposicion urgente entra si el producto no tiene stock, esta por debajo de `cantidad_alerta_stock` o se agota en 7 dias o menos segun consumo reciente.
+- `DashboardInventarioMetricas::stockSinMovimientoReciente()` detecta productos activos con stock disponible y sin movimientos en 30 dias o sin movimientos registrados.
+- El dashboard muestra ambos bloques con acceso directo a la ficha de stock del producto.
 
 ### Fase 2.4 - Agilidad para encargado y PDA
 
@@ -236,7 +251,7 @@ Mejoras recomendadas:
 
 ## Siguiente fase recomendada
 
-1. Empezar Fase 2.3 con consumo medio diario, dias estimados restantes y reposicion urgente.
+1. Empezar Fase 2.4 con flujo rapido para encargado/PDA: buscador rapido, formularios mas compactos y acciones grandes.
 2. Cruzar productos de carta con productos de inventario para detectar ventas sin descuento de stock.
 3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
 4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.

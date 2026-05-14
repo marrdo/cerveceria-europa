@@ -67,6 +67,8 @@ class DashboardInventarioController extends Controller
             'graficaMovimientosPorTipo' => $metricas->movimientosPorTipo(30),
             'graficaSalidasPorCategoria' => $metricas->salidasPorCategoria(30),
             'graficaStockPorUbicacion' => $metricas->stockPorUbicacion(),
+            'reposicionUrgente' => $metricas->reposicionUrgente(30),
+            'stockSinMovimiento' => $metricas->stockSinMovimientoReciente(30),
         ]);
     }
 
