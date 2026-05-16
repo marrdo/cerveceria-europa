@@ -4,6 +4,13 @@
         @php
             $pageTitle = $title ?? 'Cerveceria Europa';
             $pageDescription = $description ?? 'Cerveceria Europa, bar de Sevilla especializado en cervezas de importacion, artesanas y cocina para maridar.';
+            $publicLinks = [
+                ['label' => 'Carta', 'route' => 'web.carta'],
+                ['label' => 'Cervezas', 'route' => 'web.cervezas'],
+                ['label' => 'Fuera de carta', 'route' => 'web.fuera-carta'],
+                ['label' => 'Recomendaciones', 'route' => 'web.recomendaciones'],
+                ['label' => 'Contacto', 'route' => 'web.contacto'],
+            ];
         @endphp
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -46,9 +53,13 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="flex min-h-screen flex-col bg-public-background font-sans text-public-foreground">
-        <header class="sticky top-0 z-40 border-b border-public-border/15 bg-public-background/90 backdrop-blur">
-                <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-                    <a href="{{ route('web.inicio') }}" class="flex items-center gap-3">
+        <header class="sticky top-0 z-40 border-b border-public-border/15 bg-public-background/90 backdrop-blur" x-data="{ menuAbierto: false }">
+                <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
+                    <span class="order-1 md:order-3">
+                        <x-admin.theme-toggle size="sm" />
+                    </span>
+
+                    <a href="{{ route('web.inicio') }}" class="order-2 mx-auto flex items-center gap-3 md:order-1 md:mx-0">
                         <span class="flex h-10 w-10 items-center justify-center rounded-md bg-[#d08a24] text-[#23180f]">
                             <x-brand.beer-icon class="h-6 w-6" />
                         </span>
@@ -57,18 +68,56 @@
                             <span class="block text-lg font-black leading-5 text-public-foreground">Europa</span>
                         </span>
                     </a>
-                    <nav class="hidden items-center gap-6 text-sm font-semibold text-public-muted md:flex" aria-label="Navegacion principal">
-                        <a href="{{ route('web.carta') }}" class="hover:text-public-primary">Carta</a>
-                        <a href="{{ route('web.cervezas') }}" class="hover:text-public-primary">Cervezas</a>
-                        <a href="{{ route('web.fuera-carta') }}" class="hover:text-public-primary">Fuera de carta</a>
-                        <a href="{{ route('web.recomendaciones') }}" class="hover:text-public-primary">Recomendaciones</a>
+
+                    <nav class="order-2 ml-auto hidden items-center gap-6 text-sm font-semibold text-public-muted md:flex" aria-label="Navegacion principal">
+                        @foreach ($publicLinks as $link)
+                            <a href="{{ route($link['route']) }}" class="hover:text-public-primary">{{ $link['label'] }}</a>
+                        @endforeach
                         @if (\App\Models\Modulo::activo('blog'))
                             <a href="{{ route('web.blog') }}" class="hover:text-public-primary">Blog</a>
                         @endif
-                        <a href="{{ route('web.contacto') }}" class="hover:text-public-primary">Contacto</a>
                     </nav>
-                    <x-admin.theme-toggle size="sm" />
+
+                    <button
+                        type="button"
+                        class="order-3 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-public-border/25 bg-public-surface text-public-foreground transition hover:border-public-primary hover:text-public-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-public-primary/40 md:hidden"
+                        title="Abrir menu"
+                        aria-label="Abrir menu de navegacion"
+                        aria-controls="menu-publico-movil"
+                        :aria-expanded="menuAbierto.toString()"
+                        @click="menuAbierto = ! menuAbierto"
+                    >
+                        <svg x-show="! menuAbierto" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h16" />
+                        </svg>
+                        <svg x-show="menuAbierto" x-cloak class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 6 12 12M18 6 6 18" />
+                        </svg>
+                    </button>
                 </div>
+
+                <nav
+                    id="menu-publico-movil"
+                    class="border-t border-public-border/15 bg-public-background px-4 py-3 shadow-lg shadow-black/5 md:hidden"
+                    aria-label="Navegacion movil"
+                    x-show="menuAbierto"
+                    x-transition
+                    x-cloak
+                    @click.outside="menuAbierto = false"
+                >
+                    <ul class="space-y-1 text-sm font-black uppercase tracking-wide text-public-foreground">
+                        @foreach ($publicLinks as $link)
+                            <li>
+                                <a href="{{ route($link['route']) }}" class="block rounded-md px-3 py-3 transition hover:bg-public-surface hover:text-public-primary" @click="menuAbierto = false">{{ $link['label'] }}</a>
+                            </li>
+                        @endforeach
+                        @if (\App\Models\Modulo::activo('blog'))
+                            <li>
+                                <a href="{{ route('web.blog') }}" class="block rounded-md px-3 py-3 transition hover:bg-public-surface hover:text-public-primary" @click="menuAbierto = false">Blog</a>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
         </header>
 
         <main class="flex-1">
