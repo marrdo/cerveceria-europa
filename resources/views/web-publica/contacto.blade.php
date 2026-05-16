@@ -1,41 +1,48 @@
 <x-publico-layout title="Contacto | Cerveceria Europa">
-    <section class="bg-public-background py-16" aria-labelledby="contacto-heading">
-        @php($datos = $seccion->datos ?? [])
+    @php($datos = $seccion->datos ?? [])
 
-        <div class="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-            <article>
-                <header>
-                    <p class="text-sm font-black uppercase tracking-[0.2em] text-public-primary">Contacto</p>
-                    <h1 id="contacto-heading" class="mt-3 text-5xl font-black text-public-foreground">{{ $seccion->titulo ?: 'Ven a Cerveceria Europa' }}</h1>
-                    <p class="mt-5 text-lg leading-8 text-public-muted">{{ $seccion->subtitulo ?: 'Cervezas de importacion, artesanas y cocina de bar para compartir.' }}</p>
-                </header>
+    {{-- Page header --}}
+    <section class="relative overflow-hidden border-b px-8 pb-14 pt-20" style="border-color: var(--v2-line);">
+        <div class="mx-auto max-w-[1440px]">
+            <div class="font-mono text-[13px] font-medium tracking-wider text-amber-bright">/ Ven a la barra</div>
+            <h1 class="relative z-[2] m-0 font-display leading-[0.82] tracking-[-0.01em] text-ink" style="font-size: clamp(5rem, 18vw, 22rem);">Contacto.</h1>
+        </div>
+    </section>
 
-                @if ($seccion->contenido)
-                    <p class="mt-4 text-public-muted">{{ $seccion->contenido }}</p>
-                @endif
+    <section class="px-8 py-24" aria-labelledby="contacto-heading">
+        <div class="mx-auto max-w-[1440px]">
+            <div class="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-20">
+                <article>
+                    <h2 id="contacto-heading" class="m-0 mb-6 font-display leading-[0.9] tracking-[0.005em] text-ink" style="font-size: clamp(3rem, 6vw, 5.5rem);">
+                        {{ $seccion->titulo ?: 'Sevilla.' }}<br>{{ $seccion->subtitulo ?: 'Centro historico.' }}
+                    </h2>
+                    <p class="mb-10 text-lg leading-[1.55] text-ink-mute">
+                        {{ $seccion->contenido ?: 'Mejor reserva si venis mas de cuatro. La cocina para a las 23:30 entre semana, a las 01:00 los fines.' }}
+                    </p>
 
-                <address class="mt-8 not-italic text-public-muted">
-                    <dl class="space-y-4">
-                        <div>
-                            <dt class="font-bold text-public-foreground">Ubicacion</dt>
-                            <dd class="mt-1">{{ $datos['ubicacion'] ?? 'Sevilla' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="font-bold text-public-foreground">Reservas</dt>
-                            <dd class="mt-1">{{ $datos['reservas'] ?? 'pendiente de configurar' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="font-bold text-public-foreground">Horario</dt>
-                            <dd class="mt-1">{{ $datos['horario'] ?? 'pendiente de configurar' }}</dd>
-                        </div>
+                    <dl class="m-0 flex flex-col">
+                        @foreach (([
+                            ['Direccion', $datos['ubicacion'] ?? 'Calle Trajano · 41002 Sevilla'],
+                            ['Telefono',  $datos['telefono']  ?? '+34 955 00 00 00'],
+                            ['Email',     $datos['email']     ?? 'hola@cerveceriaeuropa.es'],
+                            ['Reservas',  $datos['reservas']  ?? 'Por telefono o email'],
+                            ['Horario',   $datos['horario']   ?? 'Mar–Jue 12:00–24:00 · Vie–Sab 12:00–01:30 · Dom 12:00–17:00'],
+                        ]) as [$k, $v])
+                            <div class="grid grid-cols-[140px_1fr] items-baseline gap-5 border-t py-5" style="border-color: var(--v2-line);">
+                                <dt class="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-bright">{{ $k }}</dt>
+                                <dd class="m-0 text-base leading-[1.5] text-ink">{{ $v }}</dd>
+                            </div>
+                        @endforeach
                     </dl>
-                </address>
-            </article>
+                </article>
 
-            <figure class="overflow-hidden rounded-lg border border-public-border/15 shadow-2xl shadow-black/30">
-                <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1200&q=80" alt="Barra de bar con servicio de cafe y bebidas" loading="lazy" decoding="async" class="h-full min-h-96 w-full object-cover">
-                <figcaption class="sr-only">Ambiente de barra en Cerveceria Europa</figcaption>
-            </figure>
+                <figure class="v2-contacto-photo" aria-label="Interior de Cerveceria Europa">
+                    <div class="absolute bottom-6 left-6 flex flex-col leading-none">
+                        <span class="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-amber-bright">Plot · 41002</span>
+                        <span class="mt-2 font-display text-3xl tracking-[0.005em] text-ink">Calle Trajano</span>
+                    </div>
+                </figure>
+            </div>
         </div>
     </section>
 </x-publico-layout>
