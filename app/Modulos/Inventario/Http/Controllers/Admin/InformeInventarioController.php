@@ -10,6 +10,7 @@ use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\UbicacionInventario;
+use App\Modulos\Inventario\Services\VentasInventarioMetricas;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -134,6 +135,35 @@ class InformeInventarioController extends Controller
     }
 
     /**
+     * Exporta descuadres entre ventas servidas y salidas reales de stock.
+     */
+    public function exportarDescuadres(Request $request, VentasInventarioMetricas $metricas): StreamedResponse
+    {
+        $periodo = $this->periodoExportacion($request);
+        $comparativa = $metricas->comparativaVentasStock($periodo, 1000)
+            ->filter(fn (array $fila): bool => abs((float) $fila['diferencia']) > 0.001)
+            ->values();
+
+        return $this->csv("descuadres_ventas_stock_{$periodo}_dias.csv", [
+            ['Periodo dias', 'Producto', 'SKU', 'Categoria', 'Vendido', 'Descontado', 'Diferencia', 'Incidencias', 'Ingresos', 'Coste estimado', 'Margen bruto', 'Margen %'],
+            ...$comparativa->map(fn (array $fila): array => [
+                $periodo,
+                $fila['producto']->nombre,
+                $fila['producto']->sku,
+                $fila['producto']->categoria?->nombre,
+                $fila['producto']->formatearCantidad($fila['cantidad_vendida']),
+                $fila['producto']->formatearCantidad($fila['cantidad_descontada']),
+                $fila['producto']->formatearCantidad($fila['diferencia']),
+                $fila['incidencias'],
+                number_format((float) $fila['ingresos'], 2, ',', '.'),
+                number_format((float) $fila['coste_estimado'], 2, ',', '.'),
+                number_format((float) $fila['margen_bruto'], 2, ',', '.'),
+                $fila['margen_porcentaje'] === null ? '' : number_format((float) $fila['margen_porcentaje'], 2, ',', '.'),
+            ])->all(),
+        ]);
+    }
+
+    /**
      * Devuelve productos activos con estado bajo o sin stock.
      *
      * @return Collection<int, Producto>
@@ -189,6 +219,16 @@ class InformeInventarioController extends Controller
             'ubicacion_id' => (string) $request->query('ubicacion_id', ''),
             'tipo' => (string) $request->query('tipo', ''),
         ];
+    }
+
+    /**
+     * Normaliza el periodo admitido en exportaciones rapidas del dashboard.
+     */
+    private function periodoExportacion(Request $request): int
+    {
+        $periodo = (int) $request->query('periodo', 30);
+
+        return in_array($periodo, [7, 14, 30, 90], true) ? $periodo : 30;
     }
 
     /**

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.5 implementada.
+Fase 2 del dashboard de inventario completada.
 
 Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
 
@@ -37,6 +37,7 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Grafica de salidas por categoria en el dashboard.
 - Grafica de stock por ubicacion en el dashboard.
 - Servicio reusable para metricas agregadas del dashboard de inventario.
+- Filtro temporal del dashboard para periodos de 7, 14, 30 y 90 dias.
 - Soft deletes en entidades principales.
 - Seeders iniciales orientados a un bar.
 - Seeder demo de cervezas reales importadas desde `Cartasdesdenumier.txt`.
@@ -63,6 +64,11 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Deteccion de lineas servidas sin producto de inventario asociado en los ultimos 30 dias.
 - Deteccion de lineas inventariables servidas sin movimiento de salida de inventario.
 - Generacion de propuestas automaticas de compra desde stock bajo, productos sin stock y dias restantes criticos.
+- Comparativa de ventas servidas contra salidas reales de stock por periodo.
+- Coste estimado, margen bruto y margen porcentual de ventas inventariables.
+- Alertas de descuadres repetidos entre ventas y salidas de stock.
+- Exportacion CSV UTF-8 de descuadres entre ventas y stock.
+- Exportacion CSV UTF-8 de propuestas de compra.
 
 ## Tablas
 
@@ -122,7 +128,7 @@ Cada reparto debe crear su movimiento de entrada y su lote correspondiente. El l
 
 ## Mejoras pendientes del dashboard de inventario
 
-El modulo ya tiene la base de stock, movimientos, lotes, alertas y conexion con compras/ventas. La siguiente mejora debe centrarse en que el encargado entienda el estado del inventario en pocos segundos y pueda actuar sin entrar primero en listados largos.
+El modulo ya tiene la base de stock, movimientos, lotes, alertas, graficas internas y conexion con compras/ventas. La fase 2 deja el dashboard preparado para que el encargado entienda el estado del inventario en pocos segundos y pueda actuar sin entrar primero en listados largos.
 
 ### Objetivo operativo
 
@@ -291,9 +297,27 @@ Implementacion actual:
 - La pantalla de propuestas de compra incorpora productos sin stock, bajo minimo o con 7 dias o menos de cobertura estimada.
 - La cantidad sugerida de compra intenta cubrir el doble del minimo o 14 dias de consumo reciente, usando la cifra mas exigente.
 
+### Fase 2.6 - Cierre operativo del dashboard
+
+Esta fase remata el dashboard para que no sea solo visual, sino tambien accionable y exportable.
+
+Estado: implementada.
+
+Implementacion actual:
+
+- El dashboard permite cambiar el periodo operativo entre `7`, `14`, `30` y `90` dias desde la cabecera.
+- El periodo seleccionado afecta a graficas, entradas, salidas, margen, ventas sin salida, reposicion urgente, stock parado, top de salidas y comparativa ventas/stock.
+- Las graficas se mantienen con HTML/CSS/SVG propio. Decision tecnica: no se incorpora una libreria externa todavia porque el panel actual no necesita interacciones complejas y evitamos peso/dependencias innecesarias.
+- La comparativa `Ventas vs salidas de stock` permite exportar CSV UTF-8 con los productos descuadrados del periodo.
+- La pantalla de propuestas de compra permite exportar CSV UTF-8 para revision o envio operativo.
+- El dashboard muestra `Alertas por descuadres repetidos`, detectando productos con dos o mas incidencias entre cantidad servida y salida de stock.
+- Los calculos de ventas contra inventario viven en `VentasInventarioMetricas`, servicio reusable para dashboard, exportaciones y futuras alertas.
+
 ## Siguiente fase recomendada
 
-1. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
-2. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
-3. Incorporar exportacion CSV/PDF de movimientos, descuadres y propuestas de compra.
-4. Valorar alertas automaticas para descuadres repetidos entre ventas y salidas de stock.
+La fase 2 queda cerrada. La siguiente fase ya no deberia seguir creciendo dentro del dashboard; conviene pasar a un bloque nuevo y acotado:
+
+1. Recepcion avanzada de compras con reparto por ubicaciones y lotes desde pedido.
+2. Reglas de configuracion por negocio: umbral de reposicion, dias de cobertura y ubicaciones por defecto.
+3. Auditoria de inventario: historial de descuadres, responsable y resolucion manual.
+4. Exportacion PDF solo si el cliente necesita informes imprimibles; CSV ya cubre trabajo operativo y Excel.

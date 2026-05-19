@@ -262,6 +262,39 @@ class ComprasModuleTest extends TestCase
             ->assertSee('17');
     }
 
+    public function test_purchase_proposals_can_be_exported_as_utf8_csv(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto propuesta CSV',
+            'sku' => 'PROP-CSV',
+            'proveedor_id' => $proveedor->id,
+            'cantidad_alerta_stock' => 10,
+        ]);
+
+        StockInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 2,
+            'cantidad_minima' => 0,
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('admin.compras.propuestas.exportar'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $contenido = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
+        $this->assertStringContainsString('Producto;SKU;Proveedor;"Stock actual";Alerta;"Salidas 30 dias"', $contenido);
+        $this->assertStringContainsString('Producto propuesta CSV', $contenido);
+        $this->assertStringContainsString('PROP-CSV', $contenido);
+    }
+
     public function test_purchase_proposals_include_products_with_critical_days_remaining(): void
     {
         $this->seed(InventarioSeeder::class);

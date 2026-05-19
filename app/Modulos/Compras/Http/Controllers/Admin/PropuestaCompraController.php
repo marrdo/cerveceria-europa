@@ -9,7 +9,9 @@ use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Services\DashboardInventarioMetricas;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Response;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PropuestaCompraController extends Controller
 {
@@ -39,6 +41,32 @@ class PropuestaCompraController extends Controller
         return view('modulos.compras.propuestas.index', [
             'grupos' => $grupos,
             'productosSinProveedor' => $productosSinProveedor,
+        ]);
+    }
+
+    /**
+     * Exporta propuestas de compra actuales en CSV UTF-8.
+     */
+    public function exportar(DashboardInventarioMetricas $metricas): StreamedResponse
+    {
+        $propuestas = $metricas->reposicionUrgente(30, 200, 7)
+            ->map(fn (array $propuesta): array => $this->normalizarPropuesta($propuesta))
+            ->values();
+
+        return $this->csv('propuestas_compra.csv', [
+            ['Producto', 'SKU', 'Proveedor', 'Stock actual', 'Alerta', 'Salidas 30 dias', 'Consumo diario', 'Dias restantes', 'Motivo', 'Cantidad sugerida'],
+            ...$propuestas->map(fn (array $propuesta): array => [
+                $propuesta['producto']->nombre,
+                $propuesta['producto']->sku,
+                $propuesta['producto']->proveedor?->nombre,
+                $propuesta['producto']->formatearCantidad($propuesta['stock_actual']),
+                $propuesta['producto']->formatearCantidad($propuesta['producto']->cantidad_alerta_stock),
+                $propuesta['producto']->formatearCantidad($propuesta['salidas_periodo']),
+                $propuesta['producto']->formatearCantidad($propuesta['consumo_medio_diario']),
+                $propuesta['dias_restantes'] === null ? '' : (string) $propuesta['dias_restantes'],
+                $propuesta['motivo'],
+                $propuesta['producto']->formatearCantidad($propuesta['cantidad_sugerida']),
+            ])->all(),
         ]);
     }
 
@@ -125,5 +153,27 @@ class PropuestaCompraController extends Controller
         $objetivo = max($objetivoPorAlerta, $objetivoPorConsumo, 1);
 
         return max(1, round($objetivo - $stockActual, 3));
+    }
+
+    /**
+     * Genera una descarga CSV compatible con Excel en Windows.
+     *
+     * @param array<int, array<int, mixed>> $filas
+     */
+    private function csv(string $nombreArchivo, array $filas): StreamedResponse
+    {
+        return Response::streamDownload(function () use ($filas): void {
+            $salida = fopen('php://output', 'wb');
+
+            fwrite($salida, "\xEF\xBB\xBF");
+
+            foreach ($filas as $fila) {
+                fputcsv($salida, $fila, ';');
+            }
+
+            fclose($salida);
+        }, $nombreArchivo, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 }

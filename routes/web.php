@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('alertas', [InformeInventarioController::class, 'alertas'])->name('alertas.index');
         Route::get('alertas/exportar', [InformeInventarioController::class, 'exportarAlertas'])->name('alertas.exportar');
+        Route::get('descuadres/exportar', [InformeInventarioController::class, 'exportarDescuadres'])->name('descuadres.exportar');
         Route::get('movimientos', [InformeInventarioController::class, 'movimientos'])->name('movimientos.index');
         Route::get('movimientos/exportar', [InformeInventarioController::class, 'exportarMovimientos'])->name('movimientos.exportar');
         Route::get('productos/exportar', [InformeInventarioController::class, 'exportarProductos'])->name('productos.exportar');
@@ -123,6 +124,7 @@ Route::middleware('auth')->group(function () {
             ->only(['index', 'create', 'store', 'show', 'destroy'])
             ->parameters(['documentos' => 'documento']);
         Route::get('propuestas', [PropuestaCompraController::class, 'index'])->name('propuestas.index');
+        Route::get('propuestas/exportar', [PropuestaCompraController::class, 'exportar'])->name('propuestas.exportar');
         Route::post('propuestas', [PropuestaCompraController::class, 'store'])->name('propuestas.store');
         Route::patch('pedidos/{pedido}/estado', [PedidoCompraController::class, 'cambiarEstado'])->name('pedidos.estado');
         Route::patch('pedidos/{pedido}/cerrar-pendiente', [PedidoCompraController::class, 'cerrarPendiente'])->name('pedidos.cerrar-pendiente');

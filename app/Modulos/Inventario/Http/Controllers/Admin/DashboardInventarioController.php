@@ -10,10 +10,12 @@ use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Services\DashboardInventarioMetricas;
+use App\Modulos\Inventario\Services\VentasInventarioMetricas;
 use App\Modulos\Ventas\Enums\EstadoLineaComanda;
 use App\Modulos\Ventas\Models\LineaComanda;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -23,8 +25,13 @@ class DashboardInventarioController extends Controller
     /**
      * Muestra el panel operativo principal del modulo de inventario.
      */
-    public function __invoke(DashboardInventarioMetricas $metricas): View
+    public function __invoke(
+        Request $request,
+        DashboardInventarioMetricas $metricas,
+        VentasInventarioMetricas $ventasInventarioMetricas,
+    ): View
     {
+        $periodo = $this->periodoDashboard($request);
         $productos = Producto::query()
             ->with(['categoria', 'proveedor', 'unidad', 'stock'])
             ->where('activo', true)
@@ -38,10 +45,13 @@ class DashboardInventarioController extends Controller
 
                 return $producto;
             });
-        $comparativaVentasStock = $this->comparativaVentasStock(limite: 500);
-        $resumenEconomicoVentasInventario = $this->resumenEconomicoVentasInventario($comparativaVentasStock);
+        $comparativaVentasStock = $ventasInventarioMetricas->comparativaVentasStock($periodo, 500);
+        $resumenEconomicoVentasInventario = $ventasInventarioMetricas->resumenEconomico($comparativaVentasStock, $periodo);
+        $descuadresRepetidos = $ventasInventarioMetricas->descuadresRepetidos($periodo, 6);
 
         return view('modulos.inventario.dashboard', [
+            'periodo' => $periodo,
+            'periodosDisponibles' => [7, 14, 30, 90],
             'kpis' => [
                 'productos_activos' => $productos->count(),
                 'productos_con_existencias' => $productosConStock
@@ -50,12 +60,13 @@ class DashboardInventarioController extends Controller
                 'productos_sin_stock' => $productosConEstado->where('estado_stock_calculado', EstadoStockProducto::SinStock)->count(),
                 'productos_bajo_stock' => $productosConEstado->where('estado_stock_calculado', EstadoStockProducto::Bajo)->count(),
                 'movimientos_hoy' => MovimientoInventario::query()->whereDate('created_at', today())->count(),
-                'entradas_7_dias' => $this->sumarMovimientos(TipoMovimientoInventario::Entrada, 7),
-                'salidas_7_dias' => $this->sumarMovimientos(TipoMovimientoInventario::Salida, 7),
+                'entradas_periodo' => $this->sumarMovimientos(TipoMovimientoInventario::Entrada, $periodo),
+                'salidas_periodo' => $this->sumarMovimientos(TipoMovimientoInventario::Salida, $periodo),
                 'valor_stock' => $this->valorEstimadoStock(),
                 'carta_sin_inventario' => $this->contadorCartaSinControlInventario(),
-                'ventas_sin_descuento_stock' => $this->contadorVentasServidasSinDescuentoStock(),
-                'margen_bruto_30_dias' => $resumenEconomicoVentasInventario['margen_bruto'],
+                'ventas_sin_descuento_stock' => $this->contadorVentasServidasSinDescuentoStock($periodo),
+                'margen_bruto_periodo' => $resumenEconomicoVentasInventario['margen_bruto'],
+                'descuadres_repetidos' => $ventasInventarioMetricas->descuadresRepetidos($periodo, 200)->count(),
             ],
             'productosSinStock' => $productosConEstado
                 ->where('estado_stock_calculado', EstadoStockProducto::SinStock)
@@ -70,19 +81,30 @@ class DashboardInventarioController extends Controller
                 ->latest('created_at')
                 ->take(8)
                 ->get(),
-            'topSalidas' => $this->topProductosConSalidas(),
-            'graficaEntradasSalidas' => $metricas->entradasSalidasPorDia(14),
-            'graficaMovimientosPorTipo' => $metricas->movimientosPorTipo(30),
-            'graficaSalidasPorCategoria' => $metricas->salidasPorCategoria(30),
+            'topSalidas' => $this->topProductosConSalidas($periodo),
+            'graficaEntradasSalidas' => $metricas->entradasSalidasPorDia($periodo),
+            'graficaMovimientosPorTipo' => $metricas->movimientosPorTipo($periodo),
+            'graficaSalidasPorCategoria' => $metricas->salidasPorCategoria($periodo),
             'graficaStockPorUbicacion' => $metricas->stockPorUbicacion(),
-            'reposicionUrgente' => $metricas->reposicionUrgente(30),
-            'stockSinMovimiento' => $metricas->stockSinMovimientoReciente(30),
+            'reposicionUrgente' => $metricas->reposicionUrgente($periodo),
+            'stockSinMovimiento' => $metricas->stockSinMovimientoReciente($periodo),
             'contenidosCartaSinInventario' => $this->contenidosCartaSinControlInventario(),
-            'lineasServidasSinProducto' => $this->lineasServidasSinProductoInventario(),
-            'lineasInventariablesSinMovimiento' => $this->lineasInventariablesSinMovimiento(),
+            'lineasServidasSinProducto' => $this->lineasServidasSinProductoInventario($periodo),
+            'lineasInventariablesSinMovimiento' => $this->lineasInventariablesSinMovimiento($periodo),
             'comparativaVentasStock' => $comparativaVentasStock->take(8)->values(),
             'resumenEconomicoVentasInventario' => $resumenEconomicoVentasInventario,
+            'descuadresRepetidos' => $descuadresRepetidos,
         ]);
+    }
+
+    /**
+     * Normaliza el periodo visible del dashboard.
+     */
+    private function periodoDashboard(Request $request): int
+    {
+        $periodo = (int) $request->query('periodo', 30);
+
+        return in_array($periodo, [7, 14, 30, 90], true) ? $periodo : 30;
     }
 
     /**
@@ -155,13 +177,13 @@ class DashboardInventarioController extends Controller
      *
      * @return Collection<int, MovimientoInventario>
      */
-    private function topProductosConSalidas(): Collection
+    private function topProductosConSalidas(int $dias): Collection
     {
         return MovimientoInventario::query()
             ->select('producto_id')
             ->selectRaw('sum(cantidad) as cantidad_total')
             ->where('tipo', TipoMovimientoInventario::Salida->value)
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays(max(1, $dias)))
             ->whereNotNull('producto_id')
             ->groupBy('producto_id')
             ->orderByDesc(DB::raw('sum(cantidad)'))
@@ -181,10 +203,10 @@ class DashboardInventarioController extends Controller
     /**
      * Cuenta lineas servidas que no han generado salida de inventario.
      */
-    private function contadorVentasServidasSinDescuentoStock(): int
+    private function contadorVentasServidasSinDescuentoStock(int $dias): int
     {
-        return $this->consultaLineasServidasSinProductoInventario()->count()
-            + $this->consultaLineasInventariablesSinMovimiento()->count();
+        return $this->consultaLineasServidasSinProductoInventario($dias)->count()
+            + $this->consultaLineasInventariablesSinMovimiento($dias)->count();
     }
 
     /**
@@ -207,9 +229,9 @@ class DashboardInventarioController extends Controller
      *
      * @return Collection<int, LineaComanda>
      */
-    private function lineasServidasSinProductoInventario(): Collection
+    private function lineasServidasSinProductoInventario(int $dias): Collection
     {
-        return $this->consultaLineasServidasSinProductoInventario()
+        return $this->consultaLineasServidasSinProductoInventario($dias)
             ->with(['comanda', 'contenidoWeb'])
             ->latest('servida_at')
             ->take(6)
@@ -221,9 +243,9 @@ class DashboardInventarioController extends Controller
      *
      * @return Collection<int, LineaComanda>
      */
-    private function lineasInventariablesSinMovimiento(): Collection
+    private function lineasInventariablesSinMovimiento(int $dias): Collection
     {
-        return $this->consultaLineasInventariablesSinMovimiento()
+        return $this->consultaLineasInventariablesSinMovimiento($dias)
             ->with(['comanda', 'producto.unidad', 'contenidoWeb'])
             ->latest('servida_at')
             ->take(6)
@@ -256,12 +278,12 @@ class DashboardInventarioController extends Controller
      *
      * @return Builder<LineaComanda>
      */
-    private function consultaLineasServidasSinProductoInventario(): Builder
+    private function consultaLineasServidasSinProductoInventario(int $dias): Builder
     {
         return LineaComanda::query()
             ->where('estado', EstadoLineaComanda::Servida->value)
             ->whereNull('producto_id')
-            ->where('servida_at', '>=', now()->subDays(30));
+            ->where('servida_at', '>=', now()->subDays(max(1, $dias)));
     }
 
     /**
@@ -269,103 +291,13 @@ class DashboardInventarioController extends Controller
      *
      * @return Builder<LineaComanda>
      */
-    private function consultaLineasInventariablesSinMovimiento(): Builder
+    private function consultaLineasInventariablesSinMovimiento(int $dias): Builder
     {
         return LineaComanda::query()
             ->where('estado', EstadoLineaComanda::Servida->value)
             ->whereNull('movimiento_inventario_id')
-            ->where('servida_at', '>=', now()->subDays(30))
+            ->where('servida_at', '>=', now()->subDays(max(1, $dias)))
             ->whereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', true));
     }
 
-    /**
-     * Compara ventas servidas contra salidas reales generadas desde esas ventas.
-     *
-     * @return Collection<int, array{
-     *     producto: Producto,
-     *     cantidad_vendida: float,
-     *     cantidad_descontada: float,
-     *     diferencia: float,
-     *     ingresos: float,
-     *     coste_estimado: float,
-     *     margen_bruto: float,
-     *     margen_porcentaje: float|null
-     * }>
-     */
-    private function comparativaVentasStock(int $dias = 30, int $limite = 8): Collection
-    {
-        return $this->lineasInventariablesServidas($dias)
-            ->groupBy('producto_id')
-            ->map(function (Collection $lineas): array {
-                /** @var Producto $producto */
-                $producto = $lineas->first()->producto;
-                $cantidadVendida = round((float) $lineas->sum('cantidad'), 3);
-                $cantidadDescontada = round((float) $lineas->sum(fn (LineaComanda $linea): float => (float) ($linea->movimientoInventario?->cantidad ?? 0)), 3);
-                $ingresos = round((float) $lineas->sum('total'), 2);
-                $costeEstimado = round($cantidadVendida * (float) ($producto->precio_coste ?? 0), 2);
-                $margenBruto = round($ingresos - $costeEstimado, 2);
-
-                return [
-                    'producto' => $producto,
-                    'cantidad_vendida' => $cantidadVendida,
-                    'cantidad_descontada' => $cantidadDescontada,
-                    'diferencia' => round($cantidadVendida - $cantidadDescontada, 3),
-                    'ingresos' => $ingresos,
-                    'coste_estimado' => $costeEstimado,
-                    'margen_bruto' => $margenBruto,
-                    'margen_porcentaje' => $ingresos > 0 ? round(($margenBruto / $ingresos) * 100, 2) : null,
-                ];
-            })
-            ->sortByDesc(fn (array $fila): float => abs((float) $fila['diferencia']))
-            ->take($limite)
-            ->values();
-    }
-
-    /**
-     * Resume ingresos, coste y margen estimado de ventas inventariables.
-     *
-     * @return array{
-     *     ingresos: float,
-     *     coste_estimado: float,
-     *     margen_bruto: float,
-     *     margen_porcentaje: float|null,
-     *     unidades_vendidas: float,
-     *     unidades_descontadas: float,
-     *     productos_con_descuadre: int
-     * }
-     */
-    private function resumenEconomicoVentasInventario(?Collection $comparativa = null, int $dias = 30): array
-    {
-        $comparativa ??= $this->comparativaVentasStock($dias, 500);
-        $ingresos = round((float) $comparativa->sum('ingresos'), 2);
-        $costeEstimado = round((float) $comparativa->sum('coste_estimado'), 2);
-        $margenBruto = round($ingresos - $costeEstimado, 2);
-
-        return [
-            'ingresos' => $ingresos,
-            'coste_estimado' => $costeEstimado,
-            'margen_bruto' => $margenBruto,
-            'margen_porcentaje' => $ingresos > 0 ? round(($margenBruto / $ingresos) * 100, 2) : null,
-            'unidades_vendidas' => round((float) $comparativa->sum('cantidad_vendida'), 3),
-            'unidades_descontadas' => round((float) $comparativa->sum('cantidad_descontada'), 3),
-            'productos_con_descuadre' => $comparativa
-                ->filter(fn (array $fila): bool => abs((float) $fila['diferencia']) > 0.001)
-                ->count(),
-        ];
-    }
-
-    /**
-     * Lineas servidas con producto inventariable en un periodo reciente.
-     *
-     * @return Collection<int, LineaComanda>
-     */
-    private function lineasInventariablesServidas(int $dias): Collection
-    {
-        return LineaComanda::query()
-            ->with(['producto.categoria', 'producto.unidad', 'movimientoInventario'])
-            ->where('estado', EstadoLineaComanda::Servida->value)
-            ->where('servida_at', '>=', now()->subDays(max(1, $dias)))
-            ->whereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', true))
-            ->get();
-    }
 }

@@ -2,6 +2,7 @@
     <x-slot name="header">
         <x-admin.page-header title="Propuestas de compra" description="Reposicion sugerida desde alertas de stock">
             <x-slot name="actions">
+                <a href="{{ route('admin.compras.propuestas.exportar') }}" class="admin-btn-outline">Exportar CSV</a>
                 <a href="{{ route('admin.compras.pedidos.create') }}" class="admin-btn-outline">Nuevo pedido manual</a>
             </x-slot>
         </x-admin.page-header>
@@ -71,7 +72,9 @@
                         </thead>
                         <tbody>
                             @foreach ($grupo['productos'] as $indice => $propuesta)
-                                @php($producto = $propuesta['producto'])
+                                @php
+                                    $producto = $propuesta['producto'];
+                                @endphp
                                 <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
                                     <td class="px-4 py-3">
                                         <input type="hidden" name="productos[{{ $indice }}][producto_id]" value="{{ $producto->id }}">
@@ -116,7 +119,9 @@
             </div>
             <div class="divide-y divide-border">
                 @foreach ($productosSinProveedor as $producto)
-                    @php($productoInventario = $producto['producto'])
+                    @php
+                        $productoInventario = $producto['producto'];
+                    @endphp
                     <div class="flex items-center justify-between gap-4 p-4 text-sm">
                         <div>
                             <div class="font-medium text-foreground">{{ $productoInventario->nombre }}</div>

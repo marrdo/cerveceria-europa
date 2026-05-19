@@ -185,6 +185,79 @@ class InventarioModuleTest extends TestCase
             ->assertSee('80,00 %');
     }
 
+    public function test_inventory_dashboard_accepts_operational_period_filter(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.index', ['periodo' => 7]))
+            ->assertOk()
+            ->assertSee('Entradas 7 dias')
+            ->assertSee('Salidas 7 dias')
+            ->assertSee('Margen 7 dias')
+            ->assertSee('ultimos 7 dias');
+    }
+
+    public function test_inventory_dashboard_shows_repeated_sales_stock_mismatch_alerts(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'BARRA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto descuadre repetido',
+            'sku' => 'DESCUADRE-REPETIDO',
+            'controla_stock' => true,
+        ]);
+        $comanda = Comanda::query()->create([
+            'numero' => 'COM-DESCUADRE-REPETIDO',
+            'estado' => EstadoComanda::Servida,
+            'subtotal' => 16,
+            'impuestos' => 0,
+            'total' => 16,
+            'creado_por' => $usuario->id,
+            'actualizado_por' => $usuario->id,
+            'servida_at' => now(),
+        ]);
+
+        foreach ([1, 2] as $orden) {
+            $movimiento = MovimientoInventario::query()->create([
+                'producto_id' => $producto->id,
+                'ubicacion_inventario_id' => $ubicacion->id,
+                'tipo' => 'salida',
+                'cantidad' => 1,
+                'stock_antes' => 10 - $orden,
+                'stock_despues' => 9 - $orden,
+                'motivo' => 'Salida con descuadre repetido',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $comanda->lineas()->create([
+                'producto_id' => $producto->id,
+                'movimiento_inventario_id' => $movimiento->id,
+                'nombre' => $producto->nombre,
+                'cantidad' => 2,
+                'precio_unitario' => 4,
+                'subtotal' => 8,
+                'impuestos' => 0,
+                'total' => 8,
+                'estado' => EstadoLineaComanda::Servida,
+                'orden' => $orden,
+                'servida_at' => now()->subMinutes(3 - $orden),
+            ]);
+        }
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.index'))
+            ->assertOk()
+            ->assertSee('Alertas por descuadres repetidos')
+            ->assertSee('Producto descuadre repetido')
+            ->assertSee('DESCUADRE-REPETIDO')
+            ->assertSee('Incidencias')
+            ->assertSee('2');
+    }
+
     public function test_product_can_be_created(): void
     {
         $this->seed(InventarioSeeder::class);
@@ -718,6 +791,68 @@ class InventarioModuleTest extends TestCase
         $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
         $this->assertStringContainsString('Producto;SKU;Categoria;Proveedor;Stock;Unidad;Alerta;Estado', $contenido);
         $this->assertStringContainsString($producto->nombre, $contenido);
+    }
+
+    public function test_sales_stock_mismatches_can_be_exported_as_utf8_csv(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'BARRA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto descuadre CSV',
+            'sku' => 'DESCUADRE-CSV',
+            'precio_coste' => 1.50,
+            'controla_stock' => true,
+        ]);
+
+        $movimiento = MovimientoInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'salida',
+            'cantidad' => 1,
+            'stock_antes' => 10,
+            'stock_despues' => 9,
+            'motivo' => 'Salida con descuadre CSV',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $comanda = Comanda::query()->create([
+            'numero' => 'COM-DESCUADRE-CSV',
+            'estado' => EstadoComanda::Servida,
+            'subtotal' => 12,
+            'impuestos' => 0,
+            'total' => 12,
+            'creado_por' => $usuario->id,
+            'actualizado_por' => $usuario->id,
+            'servida_at' => now(),
+        ]);
+
+        $comanda->lineas()->create([
+            'producto_id' => $producto->id,
+            'movimiento_inventario_id' => $movimiento->id,
+            'nombre' => $producto->nombre,
+            'cantidad' => 2,
+            'precio_unitario' => 6,
+            'subtotal' => 12,
+            'impuestos' => 0,
+            'total' => 12,
+            'estado' => EstadoLineaComanda::Servida,
+            'orden' => 1,
+            'servida_at' => now(),
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('admin.inventario.descuadres.exportar', ['periodo' => 30]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $contenido = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $contenido);
+        $this->assertStringContainsString('"Periodo dias";Producto;SKU;Categoria;Vendido;Descontado;Diferencia', $contenido);
+        $this->assertStringContainsString('Producto descuadre CSV', $contenido);
+        $this->assertStringContainsString('DESCUADRE-CSV', $contenido);
     }
 
     public function test_expiry_date_is_required_for_inbound_movement_when_product_tracks_expiry(): void

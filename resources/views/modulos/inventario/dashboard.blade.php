@@ -28,6 +28,14 @@
     <x-slot name="header">
         <x-admin.page-header title="Inventario" description="Vista operativa de stock, alertas y movimientos recientes">
             <x-slot name="actions">
+                <form method="GET" action="{{ route('admin.inventario.index') }}" class="flex items-center gap-2">
+                    <x-input-label for="periodo" value="Periodo" class="sr-only" />
+                    <select id="periodo" name="periodo" class="admin-input h-10 min-w-32" onchange="this.form.submit()">
+                        @foreach ($periodosDisponibles as $periodoDisponible)
+                            <option value="{{ $periodoDisponible }}" @selected($periodo === $periodoDisponible)>{{ $periodoDisponible }} dias</option>
+                        @endforeach
+                    </select>
+                </form>
                 <a href="{{ route('admin.inventario.productos.create') }}" class="admin-btn-primary">Nuevo producto</a>
                 <a href="{{ route('admin.inventario.movimientos.index') }}" class="admin-btn-outline">Ver movimientos</a>
             </x-slot>
@@ -42,19 +50,20 @@
         <x-admin.kpi-card title="Sin stock" :value="$kpis['productos_sin_stock']" description="Necesitan revision" variant="danger" />
         <x-admin.kpi-card title="Stock bajo" :value="$kpis['productos_bajo_stock']" description="Por debajo del minimo" variant="warning" />
         <x-admin.kpi-card title="Movimientos hoy" :value="$kpis['movimientos_hoy']" description="Actividad registrada" />
-        <x-admin.kpi-card title="Entradas 7 dias" :value="$formatearCantidad($kpis['entradas_7_dias'])" description="Unidades recibidas" variant="success" />
-        <x-admin.kpi-card title="Salidas 7 dias" :value="$formatearCantidad($kpis['salidas_7_dias'])" description="Unidades descontadas" variant="danger" />
+        <x-admin.kpi-card :title="'Entradas '.$periodo.' dias'" :value="$formatearCantidad($kpis['entradas_periodo'])" description="Unidades recibidas" variant="success" />
+        <x-admin.kpi-card :title="'Salidas '.$periodo.' dias'" :value="$formatearCantidad($kpis['salidas_periodo'])" description="Unidades descontadas" variant="danger" />
         <x-admin.kpi-card title="Valor stock" :value="number_format($kpis['valor_stock'], 2, ',', '.').' EUR'" description="Estimado por precio coste" />
         <x-admin.kpi-card title="Carta sin stock" :value="$kpis['carta_sin_inventario']" description="Publicados sin control" variant="warning" />
         <x-admin.kpi-card title="Ventas sin salida" :value="$kpis['ventas_sin_descuento_stock']" description="Servidas sin descuento" variant="danger" />
-        <x-admin.kpi-card title="Margen 30 dias" :value="number_format($kpis['margen_bruto_30_dias'], 2, ',', '.').' EUR'" description="Ventas inventariables" variant="success" />
+        <x-admin.kpi-card :title="'Margen '.$periodo.' dias'" :value="number_format($kpis['margen_bruto_periodo'], 2, ',', '.').' EUR'" description="Ventas inventariables" variant="success" />
+        <x-admin.kpi-card title="Descuadres repetidos" :value="$kpis['descuadres_repetidos']" description="Productos a revisar" variant="warning" />
     </section>
 
     <section class="mt-6 grid gap-4 xl:grid-cols-[1.3fr_.7fr]" aria-label="Graficas de movimientos de inventario">
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
                 <h2 class="text-base font-semibold text-foreground">Entradas vs salidas</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Comparativa diaria de unidades recibidas y descontadas en los ultimos 14 dias.</p>
+                <p class="mt-1 text-sm text-muted-foreground">Comparativa diaria de unidades recibidas y descontadas en los ultimos {{ $periodo }} dias.</p>
             </header>
 
             <div class="p-4">
@@ -108,7 +117,7 @@
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
                 <h2 class="text-base font-semibold text-foreground">Movimientos por tipo</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Peso operativo de cada tipo de movimiento en los ultimos 30 dias.</p>
+                <p class="mt-1 text-sm text-muted-foreground">Peso operativo de cada tipo de movimiento en los ultimos {{ $periodo }} dias.</p>
             </header>
 
             <div class="divide-y divide-border">
@@ -143,7 +152,7 @@
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
                 <h2 class="text-base font-semibold text-foreground">Salidas por categoria</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Categorias con mas consumo de stock en los ultimos 30 dias.</p>
+                <p class="mt-1 text-sm text-muted-foreground">Categorias con mas consumo de stock en los ultimos {{ $periodo }} dias.</p>
             </header>
 
             <div class="divide-y divide-border">
@@ -217,7 +226,7 @@
                             </div>
                             <p class="mt-1 text-xs text-muted-foreground">
                                 Stock {{ $producto->formatearCantidadConUnidad($fila['stock_actual']) }}
-                                &middot; Salidas 30 dias {{ $producto->formatearCantidadConUnidad($fila['salidas_periodo']) }}
+                                &middot; Salidas {{ $periodo }} dias {{ $producto->formatearCantidadConUnidad($fila['salidas_periodo']) }}
                             </p>
                             <p class="mt-1 text-xs text-muted-foreground">
                                 Media diaria {{ $producto->formatearCantidadConUnidad($fila['consumo_medio_diario']) }}
@@ -303,7 +312,7 @@
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
                 <h2 class="text-base font-semibold text-foreground">Ventas sin descuento de stock</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Lineas servidas en los ultimos 30 dias que no han generado salida de inventario.</p>
+                <p class="mt-1 text-sm text-muted-foreground">Lineas servidas en los ultimos {{ $periodo }} dias que no han generado salida de inventario.</p>
             </header>
 
             <div class="divide-y divide-border">
@@ -327,7 +336,7 @@
                         @endif
                     </div>
                 @empty
-                    <p class="p-4 text-sm text-muted-foreground">No hay lineas servidas sin producto de inventario en los ultimos 30 dias.</p>
+                    <p class="p-4 text-sm text-muted-foreground">No hay lineas servidas sin producto de inventario en los ultimos {{ $periodo }} dias.</p>
                 @endforelse
 
                 @forelse ($lineasInventariablesSinMovimiento as $linea)
@@ -360,7 +369,10 @@
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
                 <h2 class="text-base font-semibold text-foreground">Ventas vs salidas de stock</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Comparativa de lineas servidas frente a movimientos de salida vinculados en los ultimos 30 dias.</p>
+                <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm text-muted-foreground">Comparativa de lineas servidas frente a movimientos de salida vinculados en los ultimos {{ $periodo }} dias.</p>
+                    <a href="{{ route('admin.inventario.descuadres.exportar', ['periodo' => $periodo]) }}" class="text-sm font-medium text-primary hover:underline">Exportar CSV</a>
+                </div>
             </header>
 
             <div class="divide-y divide-border">
@@ -394,7 +406,7 @@
                         </a>
                     </div>
                 @empty
-                    <p class="p-4 text-sm text-muted-foreground">Todavia no hay ventas servidas con productos inventariables en los ultimos 30 dias.</p>
+                    <p class="p-4 text-sm text-muted-foreground">Todavia no hay ventas servidas con productos inventariables en los ultimos {{ $periodo }} dias.</p>
                 @endforelse
             </div>
         </article>
@@ -432,6 +444,48 @@
                     &middot; descontadas {{ $formatearCantidad($resumenEconomicoVentasInventario['unidades_descontadas']) }}
                     &middot; productos con descuadre {{ $resumenEconomicoVentasInventario['productos_con_descuadre'] }}
                 </p>
+            </div>
+        </article>
+    </section>
+
+    <section class="mt-6" aria-label="Alertas de descuadres repetidos">
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Alertas por descuadres repetidos</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Productos con dos o mas incidencias entre cantidad servida y salida de stock en los ultimos {{ $periodo }} dias.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @if ($descuadresRepetidos->isEmpty())
+                    <p class="p-4 text-sm text-muted-foreground">No hay descuadres repetidos en este periodo.</p>
+                @else
+                    @foreach ($descuadresRepetidos as $descuadre)
+                        @php
+                            $producto = $descuadre['producto'];
+                        @endphp
+                        <div class="grid gap-3 p-4 md:grid-cols-[1fr_8rem_9rem_10rem_auto] md:items-center">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $producto->nombre }}</p>
+                                <p class="mt-1 text-xs text-muted-foreground">{{ $producto->sku ?? 'Sin SKU' }} &middot; {{ $producto->categoria?->nombre ?? 'Sin categoria' }}</p>
+                            </div>
+                            <p class="text-sm text-muted-foreground">
+                                <span class="block text-xs">Incidencias</span>
+                                <span class="font-semibold text-foreground">{{ $descuadre['incidencias'] }}</span>
+                            </p>
+                            <p class="text-sm text-muted-foreground">
+                                <span class="block text-xs">Diferencia</span>
+                                <span class="font-semibold text-destructive">{{ $producto->formatearCantidadConUnidad($descuadre['diferencia_total']) }}</span>
+                            </p>
+                            <p class="text-sm text-muted-foreground">
+                                <span class="block text-xs">Ultima</span>
+                                <span class="font-semibold text-foreground">{{ $descuadre['ultima_incidencia'] ?? '-' }}</span>
+                            </p>
+                            <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Ver stock" aria-label="Ver stock de {{ $producto->nombre }}">
+                                <x-admin.icon name="stock" />
+                            </a>
+                        </div>
+                    @endforeach
+                @endif
             </div>
         </article>
     </section>
@@ -526,7 +580,7 @@
     <section class="mt-6 grid gap-4 xl:grid-cols-[.9fr_1.1fr]" aria-label="Rotacion y movimientos recientes">
         <article class="admin-card overflow-hidden">
             <header class="border-b border-border p-4">
-                <h2 class="text-base font-semibold text-foreground">Top salidas 30 dias</h2>
+                <h2 class="text-base font-semibold text-foreground">Top salidas {{ $periodo }} dias</h2>
                 <p class="mt-1 text-sm text-muted-foreground">Productos con mayor descuento de stock reciente.</p>
             </header>
             <div class="divide-y divide-border">
@@ -541,7 +595,7 @@
                         </p>
                     </div>
                 @empty
-                    <p class="p-4 text-sm text-muted-foreground">Todavia no hay salidas registradas en los ultimos 30 dias.</p>
+                    <p class="p-4 text-sm text-muted-foreground">Todavia no hay salidas registradas en los ultimos {{ $periodo }} dias.</p>
                 @endforelse
             </div>
         </article>
