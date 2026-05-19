@@ -45,6 +45,8 @@
         <x-admin.kpi-card title="Entradas 7 dias" :value="$formatearCantidad($kpis['entradas_7_dias'])" description="Unidades recibidas" variant="success" />
         <x-admin.kpi-card title="Salidas 7 dias" :value="$formatearCantidad($kpis['salidas_7_dias'])" description="Unidades descontadas" variant="danger" />
         <x-admin.kpi-card title="Valor stock" :value="number_format($kpis['valor_stock'], 2, ',', '.').' EUR'" description="Estimado por precio coste" />
+        <x-admin.kpi-card title="Carta sin stock" :value="$kpis['carta_sin_inventario']" description="Publicados sin control" variant="warning" />
+        <x-admin.kpi-card title="Ventas sin salida" :value="$kpis['ventas_sin_descuento_stock']" description="Servidas sin descuento" variant="danger" />
     </section>
 
     <section class="mt-6 grid gap-4 xl:grid-cols-[1.3fr_.7fr]" aria-label="Graficas de movimientos de inventario">
@@ -254,6 +256,97 @@
                     </div>
                 @empty
                     <p class="p-4 text-sm text-muted-foreground">No hay stock parado con el umbral actual.</p>
+                @endforelse
+            </div>
+        </article>
+    </section>
+
+    <section class="mt-6 grid gap-4 xl:grid-cols-[.9fr_1.1fr]" aria-label="Cruce entre carta, ventas e inventario">
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Carta sin control de stock</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Productos publicados que no tienen producto inventariable asociado o no controlan stock.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @forelse ($contenidosCartaSinInventario as $contenido)
+                    @php
+                        $motivo = $contenido->producto_id === null
+                            ? 'Sin producto de inventario'
+                            : 'Producto sin control de stock';
+                    @endphp
+                    <div class="grid gap-3 p-4 sm:grid-cols-[1fr_auto]">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $contenido->titulo }}</p>
+                                <x-admin.status-badge variant="warning">{{ $motivo }}</x-admin.status-badge>
+                            </div>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ $contenido->categoriaCarta?->nombreJerarquico() ?? 'Sin categoria' }}
+                                &middot; {{ $contenido->precioFormateado() ?? 'Sin precio' }}
+                            </p>
+                        </div>
+                        <a href="{{ route('admin.web-publica.contenidos.edit', $contenido) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Editar en carta" aria-label="Editar {{ $contenido->titulo }} en carta">
+                            <x-admin.icon name="edit" />
+                        </a>
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">La carta publicada esta vinculada a inventario controlado.</p>
+                @endforelse
+            </div>
+        </article>
+
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Ventas sin descuento de stock</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Lineas servidas en los ultimos 30 dias que no han generado salida de inventario.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @forelse ($lineasServidasSinProducto as $linea)
+                    <div class="grid gap-3 p-4 sm:grid-cols-[1fr_auto]">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $linea->nombre }}</p>
+                                <x-admin.status-badge variant="danger">Sin producto</x-admin.status-badge>
+                            </div>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Comanda {{ $linea->comanda?->numero ?? 'sin numero' }}
+                                &middot; {{ $linea->servida_at?->format('d/m/Y H:i') ?? 'Sin fecha' }}
+                                &middot; {{ $formatearCantidad($linea->cantidad) }} uds
+                            </p>
+                        </div>
+                        @if ($linea->comanda)
+                            <a href="{{ route('admin.ventas.comandas.show', $linea->comanda) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Ver comanda" aria-label="Ver comanda {{ $linea->comanda->numero }}">
+                                <x-admin.icon name="stock" />
+                            </a>
+                        @endif
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">No hay lineas servidas sin producto de inventario en los ultimos 30 dias.</p>
+                @endforelse
+
+                @forelse ($lineasInventariablesSinMovimiento as $linea)
+                    <div class="grid gap-3 bg-destructive/5 p-4 sm:grid-cols-[1fr_auto]">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $linea->nombre }}</p>
+                                <x-admin.status-badge variant="danger">Sin movimiento</x-admin.status-badge>
+                            </div>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ $linea->producto?->nombre ?? 'Producto eliminado' }}
+                                &middot; Comanda {{ $linea->comanda?->numero ?? 'sin numero' }}
+                                &middot; {{ $linea->servida_at?->format('d/m/Y H:i') ?? 'Sin fecha' }}
+                            </p>
+                        </div>
+                        @if ($linea->producto)
+                            <a href="{{ route('admin.inventario.productos.stock', $linea->producto->sku ?: $linea->producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Ver stock" aria-label="Ver stock de {{ $linea->producto->nombre }}">
+                                <x-admin.icon name="stock" />
+                            </a>
+                        @endif
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">No hay lineas inventariables servidas sin movimiento de salida.</p>
                 @endforelse
             </div>
         </article>

@@ -1,120 +1,77 @@
 <x-publico-layout title="Carta | Cerveceria Europa" description="Carta publica de Cerveceria Europa con platos y cervezas publicados desde el panel.">
-    <section class="border-b border-public-border/15 bg-public-surface">
-        <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-            <p class="text-sm font-black uppercase tracking-[0.2em] text-public-primary">Carta viva</p>
-            <h1 class="mt-3 text-4xl font-black text-public-foreground sm:text-6xl">Carta</h1>
-            <p class="mt-4 max-w-2xl text-lg leading-8 text-public-muted">Carta organizada por secciones editables desde el panel. Si un producto vinculado al inventario se queda sin stock, desaparece automaticamente.</p>
+    {{-- Page header rompedor: una sola palabra a 18vw --}}
+    <section class="relative overflow-hidden border-b px-8 pb-14 pt-20" style="border-color: var(--v2-line);">
+        <div class="mx-auto max-w-[1440px]">
+            <div class="font-mono text-[13px] font-medium tracking-wider text-amber-bright">
+                / Carta viva · {{ $categoriasPadre->sum(fn ($c) => $c->contenidos->count() + $c->hijas->sum(fn ($h) => $h->contenidos->count())) }} referencias publicadas
+            </div>
+            <h1 class="relative z-[2] m-0 font-display leading-[0.82] tracking-[-0.01em] text-ink" style="font-size: clamp(5rem, 18vw, 22rem);">Carta.</h1>
+            <p class="relative z-[2] mt-8 max-w-[56ch] text-lg leading-[1.5] text-ink-mute">
+                Organizada por secciones editables desde el panel. Si un producto vinculado al inventario se queda sin stock, desaparece automaticamente. Si vuelve, vuelve.
+            </p>
         </div>
     </section>
 
-    <section class="bg-public-background py-12">
-        <div
-            class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8"
-            x-data="{ seccionActiva: '{{ $categoriasPadre->first()?->slug }}' }"
-        >
-            @if ($categoriasPadre->isNotEmpty())
-                <div class="sticky top-[73px] z-30 border-y border-public-border/15 bg-public-background/95 py-3 backdrop-blur">
-                    <nav class="flex gap-2 overflow-x-auto" aria-label="Secciones principales de carta">
-                        @foreach ($categoriasPadre as $categoriaPadre)
-                            @php
-                                $totalCategoria = $categoriaPadre->contenidos->count()
-                                    + $categoriaPadre->hijas->sum(fn ($hija) => $hija->contenidos->count());
-                            @endphp
-                            <button
-                                type="button"
-                                class="flex shrink-0 items-center gap-2 rounded-md border px-4 py-2 text-sm font-black uppercase tracking-wide transition"
-                                :class="seccionActiva === '{{ $categoriaPadre->slug }}' ? 'border-public-primary bg-public-primary text-[#23180f]' : 'border-public-border/20 bg-public-surface text-public-foreground hover:border-public-primary hover:text-public-primary'"
-                                @click="seccionActiva = '{{ $categoriaPadre->slug }}'"
-                                title="Ver {{ $categoriaPadre->nombre }}"
-                                aria-controls="seccion-{{ $categoriaPadre->slug }}"
-                            >
-                                <span>{{ $categoriaPadre->nombre }}</span>
-                                <span class="rounded bg-public-background/70 px-2 py-0.5 text-xs text-public-muted">{{ $totalCategoria }}</span>
-                            </button>
-                        @endforeach
-                    </nav>
-                </div>
-            @endif
+    {{-- Tap list completa --}}
+    <section class="px-8 pb-24 pt-14">
+        <div class="mx-auto max-w-[1440px]" x-data="{ activa: '{{ $categoriasPadre->first()?->slug }}' }">
+            <div class="grid grid-cols-1 gap-16 lg:grid-cols-[minmax(280px,1fr)_2fr]">
+                {{-- Aside sticky con categorias numeradas --}}
+                <aside class="flex flex-col gap-1 lg:sticky lg:top-22 lg:self-start" style="top: 88px;" aria-label="Categorias de carta">
+                    @foreach ($categoriasPadre as $i => $cat)
+                        @php
+                            $total = $cat->contenidos->count() + $cat->hijas->sum(fn ($h) => $h->contenidos->count());
+                        @endphp
+                        <button
+                            type="button"
+                            class="v2-tap-cat"
+                            :class="activa === '{{ $cat->slug }}' ? 'on' : ''"
+                            @click="activa = '{{ $cat->slug }}'">
+                            <span>{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }} · {{ $cat->nombre }}</span>
+                            <span class="n">{{ $total }}</span>
+                        </button>
+                    @endforeach
+                </aside>
 
-            @forelse ($categoriasPadre as $categoriaPadre)
-                <section
-                    id="seccion-{{ $categoriaPadre->slug }}"
-                    class="scroll-mt-32"
-                    x-show="seccionActiva === '{{ $categoriaPadre->slug }}'"
-                    x-cloak
-                >
-                    <div class="mb-6">
-                        <p class="text-sm font-black uppercase tracking-[0.18em] text-public-primary">Carta</p>
-                        <h2 class="mt-2 text-3xl font-black text-public-foreground">{{ $categoriaPadre->nombre }}</h2>
-                        @if ($categoriaPadre->descripcion)
-                            <p class="mt-2 max-w-3xl text-public-muted">{{ $categoriaPadre->descripcion }}</p>
-                        @endif
-                    </div>
-
-                    @if ($categoriaPadre->contenidos->isNotEmpty())
-                        <div class="mb-8 space-y-3">
-                            @foreach ($categoriaPadre->contenidos as $contenido)
-                                <x-web-publica.fila-contenido :contenido="$contenido" />
+                {{-- Listas de filas por categoria --}}
+                <div>
+                    @foreach ($categoriasPadre as $cat)
+                        <div x-show="activa === '{{ $cat->slug }}'" x-cloak class="flex flex-col">
+                            @php $idx = 1; @endphp
+                            @foreach ($cat->contenidos as $c)
+                                <x-web-publica.tap-row :contenido="$c" :index="$idx++" />
                             @endforeach
-                        </div>
-                    @endif
-
-                    <div class="space-y-3">
-                        @forelse ($categoriaPadre->hijas as $categoriaHija)
-                            @if ($categoriaHija->contenidos->isNotEmpty())
-                                <div x-data="{ abierta: false }" class="overflow-hidden rounded-lg border border-public-border/15 bg-public-surface">
-                                    <button
-                                        type="button"
-                                        class="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-public-background/60"
-                                        @click="abierta = ! abierta"
-                                        :aria-expanded="abierta"
-                                        title="Abrir o cerrar {{ $categoriaHija->nombre }}"
-                                    >
-                                        <span class="min-w-0">
-                                            <span class="block text-lg font-black text-public-foreground">{{ $categoriaHija->nombre }}</span>
-                                            @if ($categoriaHija->descripcion)
-                                                <span class="mt-1 block text-sm text-public-muted">{{ $categoriaHija->descripcion }}</span>
-                                            @endif
-                                        </span>
-                                        <span class="flex shrink-0 items-center gap-3">
-                                            <span class="rounded-md border border-public-border/20 bg-public-background px-2 py-1 text-xs font-black text-public-muted">{{ $categoriaHija->contenidos->count() }}</span>
-                                            <svg class="h-5 w-5 text-public-primary transition" :class="abierta ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" />
-                                            </svg>
-                                        </span>
-                                    </button>
-
-                                    <div x-show="abierta" x-transition class="space-y-3 border-t border-public-border/15 bg-public-background/35 p-3">
-                                        @foreach ($categoriaHija->contenidos as $contenido)
-                                            <x-web-publica.fila-contenido :contenido="$contenido" />
-                                        @endforeach
+                            @foreach ($cat->hijas as $hija)
+                                @if ($hija->contenidos->isNotEmpty())
+                                    <div class="mb-2 mt-10 border-b pb-3" style="border-color: var(--v2-line);">
+                                        <p class="font-mono text-xs uppercase tracking-[0.16em] text-amber-bright">— {{ $hija->nombre }}</p>
                                     </div>
+                                    @foreach ($hija->contenidos as $c)
+                                        <x-web-publica.tap-row :contenido="$c" :index="$idx++" />
+                                    @endforeach
+                                @endif
+                            @endforeach
+
+                            @if ($cat->contenidos->isEmpty() && $cat->hijas->every(fn ($h) => $h->contenidos->isEmpty()))
+                                <div class="rounded-3xl border border-dashed p-20 text-center text-base text-ink-mute" style="border-color: var(--v2-line-2);">
+                                    Todavia no hay productos publicados en esta categoria.
                                 </div>
                             @endif
-                        @empty
-                            @if ($categoriaPadre->contenidos->isEmpty())
-                                <div class="rounded-lg border border-public-border/15 bg-public-surface p-8 text-public-muted">Todavia no hay productos publicados en esta categoria.</div>
-                            @endif
-                        @endforelse
-                    </div>
-                </section>
-            @empty
-                <div class="rounded-lg border border-public-border/15 bg-public-surface p-8 text-public-muted">Todavia no hay categorias de carta publicadas.</div>
-            @endforelse
+                        </div>
+                    @endforeach
 
-            @if ($sinCategoria->isNotEmpty())
-                <div>
-                    <div class="mb-6">
-                        <p class="text-sm font-black uppercase tracking-[0.18em] text-public-primary">Sin clasificar</p>
-                        <h2 class="mt-2 text-3xl font-black text-public-foreground">Otros productos</h2>
-                    </div>
-                    <div class="space-y-3">
-                        @foreach ($sinCategoria as $contenido)
-                            <x-web-publica.fila-contenido :contenido="$contenido" />
-                        @endforeach
-                    </div>
+                    @if ($sinCategoria->isNotEmpty())
+                        <div class="mt-16">
+                            <p class="font-mono text-xs uppercase tracking-[0.16em] text-amber-bright">— Otros productos</p>
+                            <div class="mt-4 flex flex-col">
+                                @foreach ($sinCategoria as $i => $c)
+                                    <x-web-publica.tap-row :contenido="$c" :index="$i + 1" />
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
-            @endif
+            </div>
         </div>
     </section>
 </x-publico-layout>

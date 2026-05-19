@@ -10,6 +10,9 @@ use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Services\DashboardInventarioMetricas;
+use App\Modulos\Ventas\Enums\EstadoLineaComanda;
+use App\Modulos\Ventas\Models\LineaComanda;
+use App\Modulos\WebPublica\Models\ContenidoWeb;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -48,6 +51,8 @@ class DashboardInventarioController extends Controller
                 'entradas_7_dias' => $this->sumarMovimientos(TipoMovimientoInventario::Entrada, 7),
                 'salidas_7_dias' => $this->sumarMovimientos(TipoMovimientoInventario::Salida, 7),
                 'valor_stock' => $this->valorEstimadoStock(),
+                'carta_sin_inventario' => $this->contadorCartaSinControlInventario(),
+                'ventas_sin_descuento_stock' => $this->contadorVentasServidasSinDescuentoStock(),
             ],
             'productosSinStock' => $productosConEstado
                 ->where('estado_stock_calculado', EstadoStockProducto::SinStock)
@@ -69,6 +74,9 @@ class DashboardInventarioController extends Controller
             'graficaStockPorUbicacion' => $metricas->stockPorUbicacion(),
             'reposicionUrgente' => $metricas->reposicionUrgente(30),
             'stockSinMovimiento' => $metricas->stockSinMovimientoReciente(30),
+            'contenidosCartaSinInventario' => $this->contenidosCartaSinControlInventario(),
+            'lineasServidasSinProducto' => $this->lineasServidasSinProductoInventario(),
+            'lineasInventariablesSinMovimiento' => $this->lineasInventariablesSinMovimiento(),
         ]);
     }
 
@@ -155,5 +163,113 @@ class DashboardInventarioController extends Controller
             ->with('producto.unidad')
             ->take(6)
             ->get();
+    }
+
+    /**
+     * Cuenta contenidos de carta publicados que no pueden descontar stock.
+     */
+    private function contadorCartaSinControlInventario(): int
+    {
+        return $this->consultaCartaSinControlInventario()->count();
+    }
+
+    /**
+     * Cuenta lineas servidas que no han generado salida de inventario.
+     */
+    private function contadorVentasServidasSinDescuentoStock(): int
+    {
+        return $this->consultaLineasServidasSinProductoInventario()->count()
+            + $this->consultaLineasInventariablesSinMovimiento()->count();
+    }
+
+    /**
+     * Devuelve contenidos publicados sin producto inventariable asociado.
+     *
+     * @return Collection<int, ContenidoWeb>
+     */
+    private function contenidosCartaSinControlInventario(): Collection
+    {
+        return $this->consultaCartaSinControlInventario()
+            ->with(['categoriaCarta.padre', 'producto.unidad'])
+            ->orderBy('orden')
+            ->orderBy('titulo')
+            ->take(8)
+            ->get();
+    }
+
+    /**
+     * Devuelve lineas servidas que no tenian producto de inventario asociado.
+     *
+     * @return Collection<int, LineaComanda>
+     */
+    private function lineasServidasSinProductoInventario(): Collection
+    {
+        return $this->consultaLineasServidasSinProductoInventario()
+            ->with(['comanda', 'contenidoWeb'])
+            ->latest('servida_at')
+            ->take(6)
+            ->get();
+    }
+
+    /**
+     * Devuelve lineas inventariables servidas sin movimiento de salida.
+     *
+     * @return Collection<int, LineaComanda>
+     */
+    private function lineasInventariablesSinMovimiento(): Collection
+    {
+        return $this->consultaLineasInventariablesSinMovimiento()
+            ->with(['comanda', 'producto.unidad', 'contenidoWeb'])
+            ->latest('servida_at')
+            ->take(6)
+            ->get();
+    }
+
+    /**
+     * Query base de contenidos publicados que no controlan inventario.
+     *
+     * @return Builder<ContenidoWeb>
+     */
+    private function consultaCartaSinControlInventario(): Builder
+    {
+        return ContenidoWeb::query()
+            ->where('publicado', true)
+            ->where(function (Builder $query): void {
+                $query->whereNull('publicado_desde')->orWhereDate('publicado_desde', '<=', now()->toDateString());
+            })
+            ->where(function (Builder $query): void {
+                $query->whereNull('publicado_hasta')->orWhereDate('publicado_hasta', '>=', now()->toDateString());
+            })
+            ->where(function (Builder $query): void {
+                $query->whereNull('producto_id')
+                    ->orWhereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', false));
+            });
+    }
+
+    /**
+     * Query base de lineas servidas sin producto de inventario.
+     *
+     * @return Builder<LineaComanda>
+     */
+    private function consultaLineasServidasSinProductoInventario(): Builder
+    {
+        return LineaComanda::query()
+            ->where('estado', EstadoLineaComanda::Servida->value)
+            ->whereNull('producto_id')
+            ->where('servida_at', '>=', now()->subDays(30));
+    }
+
+    /**
+     * Query base de lineas de productos inventariables servidas sin movimiento.
+     *
+     * @return Builder<LineaComanda>
+     */
+    private function consultaLineasInventariablesSinMovimiento(): Builder
+    {
+        return LineaComanda::query()
+            ->where('estado', EstadoLineaComanda::Servida->value)
+            ->whereNull('movimiento_inventario_id')
+            ->where('servida_at', '>=', now()->subDays(30))
+            ->whereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', true));
     }
 }

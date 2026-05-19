@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 2.4 implementada.
+Fase 2.5 implementada.
 
 Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
 
@@ -58,6 +58,10 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Formulario de movimientos adaptado a PDA/movil con selector visual de tipo y control de cantidad con botones `-` y `+`.
 - Cantidades rapidas configuradas segun si la unidad permite decimales.
 - Persistencia de valores del formulario cuando hay errores de validacion.
+- Cruce inicial entre carta publica, ventas e inventario en el dashboard.
+- Deteccion de contenidos publicados sin producto inventariable asociado o con producto sin control de stock.
+- Deteccion de lineas servidas sin producto de inventario asociado en los ultimos 30 dias.
+- Deteccion de lineas inventariables servidas sin movimiento de salida de inventario.
 
 ## Tablas
 
@@ -259,6 +263,8 @@ Implementacion actual:
 
 Esta fase conecta el dashboard con la operativa completa del negocio.
 
+Estado: iniciada e implementada en su primera entrega.
+
 Mejoras recomendadas:
 
 - Propuestas automaticas de compra desde productos bajo minimo.
@@ -268,9 +274,26 @@ Mejoras recomendadas:
 - Mostrar coste estimado de consumo por periodo.
 - Mostrar margen orientativo si existe precio de venta y precio de coste.
 
+Implementacion actual:
+
+- El dashboard de inventario muestra KPIs de `Carta sin stock` y `Ventas sin salida`.
+- `Carta sin stock` cuenta contenidos publicados que no tienen `producto_id` o cuyo producto asociado no controla stock.
+- `Ventas sin salida` cuenta lineas servidas en los ultimos 30 dias sin producto de inventario o con producto inventariable pero sin `movimiento_inventario_id`.
+- El bloque `Carta sin control de stock` enlaza al formulario de edicion del contenido web para corregir el vinculo.
+- El bloque `Ventas sin descuento de stock` separa los casos `Sin producto` y `Sin movimiento`, porque el arreglo operativo es distinto:
+  - `Sin producto`: hay que vincular la carta al producto de inventario.
+  - `Sin movimiento`: hay que revisar por que una linea inventariable servida no genero salida de stock.
+
+Pendiente dentro de la fase:
+
+- Generar propuestas automaticas de compra desde productos bajo minimo y dias restantes criticos.
+- Comparar ventas servidas contra salidas agregadas por periodo para detectar descuadres de cantidades.
+- Mostrar coste estimado de consumo y margen orientativo cuando existan precio de coste y precio de venta.
+
 ## Siguiente fase recomendada
 
-1. Empezar Fase 2.5 cruzando productos de carta con productos de inventario para detectar ventas sin descuento de stock.
-2. Crear propuestas automaticas de compra desde productos bajo minimo o con dias restantes criticos.
-3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
-4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
+1. Completar Fase 2.5 con propuestas automaticas de compra desde productos bajo minimo o con dias restantes criticos.
+2. Anadir comparativa de ventas servidas frente a salidas reales de inventario por periodo.
+3. Mostrar coste estimado de consumo y margen orientativo.
+4. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
+5. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.

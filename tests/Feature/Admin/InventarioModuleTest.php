@@ -11,6 +11,11 @@ use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
+use App\Modulos\Ventas\Enums\EstadoComanda;
+use App\Modulos\Ventas\Enums\EstadoLineaComanda;
+use App\Modulos\Ventas\Models\Comanda;
+use App\Modulos\WebPublica\Enums\TipoContenidoWeb;
+use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,6 +53,73 @@ class InventarioModuleTest extends TestCase
             ->assertSee('Reposicion urgente')
             ->assertSee('Stock parado')
             ->assertSee('Ultimos movimientos');
+    }
+
+    public function test_inventory_dashboard_detects_menu_and_sales_without_stock_traceability(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Producto inventariable vendido sin movimiento',
+            'sku' => 'VENTA-SIN-MOV',
+            'controla_stock' => true,
+        ]);
+
+        ContenidoWeb::query()->create([
+            'tipo' => TipoContenidoWeb::Plato,
+            'titulo' => 'Croquetas sin vinculo',
+            'slug' => 'croquetas-sin-vinculo',
+            'precio' => 6.50,
+            'publicado' => true,
+            'orden' => 1,
+        ]);
+
+        $comanda = Comanda::query()->create([
+            'numero' => 'COM-TEST-0001',
+            'estado' => EstadoComanda::Servida,
+            'subtotal' => 5,
+            'impuestos' => 0,
+            'total' => 5,
+            'creado_por' => $usuario->id,
+            'actualizado_por' => $usuario->id,
+            'servida_at' => now(),
+        ]);
+
+        $comanda->lineas()->create([
+            'producto_id' => null,
+            'nombre' => 'Tapa sin inventario',
+            'cantidad' => 1,
+            'precio_unitario' => 2.50,
+            'subtotal' => 2.50,
+            'impuestos' => 0,
+            'total' => 2.50,
+            'estado' => EstadoLineaComanda::Servida,
+            'orden' => 1,
+            'servida_at' => now(),
+        ]);
+
+        $comanda->lineas()->create([
+            'producto_id' => $producto->id,
+            'nombre' => 'Producto inventariable vendido sin movimiento',
+            'cantidad' => 1,
+            'precio_unitario' => 2.50,
+            'subtotal' => 2.50,
+            'impuestos' => 0,
+            'total' => 2.50,
+            'estado' => EstadoLineaComanda::Servida,
+            'orden' => 2,
+            'servida_at' => now(),
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.index'))
+            ->assertOk()
+            ->assertSee('Carta sin control de stock')
+            ->assertSee('Ventas sin descuento de stock')
+            ->assertSee('Croquetas sin vinculo')
+            ->assertSee('Tapa sin inventario')
+            ->assertSee('Producto inventariable vendido sin movimiento')
+            ->assertSee('Sin movimiento');
     }
 
     public function test_product_can_be_created(): void
