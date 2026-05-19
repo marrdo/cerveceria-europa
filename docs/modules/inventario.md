@@ -62,6 +62,7 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Deteccion de contenidos publicados sin producto inventariable asociado o con producto sin control de stock.
 - Deteccion de lineas servidas sin producto de inventario asociado en los ultimos 30 dias.
 - Deteccion de lineas inventariables servidas sin movimiento de salida de inventario.
+- Generacion de propuestas automaticas de compra desde stock bajo, productos sin stock y dias restantes criticos.
 
 ## Tablas
 
@@ -283,17 +284,17 @@ Implementacion actual:
 - El bloque `Ventas sin descuento de stock` separa los casos `Sin producto` y `Sin movimiento`, porque el arreglo operativo es distinto:
   - `Sin producto`: hay que vincular la carta al producto de inventario.
   - `Sin movimiento`: hay que revisar por que una linea inventariable servida no genero salida de stock.
+- La pantalla de propuestas de compra incorpora productos sin stock, bajo minimo o con 7 dias o menos de cobertura estimada.
+- La cantidad sugerida de compra intenta cubrir el doble del minimo o 14 dias de consumo reciente, usando la cifra mas exigente.
 
 Pendiente dentro de la fase:
 
-- Generar propuestas automaticas de compra desde productos bajo minimo y dias restantes criticos.
 - Comparar ventas servidas contra salidas agregadas por periodo para detectar descuadres de cantidades.
 - Mostrar coste estimado de consumo y margen orientativo cuando existan precio de coste y precio de venta.
 
 ## Siguiente fase recomendada
 
-1. Completar Fase 2.5 con propuestas automaticas de compra desde productos bajo minimo o con dias restantes criticos.
-2. Anadir comparativa de ventas servidas frente a salidas reales de inventario por periodo.
-3. Mostrar coste estimado de consumo y margen orientativo.
-4. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
-5. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
+1. Anadir comparativa de ventas servidas frente a salidas reales de inventario por periodo.
+2. Mostrar coste estimado de consumo y margen orientativo.
+3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
+4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.

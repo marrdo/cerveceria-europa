@@ -194,9 +194,12 @@
 
     <section class="mt-6 grid gap-4 xl:grid-cols-2" aria-label="Control inteligente de stock">
         <article class="admin-card overflow-hidden">
-            <header class="border-b border-border p-4">
-                <h2 class="text-base font-semibold text-foreground">Reposicion urgente</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Productos que conviene revisar por stock, minimo o consumo reciente.</p>
+            <header class="flex items-start justify-between gap-4 border-b border-border p-4">
+                <div>
+                    <h2 class="text-base font-semibold text-foreground">Reposicion urgente</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Productos que conviene revisar por stock, minimo o consumo reciente.</p>
+                </div>
+                <a href="{{ route('admin.compras.propuestas.index') }}" class="text-sm font-medium text-primary hover:underline">Ver propuestas</a>
             </header>
 
             <div class="divide-y divide-border">

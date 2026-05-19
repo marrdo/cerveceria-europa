@@ -36,6 +36,7 @@ El modulo `Compras` gestiona pedidos a proveedor, recepciones de mercancia, inci
 - Devoluciones a proveedor.
 - Salidas reales de inventario asociadas a devoluciones.
 - Propuestas de compra desde productos bajo stock o sin stock.
+- Propuestas de compra desde productos con pocos dias estimados de stock restante.
 - Generacion de pedidos borrador desde propuestas agrupadas por proveedor.
 - Documentos de compra para subida de albaranes/facturas.
 - Lecturas pendientes y borradores revisables asociados a documentos.
@@ -168,16 +169,18 @@ Flujo:
 
 ```text
 Productos activos con control de stock
--> Estado sin stock o stock bajo
+-> Estado sin stock, stock bajo o cobertura critica por consumo
 -> Agrupacion por proveedor principal
 -> Cantidad sugerida editable
 -> Pedido borrador
 ```
 
-Criterio inicial:
+Criterio actual:
 
 - Si el producto tiene `cantidad_alerta_stock`, se propone comprar hasta llegar al doble de esa alerta.
 - Si el producto esta sin stock y no tiene alerta, se propone 1 unidad.
+- Si el producto tiene consumo reciente y quedan 7 dias o menos de cobertura estimada, tambien entra en propuesta.
+- En productos con consumo critico, la cantidad sugerida intenta cubrir 14 dias de consumo si esa cifra supera el doble de la alerta.
 - Los productos sin proveedor principal se muestran aparte para corregir su ficha.
 
 ## Siguiente fase

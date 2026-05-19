@@ -15,7 +15,7 @@
 
     <section class="admin-card mb-6 p-4 lg:p-6">
         <h2 class="text-base font-semibold text-foreground">Criterio de propuesta</h2>
-        <p class="mt-2 text-sm text-muted-foreground">Se proponen productos activos con control de stock que estan sin stock o por debajo de su alerta. La cantidad sugerida intenta reponer hasta el doble de la alerta configurada.</p>
+        <p class="mt-2 text-sm text-muted-foreground">Se proponen productos activos con control de stock que estan sin stock, por debajo de su alerta o con 7 dias o menos de cobertura estimada segun salidas recientes. La cantidad sugerida intenta reponer hasta el doble de la alerta o cubrir 14 dias de consumo.</p>
     </section>
 
     <div class="space-y-6">
@@ -53,6 +53,14 @@
                                     <p class="mt-1 text-xs font-normal text-muted-foreground">Nivel minimo configurado.</p>
                                 </th>
                                 <th class="w-44 px-4 py-3 text-left font-medium text-foreground">
+                                    Motivo
+                                    <p class="mt-1 text-xs font-normal text-muted-foreground">Por que entra en propuesta.</p>
+                                </th>
+                                <th class="w-44 px-4 py-3 text-left font-medium text-foreground">
+                                    Consumo
+                                    <p class="mt-1 text-xs font-normal text-muted-foreground">Salidas y cobertura.</p>
+                                </th>
+                                <th class="w-44 px-4 py-3 text-left font-medium text-foreground">
                                     Cantidad propuesta
                                     <p class="mt-1 text-xs font-normal text-muted-foreground">Puedes ajustarla antes de crear el pedido.</p>
                                 </th>
@@ -73,6 +81,15 @@
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $producto->formatearCantidad($propuesta['stock_actual']) }} {{ $producto->codigoUnidad() }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $producto->formatearCantidad($producto->cantidad_alerta_stock) }} {{ $producto->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3">
+                                        <x-admin.status-badge :variant="$propuesta['motivo'] === 'Sin stock disponible' ? 'danger' : 'warning'">{{ $propuesta['motivo'] }}</x-admin.status-badge>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-muted-foreground">
+                                        <span class="block">Salidas 30 dias: {{ $producto->formatearCantidad($propuesta['salidas_periodo']) }} {{ $producto->codigoUnidad() }}</span>
+                                        <span class="mt-1 block">
+                                            {{ $propuesta['dias_restantes'] === null ? 'Sin consumo reciente' : $propuesta['dias_restantes'].' dias restantes' }}
+                                        </span>
+                                    </td>
                                     <td class="px-4 py-3">
                                         <x-text-input name="productos[{{ $indice }}][cantidad]" type="number" step="0.001" min="0.001" class="block h-10 w-full" :value="old('productos.'.$indice.'.cantidad', $propuesta['cantidad_sugerida'])" required />
                                         <x-input-error :messages="$errors->get('productos.'.$indice.'.cantidad')" class="mt-2" />
@@ -99,12 +116,16 @@
             </div>
             <div class="divide-y divide-border">
                 @foreach ($productosSinProveedor as $producto)
+                    @php($productoInventario = $producto['producto'])
                     <div class="flex items-center justify-between gap-4 p-4 text-sm">
                         <div>
-                            <div class="font-medium text-foreground">{{ $producto->nombre }}</div>
-                            <div class="text-xs text-muted-foreground">Stock {{ $producto->formatearCantidad($producto->cantidadStock()) }} {{ $producto->codigoUnidad() }}</div>
+                            <div class="font-medium text-foreground">{{ $productoInventario->nombre }}</div>
+                            <div class="text-xs text-muted-foreground">
+                                Stock {{ $productoInventario->formatearCantidad($producto['stock_actual']) }} {{ $productoInventario->codigoUnidad() }}
+                                &middot; {{ $producto['motivo'] }}
+                            </div>
                         </div>
-                        <a href="{{ route('admin.inventario.productos.edit', $producto) }}" class="text-primary hover:underline">Asignar proveedor</a>
+                        <a href="{{ route('admin.inventario.productos.edit', $productoInventario) }}" class="text-primary hover:underline">Asignar proveedor</a>
                     </div>
                 @endforeach
             </div>

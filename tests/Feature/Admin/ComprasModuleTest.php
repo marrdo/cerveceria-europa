@@ -262,6 +262,46 @@ class ComprasModuleTest extends TestCase
             ->assertSee('17');
     }
 
+    public function test_purchase_proposals_include_products_with_critical_days_remaining(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $proveedor = Proveedor::query()->firstOrFail();
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Cerveza con consumo critico',
+            'proveedor_id' => $proveedor->id,
+            'cantidad_alerta_stock' => 5,
+        ]);
+
+        StockInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'cantidad' => 8,
+            'cantidad_minima' => 0,
+        ]);
+
+        MovimientoInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'salida',
+            'cantidad' => 60,
+            'stock_antes' => 68,
+            'stock_despues' => 8,
+            'motivo' => 'Consumo critico de prueba',
+            'created_at' => now()->subDays(3),
+            'updated_at' => now()->subDays(3),
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.compras.propuestas.index'))
+            ->assertOk()
+            ->assertSee('Cerveza con consumo critico')
+            ->assertSee('Se agota pronto')
+            ->assertSee('4 dias restantes')
+            ->assertSee('20');
+    }
+
     public function test_purchase_proposal_can_generate_draft_order(): void
     {
         $this->travelTo(Carbon::parse('2026-05-01 10:00:00'));
