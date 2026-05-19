@@ -264,7 +264,7 @@ Implementacion actual:
 
 Esta fase conecta el dashboard con la operativa completa del negocio.
 
-Estado: iniciada e implementada en su primera entrega.
+Estado: implementada.
 
 Mejoras recomendadas:
 
@@ -278,23 +278,22 @@ Mejoras recomendadas:
 Implementacion actual:
 
 - El dashboard de inventario muestra KPIs de `Carta sin stock` y `Ventas sin salida`.
+- El dashboard incorpora el KPI `Margen 30 dias`, calculado desde lineas servidas con producto inventariable.
 - `Carta sin stock` cuenta contenidos publicados que no tienen `producto_id` o cuyo producto asociado no controla stock.
 - `Ventas sin salida` cuenta lineas servidas en los ultimos 30 dias sin producto de inventario o con producto inventariable pero sin `movimiento_inventario_id`.
 - El bloque `Carta sin control de stock` enlaza al formulario de edicion del contenido web para corregir el vinculo.
 - El bloque `Ventas sin descuento de stock` separa los casos `Sin producto` y `Sin movimiento`, porque el arreglo operativo es distinto:
   - `Sin producto`: hay que vincular la carta al producto de inventario.
   - `Sin movimiento`: hay que revisar por que una linea inventariable servida no genero salida de stock.
+- El bloque `Ventas vs salidas de stock` compara, por producto, las unidades servidas contra las unidades realmente descontadas desde movimientos vinculados.
+- La comparativa marca descuadres cuando la cantidad servida y la cantidad descontada no coinciden, para detectar fallos de trazabilidad o salidas no registradas.
+- El bloque `Coste y margen estimado` resume ingresos inventariables, coste estimado, margen bruto, margen porcentual, unidades vendidas, unidades descontadas y numero de productos con descuadre.
 - La pantalla de propuestas de compra incorpora productos sin stock, bajo minimo o con 7 dias o menos de cobertura estimada.
 - La cantidad sugerida de compra intenta cubrir el doble del minimo o 14 dias de consumo reciente, usando la cifra mas exigente.
 
-Pendiente dentro de la fase:
-
-- Comparar ventas servidas contra salidas agregadas por periodo para detectar descuadres de cantidades.
-- Mostrar coste estimado de consumo y margen orientativo cuando existan precio de coste y precio de venta.
-
 ## Siguiente fase recomendada
 
-1. Anadir comparativa de ventas servidas frente a salidas reales de inventario por periodo.
-2. Mostrar coste estimado de consumo y margen orientativo.
-3. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
-4. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
+1. Revisar si conviene sustituir las graficas HTML/CSS por una libreria ligera de graficas.
+2. Anadir filtros temporales configurables en el dashboard: 7, 14, 30 y 90 dias.
+3. Incorporar exportacion CSV/PDF de movimientos, descuadres y propuestas de compra.
+4. Valorar alertas automaticas para descuadres repetidos entre ventas y salidas de stock.

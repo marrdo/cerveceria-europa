@@ -122,6 +122,69 @@ class InventarioModuleTest extends TestCase
             ->assertSee('Sin movimiento');
     }
 
+    public function test_inventory_dashboard_compares_served_sales_with_stock_outputs_and_margin(): void
+    {
+        $this->seed(InventarioSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
+        $ubicacion = UbicacionInventario::query()->where('codigo', 'BARRA')->firstOrFail();
+        $producto = $this->crearProductoPrueba([
+            'nombre' => 'Leffe margen dashboard',
+            'sku' => 'LEFFE-MARGEN',
+            'precio_coste' => 2,
+            'controla_stock' => true,
+        ]);
+
+        $movimiento = MovimientoInventario::query()->create([
+            'producto_id' => $producto->id,
+            'ubicacion_inventario_id' => $ubicacion->id,
+            'tipo' => 'salida',
+            'cantidad' => 2,
+            'stock_antes' => 10,
+            'stock_despues' => 8,
+            'motivo' => 'Venta servida en comanda COM-MARGEN-0001',
+            'referencia' => 'COM-MARGEN-0001',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $comanda = Comanda::query()->create([
+            'numero' => 'COM-MARGEN-0001',
+            'estado' => EstadoComanda::Servida,
+            'subtotal' => 30,
+            'impuestos' => 0,
+            'total' => 30,
+            'creado_por' => $usuario->id,
+            'actualizado_por' => $usuario->id,
+            'servida_at' => now(),
+        ]);
+
+        $comanda->lineas()->create([
+            'producto_id' => $producto->id,
+            'movimiento_inventario_id' => $movimiento->id,
+            'nombre' => 'Leffe margen dashboard',
+            'cantidad' => 3,
+            'precio_unitario' => 10,
+            'subtotal' => 30,
+            'impuestos' => 0,
+            'total' => 30,
+            'estado' => EstadoLineaComanda::Servida,
+            'orden' => 1,
+            'servida_at' => now(),
+        ]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.inventario.index'))
+            ->assertOk()
+            ->assertSee('Ventas vs salidas de stock')
+            ->assertSee('Coste y margen estimado')
+            ->assertSee('Leffe margen dashboard')
+            ->assertSee('Descuadre')
+            ->assertSee('30,00 EUR')
+            ->assertSee('6,00 EUR')
+            ->assertSee('24,00 EUR')
+            ->assertSee('80,00 %');
+    }
+
     public function test_product_can_be_created(): void
     {
         $this->seed(InventarioSeeder::class);

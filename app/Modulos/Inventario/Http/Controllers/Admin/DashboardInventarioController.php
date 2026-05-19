@@ -38,6 +38,8 @@ class DashboardInventarioController extends Controller
 
                 return $producto;
             });
+        $comparativaVentasStock = $this->comparativaVentasStock(limite: 500);
+        $resumenEconomicoVentasInventario = $this->resumenEconomicoVentasInventario($comparativaVentasStock);
 
         return view('modulos.inventario.dashboard', [
             'kpis' => [
@@ -53,6 +55,7 @@ class DashboardInventarioController extends Controller
                 'valor_stock' => $this->valorEstimadoStock(),
                 'carta_sin_inventario' => $this->contadorCartaSinControlInventario(),
                 'ventas_sin_descuento_stock' => $this->contadorVentasServidasSinDescuentoStock(),
+                'margen_bruto_30_dias' => $resumenEconomicoVentasInventario['margen_bruto'],
             ],
             'productosSinStock' => $productosConEstado
                 ->where('estado_stock_calculado', EstadoStockProducto::SinStock)
@@ -77,6 +80,8 @@ class DashboardInventarioController extends Controller
             'contenidosCartaSinInventario' => $this->contenidosCartaSinControlInventario(),
             'lineasServidasSinProducto' => $this->lineasServidasSinProductoInventario(),
             'lineasInventariablesSinMovimiento' => $this->lineasInventariablesSinMovimiento(),
+            'comparativaVentasStock' => $comparativaVentasStock->take(8)->values(),
+            'resumenEconomicoVentasInventario' => $resumenEconomicoVentasInventario,
         ]);
     }
 
@@ -271,5 +276,96 @@ class DashboardInventarioController extends Controller
             ->whereNull('movimiento_inventario_id')
             ->where('servida_at', '>=', now()->subDays(30))
             ->whereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', true));
+    }
+
+    /**
+     * Compara ventas servidas contra salidas reales generadas desde esas ventas.
+     *
+     * @return Collection<int, array{
+     *     producto: Producto,
+     *     cantidad_vendida: float,
+     *     cantidad_descontada: float,
+     *     diferencia: float,
+     *     ingresos: float,
+     *     coste_estimado: float,
+     *     margen_bruto: float,
+     *     margen_porcentaje: float|null
+     * }>
+     */
+    private function comparativaVentasStock(int $dias = 30, int $limite = 8): Collection
+    {
+        return $this->lineasInventariablesServidas($dias)
+            ->groupBy('producto_id')
+            ->map(function (Collection $lineas): array {
+                /** @var Producto $producto */
+                $producto = $lineas->first()->producto;
+                $cantidadVendida = round((float) $lineas->sum('cantidad'), 3);
+                $cantidadDescontada = round((float) $lineas->sum(fn (LineaComanda $linea): float => (float) ($linea->movimientoInventario?->cantidad ?? 0)), 3);
+                $ingresos = round((float) $lineas->sum('total'), 2);
+                $costeEstimado = round($cantidadVendida * (float) ($producto->precio_coste ?? 0), 2);
+                $margenBruto = round($ingresos - $costeEstimado, 2);
+
+                return [
+                    'producto' => $producto,
+                    'cantidad_vendida' => $cantidadVendida,
+                    'cantidad_descontada' => $cantidadDescontada,
+                    'diferencia' => round($cantidadVendida - $cantidadDescontada, 3),
+                    'ingresos' => $ingresos,
+                    'coste_estimado' => $costeEstimado,
+                    'margen_bruto' => $margenBruto,
+                    'margen_porcentaje' => $ingresos > 0 ? round(($margenBruto / $ingresos) * 100, 2) : null,
+                ];
+            })
+            ->sortByDesc(fn (array $fila): float => abs((float) $fila['diferencia']))
+            ->take($limite)
+            ->values();
+    }
+
+    /**
+     * Resume ingresos, coste y margen estimado de ventas inventariables.
+     *
+     * @return array{
+     *     ingresos: float,
+     *     coste_estimado: float,
+     *     margen_bruto: float,
+     *     margen_porcentaje: float|null,
+     *     unidades_vendidas: float,
+     *     unidades_descontadas: float,
+     *     productos_con_descuadre: int
+     * }
+     */
+    private function resumenEconomicoVentasInventario(?Collection $comparativa = null, int $dias = 30): array
+    {
+        $comparativa ??= $this->comparativaVentasStock($dias, 500);
+        $ingresos = round((float) $comparativa->sum('ingresos'), 2);
+        $costeEstimado = round((float) $comparativa->sum('coste_estimado'), 2);
+        $margenBruto = round($ingresos - $costeEstimado, 2);
+
+        return [
+            'ingresos' => $ingresos,
+            'coste_estimado' => $costeEstimado,
+            'margen_bruto' => $margenBruto,
+            'margen_porcentaje' => $ingresos > 0 ? round(($margenBruto / $ingresos) * 100, 2) : null,
+            'unidades_vendidas' => round((float) $comparativa->sum('cantidad_vendida'), 3),
+            'unidades_descontadas' => round((float) $comparativa->sum('cantidad_descontada'), 3),
+            'productos_con_descuadre' => $comparativa
+                ->filter(fn (array $fila): bool => abs((float) $fila['diferencia']) > 0.001)
+                ->count(),
+        ];
+    }
+
+    /**
+     * Lineas servidas con producto inventariable en un periodo reciente.
+     *
+     * @return Collection<int, LineaComanda>
+     */
+    private function lineasInventariablesServidas(int $dias): Collection
+    {
+        return LineaComanda::query()
+            ->with(['producto.categoria', 'producto.unidad', 'movimientoInventario'])
+            ->where('estado', EstadoLineaComanda::Servida->value)
+            ->where('servida_at', '>=', now()->subDays(max(1, $dias)))
+            ->whereHas('producto', fn (Builder $productoQuery) => $productoQuery->where('controla_stock', true))
+            ->get();
     }
 }

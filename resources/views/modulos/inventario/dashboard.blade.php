@@ -47,6 +47,7 @@
         <x-admin.kpi-card title="Valor stock" :value="number_format($kpis['valor_stock'], 2, ',', '.').' EUR'" description="Estimado por precio coste" />
         <x-admin.kpi-card title="Carta sin stock" :value="$kpis['carta_sin_inventario']" description="Publicados sin control" variant="warning" />
         <x-admin.kpi-card title="Ventas sin salida" :value="$kpis['ventas_sin_descuento_stock']" description="Servidas sin descuento" variant="danger" />
+        <x-admin.kpi-card title="Margen 30 dias" :value="number_format($kpis['margen_bruto_30_dias'], 2, ',', '.').' EUR'" description="Ventas inventariables" variant="success" />
     </section>
 
     <section class="mt-6 grid gap-4 xl:grid-cols-[1.3fr_.7fr]" aria-label="Graficas de movimientos de inventario">
@@ -355,6 +356,86 @@
         </article>
     </section>
 
+    <section class="mt-6 grid gap-4 xl:grid-cols-[1.1fr_.9fr]" aria-label="Comparativa de ventas, stock y margen">
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Ventas vs salidas de stock</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Comparativa de lineas servidas frente a movimientos de salida vinculados en los ultimos 30 dias.</p>
+            </header>
+
+            <div class="divide-y divide-border">
+                @forelse ($comparativaVentasStock as $fila)
+                    @php
+                        $producto = $fila['producto'];
+                        $hayDescuadre = abs((float) $fila['diferencia']) > 0.001;
+                    @endphp
+                    <div class="grid gap-3 p-4 lg:grid-cols-[1fr_8rem_8rem_7rem_auto] lg:items-center">
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="truncate text-sm font-semibold text-foreground">{{ $producto->nombre }}</p>
+                                <x-admin.status-badge :variant="$hayDescuadre ? 'danger' : 'success'">{{ $hayDescuadre ? 'Descuadre' : 'Cuadra' }}</x-admin.status-badge>
+                            </div>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ $producto->sku ?? 'Sin SKU' }} &middot; {{ $producto->categoria?->nombre ?? 'Sin categoria' }}</p>
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            <span class="block text-xs">Vendido</span>
+                            <span class="font-semibold text-foreground">{{ $producto->formatearCantidadConUnidad($fila['cantidad_vendida']) }}</span>
+                        </p>
+                        <p class="text-sm text-muted-foreground">
+                            <span class="block text-xs">Descontado</span>
+                            <span class="font-semibold text-foreground">{{ $producto->formatearCantidadConUnidad($fila['cantidad_descontada']) }}</span>
+                        </p>
+                        <p class="text-sm text-muted-foreground">
+                            <span class="block text-xs">Diferencia</span>
+                            <span class="font-semibold {{ $hayDescuadre ? 'text-destructive' : 'text-success' }}">{{ $producto->formatearCantidadConUnidad($fila['diferencia']) }}</span>
+                        </p>
+                        <a href="{{ route('admin.inventario.productos.stock', $producto->sku ?: $producto->id) }}" class="inline-flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary transition hover:bg-primary/10" title="Ver stock" aria-label="Ver stock de {{ $producto->nombre }}">
+                            <x-admin.icon name="stock" />
+                        </a>
+                    </div>
+                @empty
+                    <p class="p-4 text-sm text-muted-foreground">Todavia no hay ventas servidas con productos inventariables en los ultimos 30 dias.</p>
+                @endforelse
+            </div>
+        </article>
+
+        <article class="admin-card overflow-hidden">
+            <header class="border-b border-border p-4">
+                <h2 class="text-base font-semibold text-foreground">Coste y margen estimado</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Calculo orientativo con lineas servidas y precio de coste del producto.</p>
+            </header>
+
+            <dl class="grid gap-3 p-4 sm:grid-cols-2">
+                <div class="rounded-lg border border-border bg-muted/20 p-3">
+                    <dt class="text-xs font-medium text-muted-foreground">Ingresos inventariables</dt>
+                    <dd class="mt-1 text-xl font-bold text-foreground">{{ number_format($resumenEconomicoVentasInventario['ingresos'], 2, ',', '.') }} EUR</dd>
+                </div>
+                <div class="rounded-lg border border-border bg-muted/20 p-3">
+                    <dt class="text-xs font-medium text-muted-foreground">Coste estimado</dt>
+                    <dd class="mt-1 text-xl font-bold text-foreground">{{ number_format($resumenEconomicoVentasInventario['coste_estimado'], 2, ',', '.') }} EUR</dd>
+                </div>
+                <div class="rounded-lg border border-success/20 bg-success/10 p-3">
+                    <dt class="text-xs font-medium text-muted-foreground">Margen bruto</dt>
+                    <dd class="mt-1 text-xl font-bold text-foreground">{{ number_format($resumenEconomicoVentasInventario['margen_bruto'], 2, ',', '.') }} EUR</dd>
+                </div>
+                <div class="rounded-lg border border-border bg-muted/20 p-3">
+                    <dt class="text-xs font-medium text-muted-foreground">Margen orientativo</dt>
+                    <dd class="mt-1 text-xl font-bold text-foreground">
+                        {{ $resumenEconomicoVentasInventario['margen_porcentaje'] === null ? '-' : number_format($resumenEconomicoVentasInventario['margen_porcentaje'], 2, ',', '.').' %' }}
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="border-t border-border p-4 text-sm text-muted-foreground">
+                <p>
+                    Unidades vendidas {{ $formatearCantidad($resumenEconomicoVentasInventario['unidades_vendidas']) }}
+                    &middot; descontadas {{ $formatearCantidad($resumenEconomicoVentasInventario['unidades_descontadas']) }}
+                    &middot; productos con descuadre {{ $resumenEconomicoVentasInventario['productos_con_descuadre'] }}
+                </p>
+            </div>
+        </article>
+    </section>
+
     <section class="mt-6 grid gap-4 xl:grid-cols-[1.1fr_.9fr]" aria-label="Acciones y alertas de inventario">
         <article class="admin-card p-4 lg:p-6">
             <header class="mb-4">
@@ -495,7 +576,7 @@
                                 <span class="text-xs text-muted-foreground">{{ $movimiento->created_at?->format('d/m/Y H:i') }}</span>
                             </div>
                             <p class="mt-2 truncate text-sm font-medium text-foreground">{{ $movimiento->producto?->nombre ?? 'Producto eliminado' }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ $ubicacionTexto }} · {{ $movimiento->motivo ?: 'Sin motivo' }}</p>
+                            <p class="mt-1 text-xs text-muted-foreground">{{ $ubicacionTexto }} &middot; {{ $movimiento->motivo ?: 'Sin motivo' }}</p>
                         </div>
                         <p class="text-sm font-bold text-foreground">
                             {{ $movimiento->producto?->formatearCantidadConUnidad($movimiento->cantidad) ?? $movimiento->cantidad }}
