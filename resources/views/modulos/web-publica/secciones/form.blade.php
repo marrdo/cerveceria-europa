@@ -30,23 +30,11 @@
         </div>
 
         @if ($seccion->clave === 'contacto')
-            <div class="grid gap-4 md:grid-cols-3">
-                <div>
-                    <x-input-label for="ubicacion" value="Ubicacion" />
-                    <textarea id="ubicacion" name="ubicacion" rows="3" class="admin-input mt-1 block w-full">{{ old('ubicacion', $datos['ubicacion'] ?? '') }}</textarea>
-                    <x-input-error :messages="$errors->get('ubicacion')" class="mt-2" />
-                </div>
-                <div>
-                    <x-input-label for="reservas" value="Reservas" />
-                    <textarea id="reservas" name="reservas" rows="3" class="admin-input mt-1 block w-full">{{ old('reservas', $datos['reservas'] ?? '') }}</textarea>
-                    <p class="mt-1 text-xs text-muted-foreground">Telefono, WhatsApp, email o enlace de reservas.</p>
-                    <x-input-error :messages="$errors->get('reservas')" class="mt-2" />
-                </div>
-                <div>
-                    <x-input-label for="horario" value="Horario" />
-                    <textarea id="horario" name="horario" rows="3" class="admin-input mt-1 block w-full">{{ old('horario', $datos['horario'] ?? '') }}</textarea>
-                    <x-input-error :messages="$errors->get('horario')" class="mt-2" />
-                </div>
+            <div>
+                <x-input-label for="reservas" value="Indicaciones para reservas" />
+                <textarea id="reservas" name="reservas" rows="3" class="admin-input mt-1 block w-full">{{ old('reservas', $datos['reservas'] ?? '') }}</textarea>
+                <p class="mt-1 text-xs text-muted-foreground">El telefono, email, direccion y horario se editan en Configuracion del negocio.</p>
+                <x-input-error :messages="$errors->get('reservas')" class="mt-2" />
             </div>
         @endif
 

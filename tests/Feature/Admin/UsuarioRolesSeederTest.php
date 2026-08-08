@@ -19,23 +19,23 @@ class UsuarioRolesSeederTest extends TestCase
         $this->seed(UsuarioRolesSeeder::class);
 
         $this->assertDatabaseHas('usuarios', [
-            'email' => 'admin@cerveceria-europa.local',
+            'email' => 'admin@panel-hosteleria.local',
             'rol' => RolUsuario::Superadmin->value,
             'es_protegido' => true,
         ]);
 
         $this->assertDatabaseHas('usuarios', [
-            'email' => 'camarero@cerveceria-europa.local',
+            'email' => 'camarero@demo.local',
             'rol' => RolUsuario::Camarero->value,
         ]);
 
         $this->assertDatabaseHas('usuarios', [
-            'email' => 'encargado@cerveceria-europa.local',
+            'email' => 'encargado@demo.local',
             'rol' => RolUsuario::Encargado->value,
         ]);
 
         $this->assertDatabaseHas('usuarios', [
-            'email' => 'propietario@cerveceria-europa.local',
+            'email' => 'propietario@demo.local',
             'rol' => RolUsuario::Propietario->value,
         ]);
 

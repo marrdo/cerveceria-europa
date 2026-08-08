@@ -1,6 +1,6 @@
-# Cerveceria Europa
+# Panel modular de hosteleria
 
-Panel administrativo Laravel 12 para Cerveceria Europa, un bar de Sevilla especializado en cervezas de importacion, artesanas y cocina de bar.
+Base reutilizable en Laravel 12 para paneles administrativos de bares, cafeterias y otros negocios de hosteleria. Cada despliegue representa inicialmente un unico negocio y permite activar solo los modulos necesarios.
 
 El proyecto cubre:
 
@@ -54,7 +54,7 @@ Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema
 Base recomendada para `.env` local:
 
 ```env
-APP_NAME="Cerveceria Europa"
+APP_NAME="Panel de Hosteleria"
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://127.0.0.1:8000
@@ -65,7 +65,7 @@ APP_FAKER_LOCALE=es_ES
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=cerveceria_europa
+DB_DATABASE=panel_hosteleria
 DB_USERNAME=root
 DB_PASSWORD=
 DB_CHARSET=utf8mb4
@@ -86,7 +86,7 @@ APP_FAKER_LOCALE=es_ES
 Base de datos recomendada:
 
 ```sql
-CREATE DATABASE cerveceria_europa
+CREATE DATABASE panel_hosteleria
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_es_0900_ai_ci;
 ```
@@ -151,16 +151,16 @@ php artisan serve
 Usuario superadmin:
 
 ```text
-admin@cerveceria-europa.local
+admin@panel-hosteleria.local
 password
 ```
 
 Usuarios demo por rol:
 
 ```text
-camarero@cerveceria-europa.local / password
-encargado@cerveceria-europa.local / password
-propietario@cerveceria-europa.local / password
+camarero@demo.local / password
+encargado@demo.local / password
+propietario@demo.local / password
 ```
 
 ## Modulos contratables
@@ -633,7 +633,7 @@ Alcance:
 - Sidebar.
 - Topbar.
 - Modo claro/oscuro.
-- Login adaptado a la marca Cerveceria Europa.
+- Login conectado con la identidad configurable del negocio.
 - Dashboard visual.
 - Tablas.
 - Formularios.
@@ -653,7 +653,7 @@ Reglas:
 Estado: iniciada.
 
 Objetivo:
-Crear la web publica de Cerveceria Europa dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
+Crear una web publica configurable dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
 
 Idea de rutas:
 

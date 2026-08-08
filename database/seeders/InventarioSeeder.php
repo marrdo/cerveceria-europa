@@ -57,7 +57,7 @@ class InventarioSeeder extends Seeder
     }
 
     /**
-     * Ubicaciones iniciales para Cerveceria Europa.
+     * Ubicaciones iniciales reutilizables para negocios de hosteleria.
      *
      * @return array<int, array<string, mixed>>
      */

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Modulo;
+use App\Modulos\Configuracion\Models\ConfiguracionNegocio;
 use App\Modulos\WebPublica\Models\CategoriaBlog;
 use App\Modulos\WebPublica\Models\PostBlog;
 use App\Modulos\WebPublica\Models\SeccionWeb;
@@ -52,6 +53,7 @@ class WebPublicaSeeder extends Seeder
      */
     private function crearBlogInicial(): void
     {
+        $negocio = ConfiguracionNegocio::actual();
         $categoriaCervezas = CategoriaBlog::query()->updateOrCreate(
             ['slug' => 'cervezas'],
             [
@@ -75,11 +77,11 @@ class WebPublicaSeeder extends Seeder
         $post = PostBlog::query()->updateOrCreate(
             ['slug' => 'bienvenida-al-blog'],
             [
-                'titulo' => 'Bienvenida al blog de Cerveceria Europa',
+                'titulo' => 'Bienvenida al blog de '.$negocio->nombre_comercial,
                 'resumen' => 'Un espacio para hablar de cervezas invitadas, eventos y novedades del bar.',
                 'contenido' => 'Este blog forma parte de un modulo opcional de la web publica. Se puede activar o desactivar desde el panel segun lo que tenga contratado el cliente.',
                 'imagen' => 'https://images.unsplash.com/photo-1516458464372-eea4ab222b31?auto=format&fit=crop&w=1200&q=80',
-                'autor' => 'Cerveceria Europa',
+                'autor' => $negocio->nombre_comercial,
                 'publicado' => true,
                 'destacado' => true,
                 'publicado_at' => now(),
@@ -94,17 +96,17 @@ class WebPublicaSeeder extends Seeder
      */
     private function crearSeccionesEditables(): void
     {
+        $negocio = ConfiguracionNegocio::actual();
+
         SeccionWeb::query()->updateOrCreate(
             ['clave' => 'contacto'],
             [
                 'nombre' => 'Contacto',
-                'titulo' => 'Ven a Cerveceria Europa',
+                'titulo' => 'Ven a '.$negocio->nombre_comercial,
                 'subtitulo' => 'Cervezas de importacion, artesanas y cocina de bar para compartir.',
                 'contenido' => 'Consulta disponibilidad de fuera de carta y recomendaciones directamente en el local.',
                 'datos' => [
-                    'ubicacion' => 'Sevilla',
                     'reservas' => 'Llamanos o escribenos para consultar disponibilidad.',
-                    'horario' => 'Horario pendiente de definir por el bar.',
                 ],
                 'activo' => true,
             ],

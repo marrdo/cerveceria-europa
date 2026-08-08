@@ -11,7 +11,7 @@ use Illuminate\View\View;
 class WebPublicaController extends Controller
 {
     /**
-     * Portada publica de Cerveceria Europa.
+     * Portada publica del negocio configurado.
      */
     public function inicio(): View
     {

@@ -1,4 +1,4 @@
-<x-publico-layout title="Carta | Cerveceria Europa" description="Carta publica de Cerveceria Europa con platos y cervezas publicados desde el panel.">
+<x-publico-layout title="Carta" :description="'Carta publica de '.$negocio->nombre_comercial.' con platos y bebidas disponibles.'">
     {{-- Page header rompedor: una sola palabra a 18vw --}}
     <section class="relative overflow-hidden border-b px-8 pb-14 pt-20" style="border-color: var(--v2-line);">
         <div class="mx-auto max-w-[1440px]">

@@ -5,12 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Cerveceria Europa') }}</title>
+        <title>{{ $negocio->nombre_comercial }} | Panel de gestion</title>
 
         <script>
             (() => {
                 try {
-                    const storedPreference = localStorage.getItem('cerveceria-theme-preference') ?? 'system';
+                    const storedPreference = localStorage.getItem('panel-theme-preference')
+                        ?? localStorage.getItem('cerveceria-theme-preference')
+                        ?? 'system';
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const resolvedTheme = storedPreference === 'dark' || (storedPreference === 'system' && prefersDark)
                         ? 'dark'
@@ -32,9 +34,11 @@
     </head>
     <body class="font-sans">
         @php
-            $moduloInicial = request()->routeIs('admin.compras.*')
+            $moduloInicial = request()->routeIs('admin.configuracion.*')
+                ? 'configuracion'
+                : (request()->routeIs('admin.compras.*')
                 ? 'compras'
-                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.espacios.*') ? 'espacios' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : '')))));
+                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.espacios.*') ? 'espacios' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : ''))))));
         @endphp
 
         <div x-data="{ sidebarOpen: false, moduloAbierto: '{{ $moduloInicial }}' }" class="flex h-screen overflow-hidden bg-background">
@@ -54,9 +58,9 @@
                         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
                             <x-brand.beer-icon class="h-6 w-6 text-primary-foreground" />
                         </span>
-                        <span class="flex flex-col">
-                            <span class="text-sm font-semibold text-sidebar-foreground">Cerveceria</span>
-                            <span class="text-xs text-muted-foreground">Europa</span>
+                        <span class="min-w-0">
+                            <span class="block max-w-40 truncate text-sm font-semibold text-sidebar-foreground">{{ $negocio->nombre_comercial }}</span>
+                            <span class="block text-xs text-muted-foreground">Panel de gestion</span>
                         </span>
                     </a>
                     <button type="button" class="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" @click="sidebarOpen = false" aria-label="Cerrar menu">
@@ -223,6 +227,17 @@
                                 <a href="{{ route('web.inicio') }}" target="_blank" class="block rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">Ver web</a>
                             </div>
                         </div>
+                    @endif
+
+                    @if ($usuario?->puedeConfigurarNegocio())
+                        <a href="{{ route('admin.configuracion.negocio.edit') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('admin.configuracion.*') ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent' }}">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0015 19.4a1.7 1.7 0 00-1 .6l-.04.08H10l-.04-.08a1.7 1.7 0 00-1-.6 1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-.6-1l-.08-.04V10l.08-.04a1.7 1.7 0 00.6-1 1.7 1.7 0 00-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 009 4.6a1.7 1.7 0 001-.6l.04-.08H14l.04.08a1.7 1.7 0 001 .6 1.7 1.7 0 001.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0019.4 9c.08.4.3.76.6 1l.08.04V14l-.08.04c-.3.24-.52.6-.6.96z" />
+                                </svg>
+                            </span>
+                            <span class="truncate">Configuracion</span>
+                        </a>
                     @endif
                 </nav>
 

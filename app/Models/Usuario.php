@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\RolUsuario;
-use App\Models\Modulo;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 
 class Usuario extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UsuarioFactory> */
+    /** @use HasFactory<UsuarioFactory> */
     use HasFactory, HasUuids, Notifiable, SoftDeletes;
 
     /**
@@ -107,6 +107,14 @@ class Usuario extends Authenticatable
     public function puedeGestionarPersonal(): bool
     {
         return $this->rolesGestionables()->isNotEmpty();
+    }
+
+    /**
+     * Indica si el usuario puede modificar la identidad de la instalacion.
+     */
+    public function puedeConfigurarNegocio(): bool
+    {
+        return in_array($this->rol, [RolUsuario::Propietario, RolUsuario::Superadmin], true);
     }
 
     /**

@@ -3,6 +3,9 @@
 namespace Tests\Feature\WebPublica;
 
 use App\Enums\RolUsuario;
+use App\Models\Modulo;
+use App\Models\Usuario;
+use App\Modulos\Configuracion\Models\ConfiguracionNegocio;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
@@ -14,8 +17,6 @@ use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\PostBlog;
 use App\Modulos\WebPublica\Models\SeccionWeb;
-use App\Models\Modulo;
-use App\Models\Usuario;
 use Database\Seeders\WebPublicaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -43,7 +44,7 @@ class WebPublicaTest extends TestCase
 
         $this->get(route('web.inicio'))
             ->assertOk()
-            ->assertSee('Cerveceria Europa')
+            ->assertSee('Panel de Hosteleria')
             ->assertSee('FOUNDERS KBS IMPERIAL STOUT');
     }
 
@@ -285,9 +286,19 @@ class WebPublicaTest extends TestCase
             ->assertDontSee('Post de comida');
     }
 
-    public function test_contact_section_is_editable_from_admin(): void
+    public function test_contact_combines_editorial_section_and_business_configuration(): void
     {
         $usuario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        ConfiguracionNegocio::query()->create([
+            'clave' => ConfiguracionNegocio::CLAVE_PRINCIPAL,
+            'nombre_comercial' => 'Bar de prueba',
+            'direccion' => 'Calle Betis 10',
+            'localidad' => 'Sevilla',
+            'horario' => 'Lunes a domingo de 12:00 a 00:00',
+            'pais' => 'Espana',
+            'zona_horaria' => 'Europe/Madrid',
+            'moneda' => 'EUR',
+        ]);
         $seccion = SeccionWeb::query()->create([
             'clave' => 'contacto',
             'nombre' => 'Contacto',
@@ -300,9 +311,7 @@ class WebPublicaTest extends TestCase
                 'titulo' => 'Estamos en Triana',
                 'subtitulo' => 'Cerveza fria y cocina para compartir.',
                 'contenido' => 'Texto editable por el bar.',
-                'ubicacion' => 'Calle Betis, Sevilla',
                 'reservas' => 'WhatsApp 600 000 000',
-                'horario' => 'Lunes a domingo de 12:00 a 00:00',
                 'activo' => '1',
             ])
             ->assertRedirect(route('admin.web-publica.secciones.index'));
@@ -310,6 +319,7 @@ class WebPublicaTest extends TestCase
         $this->get(route('web.contacto'))
             ->assertOk()
             ->assertSee('Estamos en Triana')
+            ->assertSee('Calle Betis 10')
             ->assertSee('WhatsApp 600 000 000')
             ->assertSee('Lunes a domingo de 12:00 a 00:00');
     }

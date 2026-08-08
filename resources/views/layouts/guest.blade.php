@@ -5,12 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Cerveceria Europa') }}</title>
+        <title>{{ $negocio->nombre_comercial }} | Acceso</title>
 
         <script>
             (() => {
                 try {
-                    const storedPreference = localStorage.getItem('cerveceria-theme-preference') ?? 'system';
+                    const storedPreference = localStorage.getItem('panel-theme-preference')
+                        ?? localStorage.getItem('cerveceria-theme-preference')
+                        ?? 'system';
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const resolvedTheme = storedPreference === 'dark' || (storedPreference === 'system' && prefersDark)
                         ? 'dark'
@@ -42,7 +44,7 @@
                         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
                             <x-brand.beer-icon class="h-6 w-6 text-primary-foreground" />
                         </div>
-                        <h1 class="text-xl font-semibold text-foreground">Cerveceria Europa</h1>
+                        <h1 class="text-xl font-semibold text-foreground">{{ $negocio->nombre_comercial }}</h1>
                         <p class="mt-1 text-sm text-muted-foreground">Panel de administracion</p>
                     </div>
 
@@ -53,7 +55,7 @@
             </main>
 
             <footer class="py-4 text-center text-xs text-muted-foreground">
-                <p>Cerveceria Europa &copy; {{ date('Y') }}. Todos los derechos reservados.</p>
+                <p>{{ $negocio->nombre_comercial }} &copy; {{ date('Y') }}. Todos los derechos reservados.</p>
             </footer>
         </div>
     </body>

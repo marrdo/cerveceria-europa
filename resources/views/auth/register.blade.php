@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6">
         <h1 class="text-xl font-semibold text-foreground">Crear usuario</h1>
-        <p class="mt-2 text-sm text-muted-foreground">Alta de acceso para el panel de Cerveceria Europa.</p>
+        <p class="mt-2 text-sm text-muted-foreground">Alta de acceso para el panel del negocio.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5">

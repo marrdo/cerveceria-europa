@@ -1,7 +1,7 @@
 {
-    "name": "Cerveceria Europa",
-    "short_name": "Europa",
-    "description": "Cerveceria Europa, cervezas de importacion, artesanas y cocina para maridar en Sevilla.",
+    "name": "Panel de Hosteleria",
+    "short_name": "Hosteleria",
+    "description": "Gestion operativa para negocios de hosteleria.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#23180f",

@@ -39,19 +39,19 @@ class UsuarioRolesSeeder extends Seeder
         return [
             [
                 'nombre' => 'Camarero Demo',
-                'email' => 'camarero@cerveceria-europa.local',
+                'email' => 'camarero@demo.local',
                 'rol' => RolUsuario::Camarero,
                 'password' => 'password',
             ],
             [
                 'nombre' => 'Encargado Demo',
-                'email' => 'encargado@cerveceria-europa.local',
+                'email' => 'encargado@demo.local',
                 'rol' => RolUsuario::Encargado,
                 'password' => 'password',
             ],
             [
                 'nombre' => 'Propietario Demo',
-                'email' => 'propietario@cerveceria-europa.local',
+                'email' => 'propietario@demo.local',
                 'rol' => RolUsuario::Propietario,
                 'password' => 'password',
             ],

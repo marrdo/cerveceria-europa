@@ -1,4 +1,4 @@
-<x-publico-layout title="Contacto | Cerveceria Europa">
+<x-publico-layout title="Contacto">
     @php($datos = $seccion->datos ?? [])
 
     {{-- Page header --}}
@@ -22,12 +22,13 @@
 
                     <dl class="m-0 flex flex-col">
                         @foreach (([
-                            ['Direccion', $datos['ubicacion'] ?? 'Calle Trajano · 41002 Sevilla'],
-                            ['Telefono',  $datos['telefono']  ?? '+34 955 00 00 00'],
-                            ['Email',     $datos['email']     ?? 'hola@cerveceriaeuropa.es'],
+                            ['Direccion', $negocio->direccionCompleta() ?: ($datos['ubicacion'] ?? null)],
+                            ['Telefono',  $negocio->telefono],
+                            ['Email',     $negocio->email],
                             ['Reservas',  $datos['reservas']  ?? 'Por telefono o email'],
-                            ['Horario',   $datos['horario']   ?? 'Mar–Jue 12:00–24:00 · Vie–Sab 12:00–01:30 · Dom 12:00–17:00'],
+                            ['Horario',   $negocio->horario],
                         ]) as [$k, $v])
+                            @continue(blank($v))
                             <div class="grid grid-cols-[140px_1fr] items-baseline gap-5 border-t py-5" style="border-color: var(--v2-line);">
                                 <dt class="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-bright">{{ $k }}</dt>
                                 <dd class="m-0 text-base leading-[1.5] text-ink">{{ $v }}</dd>
@@ -36,10 +37,10 @@
                     </dl>
                 </article>
 
-                <figure class="v2-contacto-photo" aria-label="Interior de Cerveceria Europa">
+                <figure class="v2-contacto-photo" aria-label="Interior de {{ $negocio->nombre_comercial }}">
                     <div class="absolute bottom-6 left-6 flex flex-col leading-none">
                         <span class="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-amber-bright">Plot · 41002</span>
-                        <span class="mt-2 font-display text-3xl tracking-[0.005em] text-ink">Calle Trajano</span>
+                        <span class="mt-2 font-display text-3xl tracking-[0.005em] text-ink">{{ $negocio->localidad ?: $negocio->nombre_comercial }}</span>
                     </div>
                 </figure>
             </div>

@@ -2,8 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @php
-            $pageTitle = $title ?? 'Cerveceria Europa';
-            $pageDescription = $description ?? 'Cerveceria Europa, bar de Sevilla especializado en cervezas de importacion, artesanas y cocina para maridar.';
+            $pageTitle = filled($title) ? $title.' | '.$negocio->nombre_comercial : $negocio->nombre_comercial;
+            $pageDescription = $description ?? $negocio->descripcion_corta ?? $negocio->eslogan;
             $ogImage = $ogImage ?? asset('img/og-default.jpg');
         @endphp
         <meta charset="utf-8">
@@ -13,7 +13,7 @@
         <meta name="robots" content="index, follow">
         <link rel="canonical" href="{{ url()->current() }}">
 
-        <meta property="og:site_name" content="Cerveceria Europa">
+        <meta property="og:site_name" content="{{ $negocio->nombre_comercial }}">
         <meta property="og:title" content="{{ $pageTitle }}">
         <meta property="og:description" content="{{ $pageDescription }}">
         <meta property="og:type" content="website">
@@ -46,9 +46,11 @@
                         <span class="flex h-10 w-10 items-center justify-center rounded-md bg-[#d08a24] text-[#23180f]">
                             <x-brand.beer-icon class="h-6 w-6" />
                         </span>
-                        <span>
-                            <span class="block text-sm font-black uppercase tracking-[0.18em] text-public-primary">Cerveceria</span>
-                            <span class="block text-lg font-black leading-5 text-public-foreground">Europa</span>
+                        <span class="min-w-0">
+                            <span class="block max-w-48 truncate text-lg font-black leading-5 text-public-foreground">{{ $negocio->nombre_comercial }}</span>
+                            @if ($negocio->localidad)
+                                <span class="block text-xs font-semibold uppercase tracking-[0.18em] text-public-primary">{{ $negocio->localidad }}</span>
+                            @endif
                         </span>
                     </a>
                     <nav class="hidden items-center gap-6 text-sm font-semibold text-public-muted md:flex" aria-label="Navegacion principal">
@@ -70,11 +72,11 @@
         </main>
 
         <footer class="border-t bg-gradient-to-b from-stout to-[#060403] px-8 pb-6 pt-20" style="border-color: var(--v2-line);" aria-labelledby="footer-heading">
-            <h2 id="footer-heading" class="sr-only">Informacion de Cerveceria Europa</h2>
+            <h2 id="footer-heading" class="sr-only">Informacion de {{ $negocio->nombre_comercial }}</h2>
             <div class="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 pb-14 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]" style="border-bottom: 1px solid var(--v2-line);">
                 <section>
-                    <div class="font-display text-[56px] leading-[0.9] tracking-[0.005em] text-ink">Cerveceria<br>Europa</div>
-                    <p class="my-4 max-w-[36ch] text-sm leading-6 text-ink-mute">Cervezas de importacion, artesanas y cocina de bar para compartir. Sevilla, desde hace bastante.</p>
+                    <div class="max-w-[12ch] font-display text-[56px] leading-[0.9] tracking-[0.005em] text-ink">{{ $negocio->nombre_comercial }}</div>
+                    <p class="my-4 max-w-[36ch] text-sm leading-6 text-ink-mute">{{ $negocio->eslogan ?: $negocio->descripcion_corta }}</p>
                     <a href="{{ route('web.contacto') }}" class="v2-btn v2-btn-primary">
                         Reservar mesa
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -95,27 +97,30 @@
                 <section aria-labelledby="f-local">
                     <h4 id="f-local" class="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-bright">Local</h4>
                     <ul class="flex flex-col gap-2.5 text-sm text-ink">
-                        <li>Calle Trajano · Sevilla</li>
-                        <li>Mar–Jue · 12:00 — 24:00</li>
-                        <li>Vie–Sab · 12:00 — 01:30</li>
-                        <li>Dom · 12:00 — 17:00</li>
-                        <li>Lunes cerrado</li>
+                        @if ($negocio->direccionCompleta())
+                            <li>{{ $negocio->direccionCompleta() }}</li>
+                        @elseif ($negocio->localidad)
+                            <li>{{ $negocio->localidad }}</li>
+                        @endif
+                        @if ($negocio->horario)
+                            <li class="whitespace-pre-line">{{ $negocio->horario }}</li>
+                        @endif
                     </ul>
                 </section>
                 <section aria-labelledby="f-contact">
                     <h4 id="f-contact" class="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-bright">Hablamos</h4>
                     <ul class="flex flex-col gap-2.5 text-sm text-ink">
-                        <li>+34 955 00 00 00</li>
-                        <li>hola@cerveceriaeuropa.es</li>
-                        <li><a href="#" class="hover:text-amber-bright">Instagram ↗</a></li>
-                        <li><a href="#" class="hover:text-amber-bright">Google Maps ↗</a></li>
+                        @if ($negocio->telefono)<li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $negocio->telefono) }}" class="hover:text-amber-bright">{{ $negocio->telefono }}</a></li>@endif
+                        @if ($negocio->email)<li><a href="mailto:{{ $negocio->email }}" class="hover:text-amber-bright">{{ $negocio->email }}</a></li>@endif
+                        @if ($negocio->instagram_url)<li><a href="{{ $negocio->instagram_url }}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-bright">Instagram ↗</a></li>@endif
+                        @if ($negocio->google_maps_url)<li><a href="{{ $negocio->google_maps_url }}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-bright">Google Maps ↗</a></li>@endif
                     </ul>
                 </section>
             </div>
 
             <div class="mx-auto mt-6 flex max-w-[1440px] flex-wrap items-center justify-between gap-3 text-[11px] uppercase tracking-[0.08em] text-ink-mute">
-                <span>&copy; {{ now()->year }} Cerveceria Europa &middot; Sevilla</span>
-                <span class="font-mono text-[10.5px] tracking-wide normal-case">v2 · del barril a la pantalla</span>
+                <span>&copy; {{ now()->year }} {{ $negocio->nombre_comercial }}@if($negocio->localidad) &middot; {{ $negocio->localidad }}@endif</span>
+                <span class="font-mono text-[10.5px] tracking-wide normal-case">Gestion conectada con el local</span>
             </div>
         </footer>
     </body>

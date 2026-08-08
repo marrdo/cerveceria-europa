@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ModuloController;
 use App\Http\Controllers\Admin\PersonalController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Modulo;
 use App\Modulos\Compras\Http\Controllers\Admin\BorradorCompraDocumentoController;
 use App\Modulos\Compras\Http\Controllers\Admin\DevolucionProveedorController;
@@ -11,6 +11,7 @@ use App\Modulos\Compras\Http\Controllers\Admin\IncidenciaRecepcionCompraControll
 use App\Modulos\Compras\Http\Controllers\Admin\PedidoCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\PropuestaCompraController;
 use App\Modulos\Compras\Http\Controllers\Admin\RecepcionCompraController;
+use App\Modulos\Configuracion\Http\Controllers\Admin\ConfiguracionNegocioController;
 use App\Modulos\Espacios\Http\Controllers\Admin\MesaController;
 use App\Modulos\Espacios\Http\Controllers\Admin\RecintoController;
 use App\Modulos\Espacios\Http\Controllers\Admin\ZonaController;
@@ -26,9 +27,9 @@ use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Ventas\Http\Controllers\Admin\ComandaController;
 use App\Modulos\Ventas\Http\Controllers\Admin\InformeVentasController;
 use App\Modulos\Ventas\Http\Controllers\Admin\TurnoCajaController;
-use App\Modulos\WebPublica\Http\Controllers\Admin\ContenidoWebController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaBlogController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\CategoriaCartaController;
+use App\Modulos\WebPublica\Http\Controllers\Admin\ContenidoWebController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\PostBlogController;
 use App\Modulos\WebPublica\Http\Controllers\Admin\SeccionWebController;
 use App\Modulos\WebPublica\Http\Controllers\Publico\BlogPublicoController;
@@ -71,6 +72,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::patch('/admin/modulos/{modulo}/toggle', [ModuloController::class, 'toggle'])->name('admin.modulos.toggle');
+
+    Route::get('/admin/configuracion/negocio', [ConfiguracionNegocioController::class, 'edit'])
+        ->name('admin.configuracion.negocio.edit');
+    Route::put('/admin/configuracion/negocio', [ConfiguracionNegocioController::class, 'update'])
+        ->name('admin.configuracion.negocio.update');
 
     Route::prefix('admin/personal')->name('admin.personal.')->middleware('modulo:personal')->group(function (): void {
         Route::get('/', [PersonalController::class, 'index'])->name('index');

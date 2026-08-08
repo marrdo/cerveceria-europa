@@ -1,4 +1,4 @@
-<x-publico-layout title="Blog | Cerveceria Europa" description="Blog de Cerveceria Europa.">
+<x-publico-layout title="Blog" :description="'Blog de '.$negocio->nombre_comercial.'.'">
     <section class="border-b border-public-border/15 bg-public-surface" aria-labelledby="blog-heading">
         <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <header>

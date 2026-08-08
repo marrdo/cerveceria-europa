@@ -1,4 +1,4 @@
-<x-publico-layout title="Cerveceria Europa">
+<x-publico-layout>
     <x-web-publica.hero />
 
     <x-web-publica.ticker :items="$fueraCarta" />

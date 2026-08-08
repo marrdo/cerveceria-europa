@@ -18,9 +18,9 @@ class UsuarioAdministradorSeeder extends Seeder
     public function run(): void
     {
         Usuario::query()->updateOrCreate(
-            ['email' => env('SUPERADMIN_EMAIL', 'admin@cerveceria-europa.local')],
+            ['email' => env('SUPERADMIN_EMAIL', 'admin@panel-hosteleria.local')],
             [
-                'nombre' => env('SUPERADMIN_NAME', 'Superadmin Cerveceria Europa'),
+                'nombre' => env('SUPERADMIN_NAME', 'Superadministrador'),
                 'rol' => RolUsuario::Superadmin,
                 'es_protegido' => true,
                 'password' => Hash::make(env('SUPERADMIN_PASSWORD', 'password')),
