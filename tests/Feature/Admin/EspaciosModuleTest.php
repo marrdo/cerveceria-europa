@@ -22,7 +22,7 @@ class EspaciosModuleTest extends TestCase
 
         $this->actingAs($usuario)
             ->post(route('admin.espacios.recintos.store'), [
-                'nombre_comercial' => 'Cerveceria Europa',
+                'nombre_comercial' => 'La Plaza Demo',
                 'localidad' => 'Sevilla',
                 'activo' => 1,
             ])

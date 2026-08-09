@@ -134,7 +134,7 @@ class VentasModuleTest extends TestCase
         [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
 
         $recinto = Recinto::query()->create([
-            'nombre_comercial' => 'Cerveceria Europa',
+            'nombre_comercial' => 'La Plaza Demo',
             'activo' => true,
         ]);
         $zona = Zona::query()->create([

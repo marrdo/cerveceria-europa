@@ -379,7 +379,7 @@ class ComprasModuleTest extends TestCase
         $this->seed(InventarioSeeder::class);
         $usuario = Usuario::factory()->create(['rol' => RolUsuario::Encargado]);
         $proveedor = Proveedor::query()->firstOrFail();
-        $archivo = UploadedFile::fake()->create('albaran-europa.pdf', 128, 'application/pdf');
+        $archivo = UploadedFile::fake()->create('albaran-demo.pdf', 128, 'application/pdf');
 
         $this->actingAs($usuario)
             ->post(route('admin.compras.documentos.store'), [
@@ -394,7 +394,7 @@ class ComprasModuleTest extends TestCase
             'proveedor_id' => $proveedor->id,
             'tipo_documento' => TipoDocumentoCompra::Albaran->value,
             'estado' => 'pendiente',
-            'nombre_original' => 'albaran-europa.pdf',
+            'nombre_original' => 'albaran-demo.pdf',
             'disco' => 'local',
             'notas' => 'Foto recibida en barra.',
             'subido_por' => $usuario->id,

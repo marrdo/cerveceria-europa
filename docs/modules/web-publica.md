@@ -6,7 +6,7 @@ Fase 5.0 iniciada.
 
 ## Objetivo
 
-Crear una web publica para Cerveceria Europa dentro del mismo proyecto Laravel, manteniendo el panel de gestion en `/admin`.
+Crear una web publica configurable para cualquier negocio de hosteleria dentro del mismo proyecto Laravel, manteniendo el panel de gestion en `/admin`.
 
 La idea es que el bar pueda modificar contenido desde el panel sin tocar codigo.
 
@@ -79,15 +79,13 @@ El panel deberia permitir:
   - contenidos publicados dentro de cada seccion.
 - Ocultacion automatica en web publica si el producto vinculado controla stock y esta a 0.
 - Seeder inicial `WebPublicaSeeder`.
-- Seeder `NumierCartaSeeder` para cargar la carta real desde `Cartasdesdenumier.txt`.
-- Importacion actual desde Numier:
+- Seeder `CartaDemoSeeder` para cargar una carta completamente ficticia:
   - categorias padre e hijas,
   - productos publicados,
-  - imagenes remotas,
   - destacados,
   - fuera de carta,
   - tarifas multiples,
-  - codigo de alergenos original de Numier.
+  - alergenos de ejemplo.
 
 ## Reglas
 
@@ -96,8 +94,8 @@ El panel deberia permitir:
 - Los platos/cervezas que correspondan a productos reales deben poder vincularse a inventario.
 - La estructura de carta publica no debe depender de categorias de inventario: inventario clasifica para gestion interna y carta clasifica para venta al cliente.
 - La carta publica debe poder imitar un esquema tipo `categoria padre > secciones > productos`, similar a cartas digitales externas, pero gestionado desde nuestra base de datos.
-- La carta real del bar se puede recargar con `php artisan db:seed --class=NumierCartaSeeder`.
-- `NumierCartaSeeder` elimina contenidos, tarifas y categorias de carta antes de importar para evitar arrastrar productos demo o duplicados.
+- La carta ficticia se puede recargar con `php artisan db:seed --class=CartaDemoSeeder`.
+- `CartaDemoSeeder` elimina contenidos, tarifas y categorias anteriores para impedir que la demo arrastre datos de un negocio real.
 - Un contenido puede tener precio simple o varias tarifas; si tiene tarifas, la web publica muestra las tarifas.
 - Si un contenido tiene producto vinculado y no hay stock disponible, no debe mostrarse en la carta publica.
 - Si el modulo `web_publica` esta desactivado, las rutas publicas responden 404 y el propietario no ve el modulo en el panel.

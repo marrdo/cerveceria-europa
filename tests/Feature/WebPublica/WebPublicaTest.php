@@ -44,8 +44,25 @@ class WebPublicaTest extends TestCase
 
         $this->get(route('web.inicio'))
             ->assertOk()
-            ->assertSee('Panel de Hosteleria')
-            ->assertSee('FOUNDERS KBS IMPERIAL STOUT');
+            ->assertSee('La Plaza Demo')
+            ->assertSee('Patatas bravas de la casa');
+    }
+
+    public function test_public_and_access_branding_follow_business_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+
+        ConfiguracionNegocio::query()
+            ->where('clave', ConfiguracionNegocio::CLAVE_PRINCIPAL)
+            ->update(['nombre_comercial' => 'Cafetería Campana Demo']);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('Cafetería Campana Demo');
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('Cafetería Campana Demo');
     }
 
     public function test_public_web_hides_unpublished_content(): void
@@ -225,7 +242,7 @@ class WebPublicaTest extends TestCase
                 'categorias' => [$categoria->id],
                 'resumen' => 'Esta semana entra una nueva referencia.',
                 'contenido' => 'Contenido completo del post.',
-                'autor' => 'Cerveceria Europa',
+                'autor' => 'Equipo Demo',
                 'publicado' => '1',
                 'destacado' => '1',
                 'publicado_at' => now()->format('Y-m-d\TH:i'),
@@ -302,7 +319,7 @@ class WebPublicaTest extends TestCase
         $seccion = SeccionWeb::query()->create([
             'clave' => 'contacto',
             'nombre' => 'Contacto',
-            'titulo' => 'Ven a Cerveceria Europa',
+            'titulo' => 'Ven a La Plaza Demo',
             'activo' => true,
         ]);
 

@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Modulo;
-use App\Modulos\Configuracion\Models\ConfiguracionNegocio;
 use App\Modulos\WebPublica\Models\CategoriaBlog;
 use App\Modulos\WebPublica\Models\PostBlog;
 use App\Modulos\WebPublica\Models\SeccionWeb;
@@ -12,14 +11,15 @@ use Illuminate\Database\Seeder;
 class WebPublicaSeeder extends Seeder
 {
     /**
-     * Crea la base editable de web publica e importa la carta real del bar.
+     * Crea una web pública completamente ficticia para la demostración.
      */
     public function run(): void
     {
         $this->asegurarModulo('web_publica', 'Web publica', 'Permite publicar una pagina web gestionable desde el panel de administracion.', 30);
         $this->asegurarModulo('blog', 'Blog', 'Permite publicar noticias, eventos y articulos en la web publica.', 40);
 
-        $this->call(NumierCartaSeeder::class);
+        $this->call(ConfiguracionNegocioSeeder::class);
+        $this->call(CartaDemoSeeder::class);
         $this->crearBlogInicial();
         $this->crearSeccionesEditables();
     }
@@ -53,22 +53,21 @@ class WebPublicaSeeder extends Seeder
      */
     private function crearBlogInicial(): void
     {
-        $negocio = ConfiguracionNegocio::actual();
-        $categoriaCervezas = CategoriaBlog::query()->updateOrCreate(
-            ['slug' => 'cervezas'],
+        $categoriaCocina = CategoriaBlog::query()->updateOrCreate(
+            ['slug' => 'cocina'],
             [
-                'nombre' => 'Cervezas',
-                'descripcion' => 'Articulos sobre estilos, referencias invitadas y cultura cervecera.',
+                'nombre' => 'Cocina',
+                'descripcion' => 'Recetas, producto y novedades de la cocina.',
                 'activo' => true,
                 'orden' => 10,
             ],
         );
 
         $categoriaEventos = CategoriaBlog::query()->updateOrCreate(
-            ['slug' => 'eventos'],
+            ['slug' => 'novedades'],
             [
-                'nombre' => 'Eventos',
-                'descripcion' => 'Noticias y actividades especiales del bar.',
+                'nombre' => 'Novedades',
+                'descripcion' => 'Noticias, horarios especiales y actividades del local.',
                 'activo' => true,
                 'orden' => 20,
             ],
@@ -77,18 +76,18 @@ class WebPublicaSeeder extends Seeder
         $post = PostBlog::query()->updateOrCreate(
             ['slug' => 'bienvenida-al-blog'],
             [
-                'titulo' => 'Bienvenida al blog de '.$negocio->nombre_comercial,
-                'resumen' => 'Un espacio para hablar de cervezas invitadas, eventos y novedades del bar.',
-                'contenido' => 'Este blog forma parte de un modulo opcional de la web publica. Se puede activar o desactivar desde el panel segun lo que tenga contratado el cliente.',
-                'imagen' => 'https://images.unsplash.com/photo-1516458464372-eea4ab222b31?auto=format&fit=crop&w=1200&q=80',
-                'autor' => $negocio->nombre_comercial,
+                'titulo' => 'Bienvenida a nuestro blog',
+                'resumen' => 'Un espacio de demostración para publicar novedades, propuestas de cocina y eventos.',
+                'contenido' => 'Este contenido es completamente ficticio. Sirve para comprobar cómo se administra y publica el blog desde el panel.',
+                'imagen' => null,
+                'autor' => null,
                 'publicado' => true,
                 'destacado' => true,
                 'publicado_at' => now(),
             ],
         );
 
-        $post->categorias()->sync([$categoriaCervezas->id, $categoriaEventos->id]);
+        $post->categorias()->sync([$categoriaCocina->id, $categoriaEventos->id]);
     }
 
     /**
@@ -96,17 +95,15 @@ class WebPublicaSeeder extends Seeder
      */
     private function crearSeccionesEditables(): void
     {
-        $negocio = ConfiguracionNegocio::actual();
-
         SeccionWeb::query()->updateOrCreate(
             ['clave' => 'contacto'],
             [
                 'nombre' => 'Contacto',
-                'titulo' => 'Ven a '.$negocio->nombre_comercial,
-                'subtitulo' => 'Cervezas de importacion, artesanas y cocina de bar para compartir.',
-                'contenido' => 'Consulta disponibilidad de fuera de carta y recomendaciones directamente en el local.',
+                'titulo' => 'Ven a conocernos',
+                'subtitulo' => 'Cocina cercana, bebidas y un espacio preparado para compartir.',
+                'contenido' => 'Todos los datos de esta instalación son ficticios y pueden editarse desde el panel.',
                 'datos' => [
-                    'reservas' => 'Llamanos o escribenos para consultar disponibilidad.',
+                    'reservas' => 'Llámanos o escríbenos para probar el flujo de reservas.',
                 ],
                 'activo' => true,
             ],

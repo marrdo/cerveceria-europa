@@ -87,7 +87,7 @@ class ModuloSeeder extends Seeder
                 'nombre' => 'Planificacion de turnos',
                 'descripcion' => 'Cuadrantes semanales, jornadas partidas, areas y publicacion para el equipo.',
                 'grupo' => 'personal',
-                'activo' => false,
+                'activo' => true,
                 'orden' => 57,
             ],
             [

@@ -29,7 +29,7 @@ El panel privado vive en `/admin`. La web publica vive en `/` cuando el modulo `
 
 ## Arranque rapido
 
-Desde `C:\Proyectos\cerveceria-europa`:
+Desde la carpeta en la que hayas clonado el panel, por ejemplo `C:\Proyectos\panel-hosteleria`:
 
 ```powershell
 composer install
@@ -47,6 +47,19 @@ URL local habitual:
 http://127.0.0.1:8000
 http://127.0.0.1:8000/admin
 ```
+
+## Datos de demostracion
+
+`php artisan migrate --seed` crea una empresa completamente ficticia llamada `La Plaza Demo`, una carta sin imagenes ni datos de terceros y los siguientes perfiles:
+
+| Rol | Correo | Contrasena |
+|---|---|---|
+| Superadmin | `superadmin@demo.local` | `password` |
+| Propietario | `propietario@demo.local` | `password` |
+| Encargado | `encargado@demo.local` | `password` |
+| Camarero | `camarero@demo.local` | `password` |
+
+Estos datos son solo para desarrollo local y deben sustituirse antes de publicar una instalacion real.
 
 Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema de permisos de `esbuild`/Vite en el entorno. Ejecutarlo desde terminal normal de Windows o con permisos adecuados suele resolverlo.
 
@@ -66,7 +79,7 @@ APP_FAKER_LOCALE=es_ES
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=panel_hosteleria
+DB_DATABASE=panel_hosteleria_demo
 DB_USERNAME=root
 DB_PASSWORD=
 DB_CHARSET=utf8mb4
@@ -87,7 +100,7 @@ APP_FAKER_LOCALE=es_ES
 Base de datos recomendada:
 
 ```sql
-CREATE DATABASE panel_hosteleria
+CREATE DATABASE panel_hosteleria_demo
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_es_0900_ai_ci;
 ```
@@ -661,13 +674,13 @@ Crear una web publica configurable dentro del mismo proyecto Laravel, manteniend
 Idea de rutas:
 
 ```text
-cerveceriaEuropa.com
-cerveceriaEuropa.com/carta
-cerveceriaEuropa.com/cervezas
-cerveceriaEuropa.com/recomendaciones
-cerveceriaEuropa.com/blog
-cerveceriaEuropa.com/contacto
-cerveceriaEuropa.com/admin
+demo-hosteleria.local
+demo-hosteleria.local/carta
+demo-hosteleria.local/cervezas
+demo-hosteleria.local/recomendaciones
+demo-hosteleria.local/blog
+demo-hosteleria.local/contacto
+demo-hosteleria.local/admin
 ```
 
 Contenido gestionable desde el panel:

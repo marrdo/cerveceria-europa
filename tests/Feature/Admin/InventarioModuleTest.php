@@ -700,7 +700,7 @@ class InventarioModuleTest extends TestCase
         $this->seed(InventarioSeeder::class);
         $usuario = Usuario::factory()->create([
             'nombre' => 'Encargado Movimientos',
-            'email' => 'encargado.movimientos@cerveceria-europa.local',
+            'email' => 'encargado.movimientos@demo.local',
             'rol' => RolUsuario::Encargado,
         ]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
@@ -720,7 +720,7 @@ class InventarioModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Entrada con usuario registrado')
             ->assertSee('Encargado Movimientos')
-            ->assertSee('encargado.movimientos@cerveceria-europa.local');
+            ->assertSee('encargado.movimientos@demo.local');
     }
 
     public function test_products_can_be_exported_as_utf8_csv(): void

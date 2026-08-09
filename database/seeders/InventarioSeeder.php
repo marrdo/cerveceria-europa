@@ -36,7 +36,7 @@ class InventarioSeeder extends Seeder
             ['nombre' => 'Proveedor generico', 'telefono' => null, 'email' => null, 'activo' => true],
         );
 
-        $this->call(InventarioCervezasDemoSeeder::class);
+        $this->call(InventarioDemoSeeder::class);
     }
 
     /**

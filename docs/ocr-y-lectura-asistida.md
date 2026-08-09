@@ -15,7 +15,7 @@ Ejemplo practico:
 
 OCR no entiende siempre el documento. Puede leer mal una referencia, confundir una cantidad o perder una linea si la foto sale torcida, con sombra o borrosa.
 
-Para Cerveceria Europa no vamos a hacer que una foto actualice stock directamente. La opcion profesional es lectura asistida:
+En este panel no vamos a hacer que una foto actualice stock directamente. La opcion profesional es lectura asistida:
 
 1. Subida de foto o PDF.
 2. Lectura OCR o IA multimodal.
