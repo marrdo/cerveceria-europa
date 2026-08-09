@@ -261,6 +261,13 @@ tests/Feature
 
 ## Roadmap por fases
 
+Comprobaciones de cierre y despliegue: [`docs/entrega-y-despliegue.md`](docs/entrega-y-despliegue.md).
+
+```powershell
+php artisan app:auditar-entrega
+php artisan demo:restaurar
+```
+
 ### FASE 1.0 - Base admin e inventario inicial
 
 Estado: implementada.
@@ -738,3 +745,18 @@ Implementado:
 - Categorias de blog con tabla `categorias_blog`.
 - Secciones editables con tabla `secciones_web`, empezando por contacto.
 - Seeder inicial con ejemplos de platos, cervezas y recomendaciones.
+
+### FASE 6.0 - Calidad y entrega
+
+Estado: implementada.
+
+Incluye:
+
+- cabeceras HTTP seguras y sesiones autenticadas sin caché;
+- limitación de intentos en acceso y recuperación de contraseña;
+- comando protegido `php artisan demo:restaurar`;
+- auditoría reproducible con `php artisan app:auditar-entrega`;
+- plantilla `.env.production.example`;
+- ejemplos de Nginx, Supervisor y cron en `deploy/`;
+- revisión visual y responsive de los módulos principales;
+- estrategia de despliegue y rollback en `docs/entrega-y-despliegue.md`.

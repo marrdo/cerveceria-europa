@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AsegurarAccesoModulo;
 use App\Http\Middleware\AsegurarModuloPublicoActivo;
+use App\Http\Middleware\CabecerasSeguridad;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(CabecerasSeguridad::class);
+
         $middleware->alias([
             'modulo' => AsegurarAccesoModulo::class,
             'modulo.publico' => AsegurarModuloPublicoActivo::class,

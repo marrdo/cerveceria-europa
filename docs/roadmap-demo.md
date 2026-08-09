@@ -1,6 +1,6 @@
 # Roadmap de la demo modular
 
-La **Fase 5: Web pública productizable** está completada. La siguiente iteración es la **Fase 6: Calidad y entrega**; incluirá la revisión global y la decisión de infraestructura acordada.
+Las seis fases del roadmap están completadas. La demo dispone de recorrido operativo, web configurable, restauración protegida, auditoría de entrega y una estrategia de despliegue proporcionada a su etapa actual.
 
 ## Estado rápido
 
@@ -11,7 +11,7 @@ La **Fase 5: Web pública productizable** está completada. La siguiente iteraci
 | 3. Recorrido integral de demo | Completada | Datos coherentes entre ventas, compras, inventario, espacios y personal |
 | 4. Modularización definitiva | Completada | Módulos aislados, activables y con dependencias explícitas |
 | 5. Web pública productizable | Completada | Identidad, contenidos y SEO configurables por negocio |
-| 6. Calidad y entrega | Pendiente | Instalación, restauración de demo, seguridad y documentación finales |
+| 6. Calidad y entrega | Completada | Instalación, restauración de demo, seguridad y documentación finales |
 
 ## Fase 2 en detalle
 
@@ -103,6 +103,28 @@ Al reabrir un cuadrante se conserva el último archivo publicado como evidencia.
 - [x] El seeder respeta los contenidos previamente editados.
 - [x] La migración funciona con MySQL 8.4, InnoDB y `utf8mb4`.
 
-## Siguiente paso
+## Fase 6 en detalle
 
-Continuar con la **Fase 6: Calidad y entrega**, revisar visualmente todos los módulos, endurecer instalación y seguridad, preparar restauración de demo y decidir el despliegue (incluida la valoración de AWS).
+| Bloque | Estado | Alcance |
+|---|---|---|
+| 6.1. Seguridad HTTP | Completado | Cabeceras seguras, HSTS en HTTPS, no-cache autenticado y limitación de recuperación |
+| 6.2. Restauración | Completado | Comando destructivo protegido por entorno, bandera y nombre exacto de base |
+| 6.3. Auditoría | Completado | Runtime, migraciones, UTF-8, InnoDB, módulos, storage y configuración de producción |
+| 6.4. Entrega | Completado | Entorno de producción, Nginx, Supervisor, cron, backups y rollback documentados |
+| 6.5. Revisión global | Completado | Panel, módulos, cuadrante y web revisados en escritorio, móvil y ambos temas |
+| 6.6. Infraestructura | Completado | Lightsail de 2 GB recomendado para la primera demo; RDS/S3 pospuestos hasta tener métricas |
+
+### Criterios de cierre de la Fase 6
+
+- [x] La demo puede restaurarse de forma reproducible sin apuntar por error a otra base.
+- [x] La restauración está bloqueada en producción.
+- [x] La aplicación dispone de cabeceras HTTP seguras y protección de endpoints sensibles.
+- [x] El panel vuelve a mostrar un `h1` visible y accesible en todas sus cabeceras.
+- [x] La configuración optimizada y las rutas pueden cachearse correctamente.
+- [x] Las dependencias no presentan avisos de seguridad conocidos.
+- [x] Las pantallas principales funcionan sin errores de consola ni desbordamiento horizontal.
+- [x] Existe una guía de despliegue, copias de seguridad y rollback.
+
+## Estado final
+
+El roadmap funcional queda cerrado. El siguiente trabajo debe partir de una revisión del usuario y clasificarse como corrección, mejora visual, nueva funcionalidad o despliegue real. La contratación de infraestructura no se realizará hasta disponer de dominio, cuenta AWS y autorización expresa.

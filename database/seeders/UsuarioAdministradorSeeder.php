@@ -18,12 +18,12 @@ class UsuarioAdministradorSeeder extends Seeder
     public function run(): void
     {
         Usuario::query()->updateOrCreate(
-            ['email' => env('SUPERADMIN_EMAIL', 'superadmin@demo.local')],
+            ['email' => config('demo.superadmin.email')],
             [
-                'nombre' => env('SUPERADMIN_NAME', 'Superadmin Demo'),
+                'nombre' => config('demo.superadmin.name'),
                 'rol' => RolUsuario::Superadmin,
                 'es_protegido' => true,
-                'password' => Hash::make(env('SUPERADMIN_PASSWORD', 'password')),
+                'password' => Hash::make((string) config('demo.superadmin.password')),
                 'email_verified_at' => now(),
             ],
         );

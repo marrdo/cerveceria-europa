@@ -1,0 +1,13 @@
+[program:panel-hosteleria-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/panel/current/artisan queue:work database --sleep=3 --tries=3 --timeout=120 --max-time=3600
+directory=/var/www/panel/current
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/www/panel/current/storage/logs/worker.log
+stopwaitsecs=130

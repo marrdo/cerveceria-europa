@@ -7,6 +7,9 @@
 
 <div {{ $attributes->merge(['class' => 'mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between']) }}>
     <div>
+        @if ($resolvedTitle)
+            <h1 class="text-2xl font-semibold tracking-tight text-foreground">{{ $resolvedTitle }}</h1>
+        @endif
         @if ($resolvedDescription)
             <p class="mt-1 text-sm text-muted-foreground">{{ $resolvedDescription }}</p>
         @endif
