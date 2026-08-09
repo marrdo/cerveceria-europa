@@ -4,7 +4,7 @@
             <header>
                 <p class="text-sm font-black uppercase tracking-[0.2em] text-public-primary">Novedades</p>
                 <h1 id="blog-heading" class="mt-3 text-4xl font-black text-public-foreground sm:text-6xl">{{ $categoriaActual ? 'Blog: '.$categoriaActual->nombre : 'Blog' }}</h1>
-                <p class="mt-4 max-w-2xl text-lg leading-8 text-public-muted">Noticias, eventos, cervezas invitadas y novedades del bar.</p>
+                <p class="mt-4 max-w-2xl text-lg leading-8 text-public-muted">Noticias, propuestas de cocina, eventos y novedades del local.</p>
             </header>
             @if ($categorias->isNotEmpty())
                 <nav class="mt-6" aria-label="Categorias del blog">

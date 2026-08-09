@@ -1,15 +1,15 @@
 <x-publico-layout>
-    <x-web-publica.hero />
+    <x-web-publica.hero :negocio="$negocio" />
 
     <x-web-publica.ticker :items="$fueraCarta" />
 
-    {{-- 01 / Hoy en barra — bento --}}
+    {{-- Sugerencias editables de la demo. --}}
     <section class="px-8 py-24">
         <div class="mx-auto max-w-[1440px]">
             <x-web-publica.section-head
-                num="01 / Hoy en barra"
-                eyebrow="Fuera de carta · rotacion diaria"
-                titulo="Lo que <em class='not-italic text-amber-bright'>pediriamos hoy</em>."
+                num="01 / Sugerencias"
+                eyebrow="Fuera de carta · disponibilidad limitada"
+                titulo="Lo que el equipo <em class='not-italic text-amber-bright'>recomienda hoy</em>."
                 :accion="['label' => 'Ver todo', 'href' => route('web.fuera-carta')]" />
 
             <div class="grid auto-rows-[280px] grid-cols-2 gap-4 md:grid-cols-6 lg:grid-cols-12">
@@ -35,13 +35,13 @@
         </div>
     </section>
 
-    {{-- 02 / Tap list preview --}}
+    {{-- Selección destacada de la carta. --}}
     <section class="px-8 pb-24">
         <div class="mx-auto max-w-[1440px]">
             <x-web-publica.section-head
-                num="02 / Tap list"
-                eyebrow="Carta principal · cervezas"
-                titulo="Siete tiradores. Rotan cuando hace falta."
+                num="02 / Favoritos"
+                eyebrow="Carta principal · selección demo"
+                titulo="Una carta sencilla, clara y totalmente editable."
                 :accion="['label' => 'Ver carta completa', 'href' => route('web.carta')]" />
 
             <div class="mx-auto max-w-[960px]">
@@ -52,24 +52,24 @@
         </div>
     </section>
 
-    {{-- 03 / Stripes — experiencia --}}
+    {{-- Valores de una demo de hostelería neutral. --}}
     <section class="px-8 py-16">
         <div class="mx-auto max-w-[1440px]">
             <div class="grid grid-cols-1 border-t md:grid-cols-3" style="border-color: var(--v2-line);">
                 <x-web-publica.stripe
                     num="01"
-                    titulo="Cervezas vivas"
-                    desc="La carta cambia cuando cambia la temporada. Si una referencia se queda sin stock, desaparece automaticamente. Si vuelve, vuelve."
-                    icono="beer" />
+                    titulo="Carta conectada"
+                    desc="Los productos publicados pueden vincularse al inventario y ocultarse automáticamente cuando se agota el stock."
+                    icono="servicio" />
                 <x-web-publica.stripe
                     num="02"
-                    titulo="Cocina para maridar"
-                    desc="Tapas frias, elaboraciones calientes y fuera de carta pensados para acompanar la cerveza sin pelearse con ella."
+                    titulo="Operativa ordenada"
+                    desc="Carta, ventas, compras, inventario, personal y turnos comparten datos sin duplicar trabajo."
                     icono="hops" />
                 <x-web-publica.stripe
                     num="03"
-                    titulo="Equipo del local"
-                    desc="No somos sumilleres. Somos gente que lleva anos sirviendo cerveza y sabe lo que recomienda. Preguntanos."
+                    titulo="Identidad configurable"
+                    desc="El nombre, los datos de contacto y los textos visibles salen de la configuración del negocio."
                     icono="star" />
             </div>
         </div>

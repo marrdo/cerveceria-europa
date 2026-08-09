@@ -56,7 +56,7 @@ class WebPublicaController extends Controller
     private function contenidos()
     {
         return ContenidoWeb::query()
-            ->with('producto.stock')
+            ->with(['producto.stock', 'categoriaCarta'])
             ->publicado()
             ->orderBy('orden')
             ->latest('created_at');

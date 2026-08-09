@@ -4,7 +4,7 @@
         @php
             $pageTitle = filled($title) ? $title.' | '.$negocio->nombre_comercial : $negocio->nombre_comercial;
             $pageDescription = $description ?? $negocio->descripcion_corta ?? $negocio->eslogan;
-            $ogImage = $ogImage ?? asset('img/og-default.jpg');
+            $ogImage = $ogImage ?? asset('favicon.svg');
         @endphp
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,9 +23,7 @@
         <meta name="twitter:card" content="summary_large_image">
 
         <meta name="theme-color" content="#0f0a06">
-        <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
 
         {{-- La web publica v2 es siempre oscura --}}
@@ -41,10 +39,11 @@
     </head>
     <body class="flex min-h-screen flex-col bg-public-background font-sans text-public-foreground">
         <header class="sticky top-0 z-40 border-b border-public-border/15 bg-public-background/90 backdrop-blur">
-                <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between">
                     <a href="{{ route('web.inicio') }}" class="flex items-center gap-3">
                         <span class="flex h-10 w-10 items-center justify-center rounded-md bg-[#d08a24] text-[#23180f]">
-                            <x-brand.beer-icon class="h-6 w-6" />
+                            <x-brand.hospitality-icon class="h-6 w-6" />
                         </span>
                         <span class="min-w-0">
                             <span class="block max-w-48 truncate text-lg font-black leading-5 text-public-foreground">{{ $negocio->nombre_comercial }}</span>
@@ -65,6 +64,18 @@
                     </nav>
                     <x-admin.theme-toggle size="sm" />
                 </div>
+
+                <nav class="mt-3 flex gap-5 overflow-x-auto border-t border-public-border/10 pt-3 text-xs font-semibold text-public-muted md:hidden" aria-label="Navegacion movil">
+                    <a href="{{ route('web.carta') }}" class="shrink-0 hover:text-public-primary">Carta</a>
+                    <a href="{{ route('web.cervezas') }}" class="shrink-0 hover:text-public-primary">Cervezas</a>
+                    <a href="{{ route('web.fuera-carta') }}" class="shrink-0 hover:text-public-primary">Fuera de carta</a>
+                    <a href="{{ route('web.recomendaciones') }}" class="shrink-0 hover:text-public-primary">Recomendaciones</a>
+                    @if (\App\Models\Modulo::activo('blog'))
+                        <a href="{{ route('web.blog') }}" class="shrink-0 hover:text-public-primary">Blog</a>
+                    @endif
+                    <a href="{{ route('web.contacto') }}" class="shrink-0 hover:text-public-primary">Contacto</a>
+                </nav>
+            </div>
         </header>
 
         <main class="flex-1">

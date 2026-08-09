@@ -11,7 +11,7 @@
             (() => {
                 try {
                     const storedPreference = localStorage.getItem('panel-theme-preference')
-                        ?? localStorage.getItem('cerveceria-theme-preference')
+                        ?? localStorage.getItem('panel-hosteleria-theme-preference')
                         ?? 'system';
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const resolvedTheme = storedPreference === 'dark' || (storedPreference === 'system' && prefersDark)
@@ -42,7 +42,7 @@
                 <div class="w-full max-w-sm">
                     <div class="mb-8 text-center">
                         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
-                            <x-brand.beer-icon class="h-6 w-6 text-primary-foreground" />
+                            <x-brand.hospitality-icon class="h-6 w-6 text-primary-foreground" />
                         </div>
                         <h1 class="text-xl font-semibold text-foreground">{{ $negocio->nombre_comercial }}</h1>
                         <p class="mt-1 text-sm text-muted-foreground">Panel de administracion</p>

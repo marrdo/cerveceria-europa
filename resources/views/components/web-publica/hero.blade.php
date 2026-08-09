@@ -1,14 +1,20 @@
 @props([
-    'eyebrow'  => 'Sevilla · 41002 · desde 1996',
-    'titulo'   => null,    // string o HTML. Si es null, usa el predeterminado
-    'lead'     => 'Bar con alma industrial en el centro de Sevilla. Seleccion rotatoria de cerveza de importacion y artesanas, cocina de bar pensada para maridar y una carta que cambia cuando cambia la temporada.',
+    'negocio',
+    'eyebrow'  => null,
+    'titulo'   => null,
+    'lead'     => null,
     'stats'    => [
-        ['n' => '120+', 'l' => 'Referencias en carta'],
-        ['n' => '14',   'l' => 'Paises de origen'],
-        ['n' => '7',    'l' => 'Tiradores en barra'],
+        ['n' => '10', 'l' => 'Productos de muestra'],
+        ['n' => '3',  'l' => 'Perfiles operativos'],
+        ['n' => '100%', 'l' => 'Datos ficticios'],
     ],
-    'imagen'   => null,    // url/path opcional; si null, usa la del CSS por defecto
+    'imagen'   => null,
 ])
+
+@php
+    $eyebrow ??= collect(['Demo de hostelería', $negocio->localidad])->filter()->implode(' · ');
+    $lead ??= $negocio->descripcion_corta ?: 'Una web de demostración conectada con un panel de gestión modular.';
+@endphp
 
 <section class="v2-hero">
     <div class="v2-hero-bg" @if ($imagen) style="--v2-hero-image: url('{{ $imagen }}');" @endif></div>
@@ -23,7 +29,7 @@
             @if ($titulo)
                 {!! $titulo !!}
             @else
-                Cervezas<br>que cuentan<br><em>una historia</em>.
+                {{ $negocio->nombre_comercial }}.<br><em>{{ $negocio->eslogan ?: 'Todo listo para empezar' }}</em>.
             @endif
         </h1>
 

@@ -7,7 +7,7 @@
             <figcaption class="sr-only">{{ $contenido->titulo }}</figcaption>
         @else
             <figcaption class="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_35%_20%,rgba(227,161,58,.45),transparent_28%),linear-gradient(135deg,#3b2a1f,#17110d)]" aria-label="{{ $contenido->titulo }}">
-                <x-brand.beer-icon class="h-16 w-16 text-[#e3a13a]" />
+                <x-brand.hospitality-icon class="h-16 w-16 text-[#e3a13a]" />
             </figcaption>
         @endif
         @if ($contenido->fuera_carta || $contenido->destacado)

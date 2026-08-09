@@ -11,7 +11,7 @@
             (() => {
                 try {
                     const storedPreference = localStorage.getItem('panel-theme-preference')
-                        ?? localStorage.getItem('cerveceria-theme-preference')
+                        ?? localStorage.getItem('panel-hosteleria-theme-preference')
                         ?? 'system';
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     const resolvedTheme = storedPreference === 'dark' || (storedPreference === 'system' && prefersDark)
@@ -62,7 +62,7 @@
                 <div class="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
                     <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
                         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
-                            <x-brand.beer-icon class="h-6 w-6 text-primary-foreground" />
+                            <x-brand.hospitality-icon class="h-6 w-6 text-primary-foreground" />
                         </span>
                         <span class="min-w-0">
                             <span class="block max-w-40 truncate text-sm font-semibold text-sidebar-foreground">{{ $negocio->nombre_comercial }}</span>

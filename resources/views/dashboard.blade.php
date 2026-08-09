@@ -56,21 +56,21 @@
 
         <section>
             <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-base font-semibold text-foreground">Siguientes modulos</h2>
+                <h2 class="text-base font-semibold text-foreground">Estado de la demo</h2>
             </div>
             <div class="admin-card p-4">
                 <div class="space-y-3 text-sm">
                     <div class="flex items-center justify-between border-b border-border pb-3">
-                        <span class="text-foreground">Compras a proveedor</span>
-                        <x-admin.status-badge variant="warning">Pendiente</x-admin.status-badge>
+                        <span class="text-foreground">Empresa y carta ficticias</span>
+                        <x-admin.status-badge variant="success">Preparado</x-admin.status-badge>
                     </div>
                     <div class="flex items-center justify-between border-b border-border pb-3">
-                        <span class="text-foreground">Recepciones conectadas con stock</span>
-                        <x-admin.status-badge variant="warning">Pendiente</x-admin.status-badge>
+                        <span class="text-foreground">Usuarios de prueba por rol</span>
+                        <x-admin.status-badge variant="success">Preparado</x-admin.status-badge>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-foreground">Lectura asistida de albaranes</span>
-                        <x-admin.status-badge variant="info">Roadmap</x-admin.status-badge>
+                        <span class="text-foreground">Cuadrante semanal de muestra</span>
+                        <x-admin.status-badge variant="success">Preparado</x-admin.status-badge>
                     </div>
                 </div>
             </div>
