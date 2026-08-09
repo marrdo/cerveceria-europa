@@ -1,6 +1,6 @@
 # Roadmap de la demo modular
 
-La **Fase 4: Modularización definitiva** está completada. La siguiente iteración es la **Fase 5: Web pública productizable**; el pulido visual transversal se realizará al terminar todas las fases, tal como se acordó.
+La **Fase 5: Web pública productizable** está completada. La siguiente iteración es la **Fase 6: Calidad y entrega**; incluirá la revisión global y la decisión de infraestructura acordada.
 
 ## Estado rápido
 
@@ -10,7 +10,7 @@ La **Fase 4: Modularización definitiva** está completada. La siguiente iteraci
 | 2. Planificación de turnos | Completada | Crear, revisar, publicar y exportar semanas completas |
 | 3. Recorrido integral de demo | Completada | Datos coherentes entre ventas, compras, inventario, espacios y personal |
 | 4. Modularización definitiva | Completada | Módulos aislados, activables y con dependencias explícitas |
-| 5. Web pública productizable | Pendiente | Identidad, contenidos y SEO configurables por negocio |
+| 5. Web pública productizable | Completada | Identidad, contenidos y SEO configurables por negocio |
 | 6. Calidad y entrega | Pendiente | Instalación, restauración de demo, seguridad y documentación finales |
 
 ## Fase 2 en detalle
@@ -83,6 +83,26 @@ Al reabrir un cuadrante se conserva el último archivo publicado como evidencia.
 - [x] El dashboard explica requisitos, integraciones y bloqueos.
 - [x] La auditoría modular confirma que la instalación es coherente.
 
+## Fase 5 en detalle
+
+| Bloque | Estado | Alcance |
+|---|---|---|
+| 5.1. Identidad | Completado | Logo, favicon, imagen social y datos del negocio |
+| 5.2. Apariencia | Completado | Paleta pública aplicada mediante variables CSS dinámicas |
+| 5.3. Portada editable | Completado | Cabecera, sugerencias, destacados, valores e imágenes gestionables |
+| 5.4. SEO técnico | Completado | Canonical, robots, Open Graph, JSON-LD, manifest y sitemap dinámicos |
+| 5.5. Demo segura | Completado | Seeders idempotentes que conservan textos editados y nacen sin indexación |
+
+### Criterios de cierre de la Fase 5
+
+- [x] No hay una marca de cliente fijada en la estructura pública.
+- [x] Los recursos de identidad pueden reemplazarse sin dejar archivos huérfanos.
+- [x] La portada puede adaptarse a otro negocio sin editar Blade.
+- [x] Los títulos editables se escapan y no ejecutan HTML.
+- [x] Metadatos, datos estructurados y documentos SEO salen de la configuración.
+- [x] El seeder respeta los contenidos previamente editados.
+- [x] La migración funciona con MySQL 8.4, InnoDB y `utf8mb4`.
+
 ## Siguiente paso
 
-Continuar con la **Fase 5: Web pública productizable**, separando identidad, apariencia, contenidos y SEO configurables para reutilizar la instalación con cualquier negocio.
+Continuar con la **Fase 6: Calidad y entrega**, revisar visualmente todos los módulos, endurecer instalación y seguridad, preparar restauración de demo y decidir el despliegue (incluida la valoración de AWS).

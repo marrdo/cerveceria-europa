@@ -4,6 +4,7 @@ namespace App\Modulos\WebPublica\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class SeccionWeb extends Model
 {
@@ -17,6 +18,7 @@ class SeccionWeb extends Model
         'titulo',
         'subtitulo',
         'contenido',
+        'imagen_path',
         'datos',
         'activo',
     ];
@@ -40,5 +42,18 @@ class SeccionWeb extends Model
                 'datos' => [],
                 'activo' => true,
             ]);
+    }
+
+    public function urlImagen(): ?string
+    {
+        if (blank($this->imagen_path)) {
+            return null;
+        }
+
+        if (str_starts_with($this->imagen_path, 'http://') || str_starts_with($this->imagen_path, 'https://')) {
+            return $this->imagen_path;
+        }
+
+        return Storage::disk('public')->url($this->imagen_path);
     }
 }

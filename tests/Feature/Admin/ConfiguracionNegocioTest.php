@@ -6,6 +6,8 @@ use App\Enums\RolUsuario;
 use App\Models\Usuario;
 use App\Modulos\Configuracion\Models\ConfiguracionNegocio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ConfiguracionNegocioTest extends TestCase
@@ -58,6 +60,28 @@ class ConfiguracionNegocioTest extends TestCase
             ->assertSee('Bar Demo');
     }
 
+    public function test_propietario_puede_configurar_recursos_marca_y_seo(): void
+    {
+        Storage::fake('public');
+        $propietario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        $datos = $this->datosValidos() + [
+            'logo' => UploadedFile::fake()->image('logo.png', 600, 300),
+            'favicon' => UploadedFile::fake()->image('favicon.png', 64, 64),
+            'imagen_social' => UploadedFile::fake()->image('social.jpg', 1200, 630),
+        ];
+
+        $this->actingAs($propietario)
+            ->put(route('admin.configuracion.negocio.update'), $datos)
+            ->assertRedirect(route('admin.configuracion.negocio.edit'));
+
+        $configuracion = ConfiguracionNegocio::query()->firstOrFail();
+        Storage::disk('public')->assertExists($configuracion->logo_path);
+        Storage::disk('public')->assertExists($configuracion->favicon_path);
+        Storage::disk('public')->assertExists($configuracion->imagen_social_path);
+        $this->assertSame('#112233', $configuracion->color_primario);
+        $this->assertFalse($configuracion->seo_indexar);
+    }
+
     /** @return array<string, string> */
     private function datosValidos(): array
     {
@@ -77,6 +101,13 @@ class ConfiguracionNegocioTest extends TestCase
             'google_maps_url' => 'https://maps.google.com/?q=Bar+Demo',
             'zona_horaria' => 'Europe/Madrid',
             'moneda' => 'EUR',
+            'color_primario' => '#112233',
+            'color_secundario' => '#445566',
+            'color_fondo' => '#101010',
+            'color_superficie' => '#202020',
+            'color_texto' => '#F5F5F5',
+            'seo_titulo' => 'Bar Demo · Tapas en Sevilla',
+            'seo_descripcion' => 'Bar de tapas de demostración situado en Sevilla.',
         ];
     }
 }

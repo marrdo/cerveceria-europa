@@ -8,10 +8,14 @@ use App\Modulos\WebPublica\Http\Controllers\Admin\SeccionWebController;
 use App\Modulos\WebPublica\Http\Controllers\Publico\BlogPublicoController;
 use App\Modulos\WebPublica\Http\Controllers\Publico\CartaPublicaController;
 use App\Modulos\WebPublica\Http\Controllers\Publico\FueraCartaPublicaController;
+use App\Modulos\WebPublica\Http\Controllers\Publico\SeoPublicoController;
 use App\Modulos\WebPublica\Http\Controllers\Publico\WebPublicaController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('modulo.publico:web_publica')->group(function (): void {
+    Route::get('/site.webmanifest', [SeoPublicoController::class, 'manifest'])->name('web.manifest');
+    Route::get('/robots.txt', [SeoPublicoController::class, 'robots'])->name('web.robots');
+    Route::get('/sitemap.xml', [SeoPublicoController::class, 'sitemap'])->name('web.sitemap');
     Route::get('/', fn () => app(WebPublicaController::class)->inicio())->name('web.inicio');
     Route::get('/carta', [CartaPublicaController::class, 'index'])->name('web.carta');
     Route::get('/cervezas', [CartaPublicaController::class, 'cervezas'])->name('web.cervezas');

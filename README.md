@@ -675,7 +675,7 @@ Reglas:
 
 ### FASE 5.0 - Web publica gestionable
 
-Estado: iniciada.
+Estado: implementada.
 
 Objetivo:
 Crear una web publica configurable dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
@@ -723,6 +723,11 @@ Implementado:
   - contenidos/productos publicados.
 - Tarifas multiples por contenido para formatos tipo `Tapa`, `Plato`, `25cl`, `50cl`, `Copa` o `Botella`.
 - Vinculacion opcional con productos de inventario.
+- Logo, favicon, imagen social y paleta configurables desde el panel.
+- Portada y contacto estructurados en secciones editables, activables y con imagen propia.
+- SEO dinámico con canonical, robots, Open Graph, Twitter Cards y JSON-LD `Restaurant`.
+- Manifest, `robots.txt` y `sitemap.xml` generados desde la configuración real.
+- Documentación operativa en `docs/web-publica-productizable.md`.
 - Ocultacion automatica de contenidos vinculados a productos sin stock.
 - Modulos activables desde `modulos`, incluyendo `web_publica` y `blog`.
 - Modulo principal `web_publica` activable/desactivable por `superadmin`.

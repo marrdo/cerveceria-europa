@@ -48,6 +48,72 @@ class WebPublicaTest extends TestCase
             ->assertSee('Patatas bravas de la casa');
     }
 
+    public function test_public_identity_palette_and_seo_are_generated_from_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+        ConfiguracionNegocio::query()->where('clave', ConfiguracionNegocio::CLAVE_PRINCIPAL)->update([
+            'nombre_comercial' => 'Casa Prueba',
+            'web_url' => 'https://casa-prueba.test',
+            'color_primario' => '#112233',
+            'seo_titulo' => 'Casa Prueba · Cocina local',
+            'seo_descripcion' => 'Descripción SEO totalmente configurable.',
+            'seo_indexar' => false,
+        ]);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('<title>Casa Prueba · Cocina local</title>', false)
+            ->assertSee('content="noindex, nofollow"', false)
+            ->assertSee('href="https://casa-prueba.test"', false)
+            ->assertSee('--color-amber-bright: 17 34 51', false)
+            ->assertSee('"@type":"Restaurant"', false);
+    }
+
+    public function test_home_sections_are_editable_and_escape_html(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+        SeccionWeb::query()->where('clave', 'inicio_hero')->update([
+            'titulo' => '<script>alert(1)</script> Portada propia',
+        ]);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; Portada propia', false)
+            ->assertDontSee('<script>alert(1)</script>', false);
+    }
+
+    public function test_manifest_robots_and_sitemap_follow_public_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+
+        $this->get(route('web.manifest'))
+            ->assertOk()
+            ->assertJsonPath('name', 'La Plaza Demo');
+        $this->get(route('web.robots'))
+            ->assertOk()
+            ->assertSee('Disallow: /');
+        $this->get(route('web.sitemap'))
+            ->assertOk()
+            ->assertSee(route('web.contacto'));
+    }
+
+    public function test_owner_can_replace_an_editable_section_image(): void
+    {
+        Storage::fake('public');
+        $this->seed(WebPublicaSeeder::class);
+        $propietario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        $seccion = SeccionWeb::query()->where('clave', 'inicio_hero')->firstOrFail();
+
+        $this->actingAs($propietario)->put(route('admin.web-publica.secciones.update', $seccion), [
+            'titulo' => 'Portada',
+            'imagen' => UploadedFile::fake()->image('portada.jpg', 1200, 800),
+            'activo' => '1',
+        ])->assertRedirect(route('admin.web-publica.secciones.index'));
+
+        $seccion->refresh();
+        Storage::disk('public')->assertExists($seccion->imagen_path);
+    }
+
     public function test_public_and_access_branding_follow_business_configuration(): void
     {
         $this->seed(WebPublicaSeeder::class);

@@ -297,9 +297,12 @@
         aspect-ratio: 3/4;
         border-color: var(--v2-line);
         background:
+            var(--v2-contact-image, linear-gradient(transparent, transparent)),
             radial-gradient(circle at 30% 25%, rgba(227,161,58,.4), transparent 24%),
             radial-gradient(circle at 72% 66%, rgba(93,155,110,.2), transparent 28%),
             repeating-linear-gradient(145deg, rgba(255,255,255,.025) 0 1px, transparent 1px 28px),
             linear-gradient(160deg, #3b2a1f, #17110d 70%);
+        background-position: center;
+        background-size: cover;
     }
 }
