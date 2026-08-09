@@ -83,6 +83,14 @@ class ModuloSeeder extends Seeder
                 'orden' => 55,
             ],
             [
+                'clave' => 'planificacion_turnos',
+                'nombre' => 'Planificacion de turnos',
+                'descripcion' => 'Cuadrantes semanales, jornadas partidas, areas y publicacion para el equipo.',
+                'grupo' => 'personal',
+                'activo' => false,
+                'orden' => 57,
+            ],
+            [
                 'clave' => 'reservas',
                 'nombre' => 'Reservas',
                 'descripcion' => 'Modulo futuro para gestionar reservas desde la web.',

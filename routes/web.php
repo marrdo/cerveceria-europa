@@ -24,6 +24,7 @@ use App\Modulos\Inventario\Http\Controllers\Admin\UbicacionInventarioController;
 use App\Modulos\Inventario\Http\Controllers\Admin\UnidadInventarioController;
 use App\Modulos\Inventario\Models\MovimientoInventario;
 use App\Modulos\Inventario\Models\Producto;
+use App\Modulos\PlanificacionTurnos\Http\Controllers\Admin\CuadranteLaboralController;
 use App\Modulos\Ventas\Http\Controllers\Admin\ComandaController;
 use App\Modulos\Ventas\Http\Controllers\Admin\InformeVentasController;
 use App\Modulos\Ventas\Http\Controllers\Admin\TurnoCajaController;
@@ -87,6 +88,19 @@ Route::middleware('auth')->group(function () {
         Route::put('usuarios/{usuario}', [PersonalController::class, 'update'])->name('usuarios.update');
         Route::delete('usuarios/{usuario}', [PersonalController::class, 'destroy'])->name('usuarios.destroy');
     });
+
+    Route::prefix('admin/planificacion-turnos')
+        ->name('admin.planificacion-turnos.')
+        ->middleware('modulo:planificacion_turnos')
+        ->group(function (): void {
+            Route::get('/', [CuadranteLaboralController::class, 'index'])->name('cuadrantes.index');
+            Route::post('/', [CuadranteLaboralController::class, 'store'])->name('cuadrantes.store');
+            Route::get('cuadrantes/{cuadrante}', [CuadranteLaboralController::class, 'show'])->name('cuadrantes.show');
+            Route::post('cuadrantes/{cuadrante}/jornadas', [CuadranteLaboralController::class, 'storeJornada'])->name('cuadrantes.jornadas.store');
+            Route::delete('cuadrantes/{cuadrante}/jornadas/{jornada}', [CuadranteLaboralController::class, 'destroyJornada'])->name('cuadrantes.jornadas.destroy');
+            Route::patch('cuadrantes/{cuadrante}/publicar', [CuadranteLaboralController::class, 'publicar'])->name('cuadrantes.publicar');
+            Route::patch('cuadrantes/{cuadrante}/reabrir', [CuadranteLaboralController::class, 'reabrir'])->name('cuadrantes.reabrir');
+        });
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {
         Route::get('/', DashboardInventarioController::class)->name('index');

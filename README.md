@@ -10,6 +10,7 @@ El proyecto cubre:
 - Documentos de compra con trazabilidad.
 - Ventas y comandas conectadas con carta e inventario.
 - Gestion de personal operativo.
+- Planificacion semanal de turnos por areas y tramos de trabajo.
 - Web publica gestionable opcional.
 - Carta publica editable por categorias, productos y tarifas.
 - Blog opcional como submodulo vendible.
@@ -115,6 +116,7 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - `Compras`: proveedores, pedidos, recepciones y entradas reales en inventario.
 - `Ventas`: comandas de sala/barra tomadas desde la carta publicada.
 - `Personal`: alta de usuarios operativos segun permisos de rol.
+- `PlanificacionTurnos`: cuadrantes semanales, turnos partidos, pausas y areas de trabajo.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
 Documentacion por modulos:
@@ -123,6 +125,7 @@ Documentacion por modulos:
 docs/modules/inventario.md
 docs/modules/compras.md
 docs/modules/ventas.md
+docs/modules/planificacion-turnos.md
 docs/modules/web-publica.md
 docs/modules/modulos.md
 ```

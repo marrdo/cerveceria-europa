@@ -34,11 +34,17 @@
     </head>
     <body class="font-sans">
         @php
-            $moduloInicial = request()->routeIs('admin.configuracion.*')
-                ? 'configuracion'
-                : (request()->routeIs('admin.compras.*')
-                ? 'compras'
-                : (request()->routeIs('admin.inventario.*') ? 'inventario' : (request()->routeIs('admin.ventas.*') ? 'ventas' : (request()->routeIs('admin.espacios.*') ? 'espacios' : (request()->routeIs('admin.personal.*') ? 'personal' : (request()->routeIs('admin.web-publica.*') ? 'web_publica' : ''))))));
+            $moduloInicial = match (true) {
+                request()->routeIs('admin.configuracion.*') => 'configuracion',
+                request()->routeIs('admin.compras.*') => 'compras',
+                request()->routeIs('admin.inventario.*') => 'inventario',
+                request()->routeIs('admin.ventas.*') => 'ventas',
+                request()->routeIs('admin.espacios.*') => 'espacios',
+                request()->routeIs('admin.personal.*') => 'personal',
+                request()->routeIs('admin.planificacion-turnos.*') => 'planificacion_turnos',
+                request()->routeIs('admin.web-publica.*') => 'web_publica',
+                default => '',
+            };
         @endphp
 
         <div x-data="{ sidebarOpen: false, moduloAbierto: '{{ $moduloInicial }}' }" class="flex h-screen overflow-hidden bg-background">
@@ -181,6 +187,17 @@
                                 <a href="{{ route('admin.espacios.mesas.index') }}" class="block rounded-md px-3 py-1.5 text-sm {{ request()->routeIs('admin.espacios.mesas.*') ? 'bg-sidebar-accent text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground' }}">Mesas</a>
                             </div>
                         </div>
+                    @endif
+
+                    @if ($usuario?->puedeAccederModulo('planificacion_turnos'))
+                        <a href="{{ route('admin.planificacion-turnos.cuadrantes.index') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('admin.planificacion-turnos.*') ? 'bg-sidebar-accent text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent' }}">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-md bg-card/70">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 2v3m8-3v3M3 9h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm2 9h3m4 0h3m-8 4h3m4 0h3" />
+                                </svg>
+                            </span>
+                            <span class="truncate">Planificacion de turnos</span>
+                        </a>
                     @endif
 
                     @if ($usuario?->puedeAccederModulo('personal'))

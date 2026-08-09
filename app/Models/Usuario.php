@@ -97,6 +97,7 @@ class Usuario extends Authenticatable
             'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
             'espacios' => $this->rol === RolUsuario::Encargado,
             'personal' => in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario], true),
+            'planificacion_turnos' => $this->rol === RolUsuario::Encargado,
             default => false,
         };
     }
@@ -107,6 +108,15 @@ class Usuario extends Authenticatable
     public function puedeGestionarPersonal(): bool
     {
         return $this->rolesGestionables()->isNotEmpty();
+    }
+
+    /**
+     * Indica si el usuario puede crear y publicar cuadrantes laborales.
+     */
+    public function puedeGestionarPlanificacionTurnos(): bool
+    {
+        return in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario, RolUsuario::Superadmin], true)
+            && $this->puedeAccederModulo('planificacion_turnos');
     }
 
     /**
