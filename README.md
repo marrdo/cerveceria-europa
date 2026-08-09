@@ -59,6 +59,8 @@ http://127.0.0.1:8000/admin
 | Encargado | `encargado@demo.local` | `password` |
 | Camarero | `camarero@demo.local` | `password` |
 
+Ademas, `PersonalDemoSeeder` genera 19 perfiles ficticios mediante la factoria de usuarios. La demo queda asi con 22 personas operativas —la misma cantidad que el cuadrante de referencia— mas el superadmin tecnico. El cuadrante semanal reparte 17 personas en `Sala y barra` y 5 en `Trastienda`, con cinco dias de trabajo, descansos rotativos y algunos turnos partidos.
+
 Estos datos son solo para desarrollo local y deben sustituirse antes de publicar una instalacion real.
 
 Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema de permisos de `esbuild`/Vite en el entorno. Ejecutarlo desde terminal normal de Windows o con permisos adecuados suele resolverlo.

@@ -154,6 +154,32 @@ class PlanificacionTurnosModuleTest extends TestCase
         )->assertUnprocessable();
     }
 
+    public function test_vista_semanal_organiza_todo_el_personal_por_filas_y_dias(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        $empleadoSinTurno = Usuario::factory()->create([
+            'nombre' => 'Persona sin asignar',
+            'rol' => RolUsuario::Camarero,
+            'es_protegido' => false,
+        ]);
+
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->get(route('admin.planificacion-turnos.cuadrantes.show', $cuadrante))
+            ->assertOk()
+            ->assertSee('Vista por empleado')
+            ->assertSee('Buscar empleado')
+            ->assertSee($empleado->nombre)
+            ->assertSee($empleadoSinTurno->nombre)
+            ->assertSee('Compacta')
+            ->assertSee('Detallada')
+            ->assertSee('8,0 h');
+    }
+
     /**
      * @return array{Usuario, Usuario, AreaTrabajo, CuadranteLaboral}
      */

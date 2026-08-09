@@ -2,15 +2,17 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RolUsuario;
 use App\Models\Usuario;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
-use Illuminate\Database\Seeder;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 /**
- * Deja un cuadrante ficticio visible al entrar en la demo.
+ * Deja un cuadrante semanal completo y ficticio visible en la demo.
  */
 class PlanificacionTurnosDemoSeeder extends Seeder
 {
@@ -29,37 +31,78 @@ class PlanificacionTurnosDemoSeeder extends Seeder
 
         $cuadrante->jornadas()->delete();
 
-        $usuarios = Usuario::query()
-            ->whereIn('email', ['camarero@demo.local', 'encargado@demo.local', 'propietario@demo.local'])
-            ->get()
-            ->keyBy('email');
+        $usuarios = $this->personalOperativo();
         $areas = AreaTrabajo::query()->get()->keyBy('nombre');
 
-        foreach ($this->jornadas() as $jornada) {
-            $cuadrante->jornadas()->create([
-                'usuario_id' => $usuarios[$jornada['email']]->id,
-                'area_trabajo_id' => $areas[$jornada['area']]->id,
-                'fecha' => $lunes->addDays($jornada['dia'])->toDateString(),
-                'hora_inicio' => $jornada['inicio'],
-                'hora_fin' => $jornada['fin'],
-                'termina_dia_siguiente' => false,
-                'minutos_descanso' => $jornada['pausa'],
-                'notas' => 'Jornada de demostración.',
-            ]);
+        foreach ($usuarios->values() as $indice => $usuario) {
+            $area = $indice < 17 ? $areas['Sala y barra'] : $areas['Trastienda'];
+            $diasDescanso = [$indice % 7, ($indice + 3) % 7];
+
+            foreach (range(0, 6) as $dia) {
+                if (in_array($dia, $diasDescanso, true)) {
+                    continue;
+                }
+
+                foreach ($this->tramosDelDia($indice, $dia) as $tramo) {
+                    $cuadrante->jornadas()->create([
+                        'usuario_id' => $usuario->id,
+                        'area_trabajo_id' => $area->id,
+                        'fecha' => $lunes->addDays($dia)->toDateString(),
+                        'hora_inicio' => $tramo['inicio'],
+                        'hora_fin' => $tramo['fin'],
+                        'termina_dia_siguiente' => false,
+                        'minutos_descanso' => $tramo['pausa'],
+                        'notas' => 'Jornada de demostración.',
+                    ]);
+                }
+            }
         }
     }
 
-    /** @return array<int, array{email: string, area: string, dia: int, inicio: string, fin: string, pausa: int}> */
-    private function jornadas(): array
+    /**
+     * Devuelve las 22 personas que forman el equipo operativo de la demo.
+     *
+     * @return Collection<int, Usuario>
+     */
+    private function personalOperativo(): Collection
     {
-        return [
-            ['email' => 'camarero@demo.local', 'area' => 'Sala y barra', 'dia' => 0, 'inicio' => '08:00', 'fin' => '12:00', 'pausa' => 0],
-            ['email' => 'camarero@demo.local', 'area' => 'Sala y barra', 'dia' => 0, 'inicio' => '18:00', 'fin' => '22:00', 'pausa' => 0],
-            ['email' => 'encargado@demo.local', 'area' => 'Sala y barra', 'dia' => 0, 'inicio' => '09:00', 'fin' => '17:00', 'pausa' => 30],
-            ['email' => 'propietario@demo.local', 'area' => 'Trastienda', 'dia' => 1, 'inicio' => '08:00', 'fin' => '15:00', 'pausa' => 0],
-            ['email' => 'camarero@demo.local', 'area' => 'Sala y barra', 'dia' => 2, 'inicio' => '10:00', 'fin' => '18:00', 'pausa' => 30],
-            ['email' => 'encargado@demo.local', 'area' => 'Sala y barra', 'dia' => 3, 'inicio' => '14:00', 'fin' => '22:00', 'pausa' => 30],
-            ['email' => 'propietario@demo.local', 'area' => 'Trastienda', 'dia' => 4, 'inicio' => '08:00', 'fin' => '16:00', 'pausa' => 30],
-        ];
+        $orden = collect([
+            'encargado@demo.local',
+            'propietario@demo.local',
+            'camarero@demo.local',
+            ...array_map(
+                static fn (int $indice): string => sprintf('equipo%02d@demo.local', $indice),
+                range(1, PersonalDemoSeeder::TOTAL_PERSONAL_GENERADO),
+            ),
+        ])->flip();
+
+        return Usuario::query()
+            ->where('rol', '!=', RolUsuario::Superadmin)
+            ->whereIn('email', $orden->keys())
+            ->get()
+            ->sortBy(static fn (Usuario $usuario): int => $orden[$usuario->email])
+            ->values();
+    }
+
+    /**
+     * Alterna mañanas, tardes y turnos partidos para que la cuadrícula permita
+     * evaluar de un vistazo los casos habituales de un negocio de hostelería.
+     *
+     * @return array<int, array{inicio: string, fin: string, pausa: int}>
+     */
+    private function tramosDelDia(int $indicePersona, int $dia): array
+    {
+        if (($indicePersona + $dia) % 9 === 0) {
+            return [
+                ['inicio' => '08:00', 'fin' => '12:00', 'pausa' => 0],
+                ['inicio' => '18:00', 'fin' => '22:00', 'pausa' => 0],
+            ];
+        }
+
+        return match (($indicePersona + $dia) % 3) {
+            0 => [['inicio' => '08:00', 'fin' => '16:00', 'pausa' => 30]],
+            1 => [['inicio' => '10:00', 'fin' => '18:00', 'pausa' => 30]],
+            default => [['inicio' => '14:00', 'fin' => '22:00', 'pausa' => 30]],
+        };
     }
 }

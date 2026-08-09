@@ -48,6 +48,20 @@ Representa un tramo continuo de trabajo. Un turno partido se guarda como dos jor
 
 La siguiente iteración debe añadir ausencias explícitas (`descanso`, `vacaciones`, `baja` y otras incidencias), avisos de cobertura mínima y una vista por empleado con el total de horas semanales. Los colores serán una ayuda visual derivada de los datos, nunca la fuente de verdad.
 
+## Escenario de demostración
+
+`DatabaseSeeder` crea un equipo completamente ficticio de 22 personas operativas, sin copiar ningún dato personal del Excel de referencia. El cuadrante de la semana actual distribuye 17 personas en `Sala y barra` y 5 en `Trastienda`, asigna cinco días de trabajo a cada una y mezcla jornadas continuas con turnos partidos para facilitar las pruebas del panel.
+
+## Fase 2.3: experiencia operativa
+
+La vista semanal utiliza una matriz con una fila estable por empleado y una columna por día. Incluye búsqueda por nombre, filtro por área, modos compacto y detallado, totales semanales y cabecera y columna de empleado fijas durante el desplazamiento. También muestra a las personas sin turnos para que una ausencia de planificación no pase desapercibida.
+
+## Fase 2.6: Excel automático al publicar
+
+La publicación definitiva del cuadrante deberá generar automáticamente un archivo `.xlsx` descargable. El documento reproducirá la estructura operativa del Excel de referencia —empleados por filas, horas por columnas, separación por áreas y colores para trabajo, descanso, vacaciones y bajas— usando exclusivamente los datos registrados en la aplicación.
+
+La generación estará vinculada a la versión publicada: al reabrir se conservará el archivo anterior como evidencia y una nueva publicación generará una versión actualizada. El Excel será una salida del sistema, nunca una segunda fuente de datos editable.
+
 ## Verificación
 
 ```powershell

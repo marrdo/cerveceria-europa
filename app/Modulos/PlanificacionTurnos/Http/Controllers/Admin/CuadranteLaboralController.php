@@ -12,6 +12,7 @@ use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarJornadaLaboralRequest;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
+use App\Modulos\PlanificacionTurnos\ViewData\CuadranteSemanalViewData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -44,8 +45,11 @@ class CuadranteLaboralController extends Controller
             ->with('status', 'Cuadrante semanal creado correctamente.');
     }
 
-    public function show(Request $request, CuadranteLaboral $cuadrante): View
-    {
+    public function show(
+        Request $request,
+        CuadranteLaboral $cuadrante,
+        CuadranteSemanalViewData $viewData,
+    ): View {
         abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
 
         $cuadrante->load([
@@ -55,15 +59,19 @@ class CuadranteLaboralController extends Controller
                 ->orderBy('hora_inicio'),
         ]);
 
+        $dias = $this->diasSemana($cuadrante);
+        $empleados = Usuario::query()
+            ->where('rol', '!=', RolUsuario::Superadmin->value)
+            ->where('es_protegido', false)
+            ->orderBy('nombre')
+            ->get();
+
         return view('modulos.planificacion-turnos.cuadrantes.show', [
             'cuadrante' => $cuadrante,
-            'dias' => $this->diasSemana($cuadrante),
-            'empleados' => Usuario::query()
-                ->where('rol', '!=', RolUsuario::Superadmin->value)
-                ->where('es_protegido', false)
-                ->orderBy('nombre')
-                ->get(),
+            'dias' => $dias,
+            'empleados' => $empleados,
             'areas' => AreaTrabajo::query()->where('activo', true)->orderBy('orden')->orderBy('nombre')->get(),
+            'filasPlanificacion' => $viewData->construir($cuadrante, $empleados, $dias),
         ]);
     }
 
