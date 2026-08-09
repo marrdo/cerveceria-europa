@@ -10,16 +10,26 @@ use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CoberturaMinimaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\ExportacionCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class PlanificacionTurnosModuleTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('local');
+    }
 
     public function test_encargado_puede_crear_un_cuadrante_semanal(): void
     {
@@ -152,10 +162,76 @@ class PlanificacionTurnosModuleTest extends TestCase
 
         $this->assertSame(EstadoCuadranteLaboral::Publicado, $cuadrante->refresh()->estado);
 
+        $exportacion = ExportacionCuadranteLaboral::query()->sole();
+        $this->assertSame(1, $exportacion->version);
+        $this->assertSame($encargado->id, $exportacion->generado_por_id);
+        $this->assertSame(64, strlen($exportacion->hash_sha256));
+        $this->assertGreaterThan(0, $exportacion->tamano_bytes);
+        Storage::disk($exportacion->disk)->assertExists($exportacion->ruta);
+
+        $libro = IOFactory::load(Storage::disk($exportacion->disk)->path($exportacion->ruta));
+        $hoja = $libro->getSheetByName('Cuadrante');
+        $this->assertNotNull($hoja);
+        $this->assertStringContainsString('VERSIÓN 001', (string) $hoja->getCell('A2')->getValue());
+        $valoresPrimeraColumna = collect(
+            $hoja->rangeToArray('A1:A'.$hoja->getHighestRow(), null, true, true, false),
+        )->flatten()->implode('|');
+        $this->assertStringContainsString($empleado->nombre, $valoresPrimeraColumna);
+        $libro->disconnectWorksheets();
+
         $this->actingAs($encargado)->post(
             route('admin.planificacion-turnos.cuadrantes.jornadas.store', $cuadrante),
             $this->datosJornada($empleado, $area, '18:00', '22:00'),
         )->assertUnprocessable();
+    }
+
+    public function test_reabrir_y_republicar_conserva_el_excel_anterior_y_crea_otra_version(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->patch(route('admin.planificacion-turnos.cuadrantes.publicar', $cuadrante))
+            ->assertRedirect();
+        $primera = ExportacionCuadranteLaboral::query()->sole();
+
+        $this->actingAs($encargado)
+            ->patch(route('admin.planificacion-turnos.cuadrantes.reabrir', $cuadrante))
+            ->assertRedirect();
+        $this->assertSame(EstadoCuadranteLaboral::Borrador, $cuadrante->refresh()->estado);
+        Storage::disk($primera->disk)->assertExists($primera->ruta);
+
+        $this->actingAs($encargado)
+            ->patch(route('admin.planificacion-turnos.cuadrantes.publicar', $cuadrante))
+            ->assertRedirect();
+
+        $versiones = $cuadrante->exportaciones()->orderBy('version')->get();
+        $this->assertSame([1, 2], $versiones->pluck('version')->all());
+        $this->assertNotSame($versiones[0]->ruta, $versiones[1]->ruta);
+        Storage::disk($versiones[0]->disk)->assertExists($versiones[0]->ruta);
+        Storage::disk($versiones[1]->disk)->assertExists($versiones[1]->ruta);
+    }
+
+    public function test_encargado_puede_descargar_una_version_excel_privada(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->patch(route('admin.planificacion-turnos.cuadrantes.publicar', $cuadrante))
+            ->assertRedirect();
+        $exportacion = ExportacionCuadranteLaboral::query()->sole();
+
+        $this->actingAs($encargado)
+            ->get(route('admin.planificacion-turnos.cuadrantes.exportaciones.descargar', [$cuadrante, $exportacion]))
+            ->assertOk()
+            ->assertDownload($exportacion->nombre_archivo);
     }
 
     public function test_puede_registrar_vacaciones_que_atraviesan_varios_dias(): void

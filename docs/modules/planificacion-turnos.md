@@ -51,10 +51,6 @@ Representa un periodo de `descanso`, `vacaciones`, `baja`, `ausencia` o `festivo
 - Un cuadrante con conflictos entre turnos e incidencias no puede publicarse.
 - Un cuadrante publicado no admite altas ni eliminaciones hasta que se reabre.
 
-## Evolución prevista
-
-La siguiente iteración debe añadir utilidades de productividad: copia de semanas, plantillas, horas contratadas, edición en bloque y avisos de cobertura mínima.
-
 ## Escenario de demostración
 
 `DatabaseSeeder` crea un equipo completamente ficticio de 22 personas operativas, sin copiar ningún dato personal del Excel de referencia. El cuadrante de la semana actual distribuye 17 personas en `Sala y barra` y 5 en `Trastienda`, mezcla jornadas continuas y partidas e incluye descansos, vacaciones, una baja, una ausencia y un festivo para revisar todos los estados visuales.
@@ -79,9 +75,13 @@ Las incidencias no se copian ni se almacenan en plantillas porque ya viven en el
 
 ## Fase 2.6: Excel automático al publicar
 
-La publicación definitiva del cuadrante deberá generar automáticamente un archivo `.xlsx` descargable. El documento reproducirá la estructura operativa del Excel de referencia —empleados por filas, horas por columnas, separación por áreas y colores para trabajo, descanso, vacaciones y bajas— usando exclusivamente los datos registrados en la aplicación.
+La publicación definitiva genera automáticamente un archivo `.xlsx` descargable. El documento reproduce la estructura operativa del Excel de referencia —empleados por filas, intervalos de 30 minutos por columnas, separación por áreas y colores para trabajo, descanso, vacaciones, bajas, ausencias y festivos— usando exclusivamente los datos registrados en la aplicación.
 
-La generación estará vinculada a la versión publicada: al reabrir se conservará el archivo anterior como evidencia y una nueva publicación generará una versión actualizada. El Excel será una salida del sistema, nunca una segunda fuente de datos editable.
+La generación está vinculada a la versión publicada: al reabrir se conserva el archivo anterior como evidencia y una nueva publicación genera una versión actualizada. El Excel es una salida del sistema, nunca una segunda fuente de datos editable.
+
+Cada versión registra nombre, ruta privada, disco, tamaño, fecha, autor y huella SHA-256. La publicación y el registro se ejecutan de forma transaccional; si el proceso falla, el cuadrante continúa como borrador y se elimina cualquier archivo huérfano. El disco se configura con `PLANIFICACION_TURNOS_EXPORT_DISK` y usa `local` por defecto, por lo que en una futura infraestructura puede cambiarse a S3 sin modificar el código de negocio.
+
+La hoja se prepara en horizontal, ajustada al ancho de impresión, con cabeceras por día y área, horarios exactos visibles junto al empleado y soporte para turnos partidos y nocturnos.
 
 ## Verificación
 

@@ -39,6 +39,16 @@ class CuadranteLaboral extends Model
     }
 
     /**
+     * Versiones Excel creadas en cada publicación del cuadrante.
+     *
+     * @return HasMany<ExportacionCuadranteLaboral, $this>
+     */
+    public function exportaciones(): HasMany
+    {
+        return $this->hasMany(ExportacionCuadranteLaboral::class, 'cuadrante_laboral_id');
+    }
+
+    /**
      * Usuario que publico la version visible del cuadrante.
      *
      * @return BelongsTo<Usuario, $this>

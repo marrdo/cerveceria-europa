@@ -109,6 +109,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('coberturas/{cobertura}', [CuadranteLaboralController::class, 'destroyCobertura'])->name('coberturas.destroy');
             Route::patch('cuadrantes/{cuadrante}/publicar', [CuadranteLaboralController::class, 'publicar'])->name('cuadrantes.publicar');
             Route::patch('cuadrantes/{cuadrante}/reabrir', [CuadranteLaboralController::class, 'reabrir'])->name('cuadrantes.reabrir');
+            Route::get('cuadrantes/{cuadrante}/exportaciones/{exportacion}/descargar', [CuadranteLaboralController::class, 'descargarExportacion'])->name('cuadrantes.exportaciones.descargar');
         });
 
     Route::prefix('admin/inventario')->name('admin.inventario.')->middleware('modulo:inventario')->group(function (): void {

@@ -13,6 +13,7 @@ use App\Modulos\PlanificacionTurnos\Actions\CrearJornadaLaboralAction;
 use App\Modulos\PlanificacionTurnos\Actions\CrearJornadasEnBloqueAction;
 use App\Modulos\PlanificacionTurnos\Actions\DetectarConflictosLaboralesAction;
 use App\Modulos\PlanificacionTurnos\Actions\GuardarPlantillaCuadranteAction;
+use App\Modulos\PlanificacionTurnos\Actions\PublicarCuadranteLaboralAction;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Http\Requests\CrearSemanaPlanificadaRequest;
@@ -25,6 +26,7 @@ use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarPlantillaCuadranteReque
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CoberturaMinimaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\ExportacionCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
@@ -33,8 +35,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Gestiona los cuadrantes semanales y sus tramos de trabajo.
@@ -77,6 +81,9 @@ class CuadranteLaboralController extends Controller
                 ->with(['usuario', 'areaTrabajo'])
                 ->orderBy('fecha')
                 ->orderBy('hora_inicio'),
+            'exportaciones' => fn ($query) => $query
+                ->with('generadoPor')
+                ->orderByDesc('version'),
         ]);
 
         $dias = $this->diasSemana($cuadrante);
@@ -251,9 +258,11 @@ class CuadranteLaboralController extends Controller
         Request $request,
         CuadranteLaboral $cuadrante,
         DetectarConflictosLaboralesAction $detectarConflictos,
+        PublicarCuadranteLaboralAction $publicarCuadrante,
     ): RedirectResponse {
         abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
-        abort_if($cuadrante->jornadas()->doesntExist(), 422, 'Anade al menos una jornada antes de publicar.');
+        abort_unless($cuadrante->esBorrador(), 422, 'El cuadrante ya está publicado.');
+        abort_if($cuadrante->jornadas()->doesntExist(), 422, 'Añade al menos una jornada antes de publicar.');
 
         $conflictos = $detectarConflictos->ejecutar($cuadrante)->count();
 
@@ -263,13 +272,31 @@ class CuadranteLaboralController extends Controller
             ]);
         }
 
-        $cuadrante->update([
-            'estado' => EstadoCuadranteLaboral::Publicado,
-            'publicado_at' => now(),
-            'publicado_por_id' => $request->user()->id,
-        ]);
+        $exportacion = $publicarCuadrante->ejecutar($cuadrante, $request->user());
 
-        return back()->with('status', 'Cuadrante publicado correctamente.');
+        return back()->with(
+            'status',
+            sprintf('Cuadrante publicado y Excel v%03d generado correctamente.', $exportacion->version),
+        );
+    }
+
+    /**
+     * Descarga una versión privada del cuadrante tras comprobar su pertenencia.
+     */
+    public function descargarExportacion(
+        Request $request,
+        CuadranteLaboral $cuadrante,
+        ExportacionCuadranteLaboral $exportacion,
+    ): StreamedResponse {
+        abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
+        abort_unless($exportacion->cuadrante_laboral_id === $cuadrante->id, 404);
+        abort_unless(Storage::disk($exportacion->disk)->exists($exportacion->ruta), 404);
+
+        return Storage::disk($exportacion->disk)->download(
+            $exportacion->ruta,
+            $exportacion->nombre_archivo,
+            ['Content-Type' => $exportacion->mime_type],
+        );
     }
 
     public function reabrir(Request $request, CuadranteLaboral $cuadrante): RedirectResponse

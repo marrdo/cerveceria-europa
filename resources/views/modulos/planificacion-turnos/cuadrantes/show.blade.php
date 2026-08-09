@@ -2,6 +2,7 @@
     $nombresDia = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     $totalMinutos = $cuadrante->jornadas->sum(fn ($jornada) => $jornada->minutosEfectivos());
     $totalEmpleados = $cuadrante->jornadas->pluck('usuario_id')->unique()->count();
+    $ultimaExportacion = $cuadrante->exportaciones->first();
 @endphp
 
 <x-app-layout>
@@ -17,7 +18,7 @@
                     <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.publicar', $cuadrante) }}">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="admin-btn-primary" onclick="return confirm('Publicar el cuadrante bloqueará su edición hasta que lo reabras.');">Publicar semana</button>
+                        <button type="submit" class="admin-btn-primary" onclick="return confirm('Publicar el cuadrante bloqueará su edición y generará una nueva versión del Excel.');">Publicar semana</button>
                     </form>
                 @else
                     <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.reabrir', $cuadrante) }}">
@@ -94,6 +95,68 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Horas planificadas</p>
                 <p class="mt-2 text-2xl font-black text-foreground">{{ number_format($totalMinutos / 60, 1, ',', '.') }} h</p>
             </div>
+        </section>
+
+        <section class="admin-card mb-6 overflow-hidden" aria-labelledby="exportaciones-heading">
+            <div class="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 id="exportaciones-heading" class="font-semibold text-foreground">Excel del cuadrante</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">Cada publicación crea una copia nueva; reabrir el borrador no elimina las anteriores.</p>
+                </div>
+                @if ($ultimaExportacion)
+                    <a href="{{ route('admin.planificacion-turnos.cuadrantes.exportaciones.descargar', [$cuadrante, $ultimaExportacion]) }}" class="admin-btn-primary shrink-0 justify-center">
+                        Descargar v{{ str_pad((string) $ultimaExportacion->version, 3, '0', STR_PAD_LEFT) }}
+                    </a>
+                @endif
+            </div>
+
+            @if ($ultimaExportacion)
+                <div class="grid gap-4 p-5 lg:grid-cols-[1.2fr_1fr]">
+                    <div class="rounded-lg border border-success/25 bg-success/10 p-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wide text-success">Última publicación</p>
+                                <p class="mt-1 font-semibold text-foreground">{{ $ultimaExportacion->nombre_archivo }}</p>
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    {{ $ultimaExportacion->generado_at->format('d/m/Y H:i') }}
+                                    · {{ $ultimaExportacion->generadoPor?->nombre ?? 'Usuario eliminado' }}
+                                    · {{ $ultimaExportacion->tamanoLegible() }}
+                                </p>
+                            </div>
+                            <span class="rounded-full bg-success px-2.5 py-1 text-xs font-black text-white">v{{ str_pad((string) $ultimaExportacion->version, 3, '0', STR_PAD_LEFT) }}</span>
+                        </div>
+                        <p class="mt-3 break-all font-mono text-[10px] text-muted-foreground" title="Huella SHA-256 completa">
+                            SHA-256 {{ $ultimaExportacion->hash_sha256 }}
+                        </p>
+                    </div>
+
+                    <details class="rounded-lg border border-border bg-muted/15 p-4" @if ($cuadrante->exportaciones->count() > 1) open @endif>
+                        <summary class="cursor-pointer text-sm font-semibold text-foreground">
+                            Historial · {{ $cuadrante->exportaciones->count() }} {{ Str::plural('versión', $cuadrante->exportaciones->count()) }}
+                        </summary>
+                        <div class="mt-3 max-h-52 space-y-2 overflow-y-auto pe-1">
+                            @foreach ($cuadrante->exportaciones as $exportacion)
+                                <div class="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2">
+                                    <div class="min-w-0">
+                                        <p class="truncate text-xs font-semibold text-foreground">v{{ str_pad((string) $exportacion->version, 3, '0', STR_PAD_LEFT) }} · {{ $exportacion->generado_at->format('d/m/Y H:i') }}</p>
+                                        <p class="mt-0.5 truncate text-[10px] text-muted-foreground">{{ $exportacion->generadoPor?->nombre ?? 'Usuario eliminado' }} · {{ $exportacion->tamanoLegible() }}</p>
+                                    </div>
+                                    <a href="{{ route('admin.planificacion-turnos.cuadrantes.exportaciones.descargar', [$cuadrante, $exportacion]) }}" class="rounded-md border border-border px-2.5 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/10">
+                                        Descargar
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </details>
+                </div>
+            @else
+                <div class="p-5">
+                    <div class="rounded-lg border border-dashed border-border bg-muted/15 px-4 py-5 text-center">
+                        <p class="text-sm font-semibold text-foreground">Todavía no hay ningún Excel publicado</p>
+                        <p class="mt-1 text-xs text-muted-foreground">Se generará automáticamente al pulsar «Publicar semana».</p>
+                    </div>
+                </div>
+            @endif
         </section>
 
         @if ($alertasCobertura->isNotEmpty())

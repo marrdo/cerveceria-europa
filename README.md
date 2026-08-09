@@ -131,7 +131,7 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - `Compras`: proveedores, pedidos, recepciones y entradas reales en inventario.
 - `Ventas`: comandas de sala/barra tomadas desde la carta publicada.
 - `Personal`: alta de usuarios operativos segun permisos de rol.
-- `PlanificacionTurnos`: cuadrantes semanales, turnos partidos, pausas y areas de trabajo.
+- `PlanificacionTurnos`: cuadrantes semanales, turnos partidos, incidencias, cobertura y Excel privado versionado al publicar.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
 Documentacion por modulos:
