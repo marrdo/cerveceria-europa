@@ -28,6 +28,7 @@ class GuardarUsuarioPersonalRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:255'],
             'email' => [...ReglasValidacion::email(nullable: false), Rule::unique(Usuario::class, 'email')],
             'rol' => ['required', 'string', Rule::in($this->rolesPermitidos())],
+            'horas_contrato_semanales' => ['required', 'numeric', 'min:1', 'max:60'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }
@@ -43,6 +44,8 @@ class GuardarUsuarioPersonalRequest extends FormRequest
             'email.unique' => 'Ya existe un usuario con este email.',
             'rol.required' => 'El rol es obligatorio.',
             'rol.in' => 'No puedes crear usuarios con ese rol.',
+            'horas_contrato_semanales.required' => 'Indica las horas contratadas por semana.',
+            'horas_contrato_semanales.max' => 'Las horas contratadas no pueden superar 60 por semana.',
             'password.required' => 'La contrasena es obligatoria.',
             'password.confirmed' => 'La confirmacion de contrasena no coincide.',
         ];
@@ -59,6 +62,7 @@ class GuardarUsuarioPersonalRequest extends FormRequest
             'nombre' => trim((string) $this->input('nombre')),
             'email' => mb_strtolower(trim((string) $this->input('email'))),
             'rol' => RolUsuario::from((string) $this->input('rol')),
+            'minutos_contrato_semanales' => (int) round((float) $this->input('horas_contrato_semanales') * 60),
             'password' => $this->input('password'),
         ];
     }

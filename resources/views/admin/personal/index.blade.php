@@ -25,6 +25,7 @@
                         <th class="px-4 py-3 text-left font-medium text-foreground">Nombre</th>
                         <th class="px-4 py-3 text-left font-medium text-foreground">Email</th>
                         <th class="px-4 py-3 text-left font-medium text-foreground">Rol</th>
+                        <th class="px-4 py-3 text-left font-medium text-foreground">Contrato</th>
                         <th class="px-4 py-3 text-left font-medium text-foreground">Alta</th>
                         <th class="px-4 py-3 text-right font-medium text-foreground">Acciones</th>
                     </tr>
@@ -35,6 +36,7 @@
                             <td class="px-4 py-3 font-medium text-foreground">{{ $usuario->nombre }}</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $usuario->email }}</td>
                             <td class="px-4 py-3"><x-admin.status-badge>{{ $usuario->rol->etiqueta() }}</x-admin.status-badge></td>
+                            <td class="px-4 py-3 text-muted-foreground">{{ number_format($usuario->horasContratoSemanales(), 1, ',', '.') }} h</td>
                             <td class="px-4 py-3 text-muted-foreground">{{ $usuario->created_at?->format('d/m/Y') }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-1">
@@ -64,7 +66,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-muted-foreground">No hay usuarios para los roles que puedes gestionar.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-muted-foreground">No hay usuarios para los roles que puedes gestionar.</td>
                         </tr>
                     @endforelse
                 </tbody>

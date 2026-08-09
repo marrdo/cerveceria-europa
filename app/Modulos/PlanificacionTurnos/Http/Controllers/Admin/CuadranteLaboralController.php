@@ -5,18 +5,29 @@ namespace App\Modulos\PlanificacionTurnos\Http\Controllers\Admin;
 use App\Enums\RolUsuario;
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
+use App\Modulos\PlanificacionTurnos\Actions\AplicarPlantillaCuadranteAction;
+use App\Modulos\PlanificacionTurnos\Actions\CalcularAlertasCoberturaAction;
+use App\Modulos\PlanificacionTurnos\Actions\CopiarCuadranteLaboralAction;
 use App\Modulos\PlanificacionTurnos\Actions\CrearIncidenciaLaboralAction;
 use App\Modulos\PlanificacionTurnos\Actions\CrearJornadaLaboralAction;
+use App\Modulos\PlanificacionTurnos\Actions\CrearJornadasEnBloqueAction;
 use App\Modulos\PlanificacionTurnos\Actions\DetectarConflictosLaboralesAction;
+use App\Modulos\PlanificacionTurnos\Actions\GuardarPlantillaCuadranteAction;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
+use App\Modulos\PlanificacionTurnos\Http\Requests\CrearSemanaPlanificadaRequest;
+use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarCoberturaMinimaRequest;
 use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarCuadranteLaboralRequest;
 use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarIncidenciaLaboralRequest;
 use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarJornadaLaboralRequest;
+use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarJornadasEnBloqueRequest;
+use App\Modulos\PlanificacionTurnos\Http\Requests\GuardarPlantillaCuadranteRequest;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
+use App\Modulos\PlanificacionTurnos\Models\CoberturaMinimaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
+use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\ViewData\CuadranteSemanalViewData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +51,7 @@ class CuadranteLaboralController extends Controller
                 ->orderByDesc('semana_inicio')
                 ->paginate(12),
             'proximoLunes' => now()->startOfWeek()->toDateString(),
+            'plantillas' => PlantillaCuadranteLaboral::query()->withCount('jornadas')->orderBy('nombre')->get(),
         ]);
     }
 
@@ -56,6 +68,7 @@ class CuadranteLaboralController extends Controller
         CuadranteLaboral $cuadrante,
         CuadranteSemanalViewData $viewData,
         DetectarConflictosLaboralesAction $detectarConflictos,
+        CalcularAlertasCoberturaAction $calcularAlertasCobertura,
     ): View {
         abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
 
@@ -77,6 +90,11 @@ class CuadranteLaboralController extends Controller
             ->coincideConPeriodo($cuadrante->semana_inicio, $cuadrante->semanaFin())
             ->orderBy('fecha_inicio')
             ->get();
+        $reglasCobertura = CoberturaMinimaLaboral::query()
+            ->with('areaTrabajo')
+            ->orderBy('dia_semana')
+            ->orderBy('hora_inicio')
+            ->get();
 
         return view('modulos.planificacion-turnos.cuadrantes.show', [
             'cuadrante' => $cuadrante,
@@ -91,6 +109,9 @@ class CuadranteLaboralController extends Controller
             ]),
             'tiposIncidencia' => TipoIncidenciaLaboral::cases(),
             'conflictosLaborales' => $detectarConflictos->ejecutar($cuadrante),
+            'reglasCobertura' => $reglasCobertura,
+            'alertasCobertura' => $calcularAlertasCobertura->ejecutar($cuadrante, $reglasCobertura),
+            'proximaSemana' => $cuadrante->semanaFin()->addDay()->toDateString(),
         ]);
     }
 
@@ -118,6 +139,78 @@ class CuadranteLaboralController extends Controller
         $jornada->delete();
 
         return back()->with('status', 'Tramo eliminado correctamente.');
+    }
+
+    public function storeJornadasBloque(
+        GuardarJornadasEnBloqueRequest $request,
+        CuadranteLaboral $cuadrante,
+        CrearJornadasEnBloqueAction $crearJornadas,
+    ): RedirectResponse {
+        abort_unless($cuadrante->esBorrador(), 422, 'No puedes modificar un cuadrante publicado.');
+
+        $creadas = $crearJornadas->ejecutar(
+            $cuadrante,
+            $request->input('usuario_ids'),
+            $request->input('fechas'),
+            $request->datosComunes(),
+        );
+
+        return back()->with('status', "Se han creado {$creadas} turnos en bloque.");
+    }
+
+    public function copiar(
+        CrearSemanaPlanificadaRequest $request,
+        CuadranteLaboral $cuadrante,
+        CopiarCuadranteLaboralAction $copiarCuadrante,
+    ): RedirectResponse {
+        $copia = $copiarCuadrante->ejecutar($cuadrante, $request->semanaInicio());
+
+        return redirect()->route('admin.planificacion-turnos.cuadrantes.show', $copia)
+            ->with('status', 'Semana copiada correctamente como borrador.');
+    }
+
+    public function storePlantilla(
+        GuardarPlantillaCuadranteRequest $request,
+        CuadranteLaboral $cuadrante,
+        GuardarPlantillaCuadranteAction $guardarPlantilla,
+    ): RedirectResponse {
+        $guardarPlantilla->ejecutar($cuadrante, $request->datosPlantilla());
+
+        return back()->with('status', 'Plantilla semanal guardada correctamente.');
+    }
+
+    public function aplicarPlantilla(
+        CrearSemanaPlanificadaRequest $request,
+        PlantillaCuadranteLaboral $plantilla,
+        AplicarPlantillaCuadranteAction $aplicarPlantilla,
+    ): RedirectResponse {
+        $cuadrante = $aplicarPlantilla->ejecutar($plantilla, $request->semanaInicio());
+
+        return redirect()->route('admin.planificacion-turnos.cuadrantes.show', $cuadrante)
+            ->with('status', 'Cuadrante creado desde la plantilla.');
+    }
+
+    public function destroyPlantilla(Request $request, PlantillaCuadranteLaboral $plantilla): RedirectResponse
+    {
+        abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
+        $plantilla->delete();
+
+        return back()->with('status', 'Plantilla eliminada correctamente.');
+    }
+
+    public function storeCobertura(GuardarCoberturaMinimaRequest $request): RedirectResponse
+    {
+        CoberturaMinimaLaboral::query()->create($request->datosCobertura());
+
+        return back()->with('status', 'Regla de cobertura creada correctamente.');
+    }
+
+    public function destroyCobertura(Request $request, CoberturaMinimaLaboral $cobertura): RedirectResponse
+    {
+        abort_unless($request->user()?->puedeGestionarPlanificacionTurnos(), 403);
+        $cobertura->delete();
+
+        return back()->with('status', 'Regla de cobertura eliminada correctamente.');
     }
 
     public function storeIncidencia(

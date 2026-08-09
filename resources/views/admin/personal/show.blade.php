@@ -29,6 +29,10 @@
                     <dd class="mt-1"><x-admin.status-badge>{{ $usuario->rol->etiqueta() }}</x-admin.status-badge></dd>
                 </div>
                 <div>
+                    <dt class="text-xs font-medium uppercase text-muted-foreground">Contrato semanal</dt>
+                    <dd class="mt-1 text-sm text-foreground">{{ number_format($usuario->horasContratoSemanales(), 1, ',', '.') }} h</dd>
+                </div>
+                <div>
                     <dt class="text-xs font-medium uppercase text-muted-foreground">Email verificado</dt>
                     <dd class="mt-1 text-sm text-foreground">{{ $usuario->email_verified_at?->format('d/m/Y H:i') ?? 'No' }}</dd>
                 </div>

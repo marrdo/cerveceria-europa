@@ -8,9 +8,11 @@ use App\Models\Usuario;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
+use App\Modulos\PlanificacionTurnos\Models\CoberturaMinimaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
+use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -287,6 +289,97 @@ class PlanificacionTurnosModuleTest extends TestCase
             ->assertSee('Compacta')
             ->assertSee('Detallada')
             ->assertSee('8,0 h');
+    }
+
+    public function test_puede_copiar_un_cuadrante_a_otra_semana(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+
+        $respuesta = $this->actingAs($encargado)->post(
+            route('admin.planificacion-turnos.cuadrantes.copiar', $cuadrante),
+            ['semana_inicio' => '2026-08-17'],
+        );
+
+        $copia = CuadranteLaboral::query()->whereDate('semana_inicio', '2026-08-17')->sole();
+        $respuesta->assertRedirect(route('admin.planificacion-turnos.cuadrantes.show', $copia));
+        $jornadaCopiada = $copia->jornadas()->sole();
+        $this->assertSame($empleado->id, $jornadaCopiada->usuario_id);
+        $this->assertSame('2026-08-17', $jornadaCopiada->fecha->toDateString());
+    }
+
+    public function test_puede_guardar_y_aplicar_una_plantilla_semanal(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '10:00', '18:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+
+        $this->actingAs($encargado)->post(
+            route('admin.planificacion-turnos.cuadrantes.plantillas.store', $cuadrante),
+            ['nombre' => 'Semana de prueba'],
+        )->assertRedirect();
+
+        $plantilla = PlantillaCuadranteLaboral::query()->sole();
+        $this->assertSame(1, $plantilla->jornadas()->count());
+
+        $respuesta = $this->actingAs($encargado)->post(
+            route('admin.planificacion-turnos.plantillas.aplicar', $plantilla),
+            ['semana_inicio' => '2026-08-24'],
+        );
+
+        $creado = CuadranteLaboral::query()->whereDate('semana_inicio', '2026-08-24')->sole();
+        $respuesta->assertRedirect(route('admin.planificacion-turnos.cuadrantes.show', $creado));
+        $this->assertSame(1, $creado->jornadas()->count());
+    }
+
+    public function test_puede_crear_turnos_para_varios_empleados_y_dias_en_bloque(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        $segundoEmpleado = $this->usuario(RolUsuario::Camarero);
+
+        $this->actingAs($encargado)->post(
+            route('admin.planificacion-turnos.cuadrantes.jornadas.bloque', $cuadrante),
+            [
+                'usuario_ids' => [$empleado->id, $segundoEmpleado->id],
+                'fechas' => ['2026-08-10', '2026-08-11'],
+                'area_trabajo_id' => $area->id,
+                'hora_inicio' => '08:00',
+                'hora_fin' => '16:00',
+                'minutos_descanso' => 30,
+            ],
+        )->assertRedirect();
+
+        $this->assertSame(4, $cuadrante->jornadas()->count());
+    }
+
+    public function test_muestra_desviacion_de_contrato_y_alertas_de_cobertura(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        $empleado->update(['minutos_contrato_semanales' => 1200]);
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+        CoberturaMinimaLaboral::query()->create([
+            'area_trabajo_id' => $area->id,
+            'dia_semana' => 1,
+            'hora_inicio' => '08:00',
+            'hora_fin' => '10:00',
+            'minimo_personas' => 2,
+            'activo' => true,
+        ]);
+
+        $this->actingAs($encargado)
+            ->get(route('admin.planificacion-turnos.cuadrantes.show', $cuadrante))
+            ->assertOk()
+            ->assertSee('avisos de cobertura')
+            ->assertSee('1 de 2 personas')
+            ->assertSee('de 20,0 h');
     }
 
     /**

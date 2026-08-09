@@ -88,5 +88,39 @@
         </aside>
     </div>
 
+    <section class="admin-card mt-6 overflow-hidden" aria-labelledby="plantillas-heading">
+        <div class="border-b border-border p-5">
+            <h2 id="plantillas-heading" class="font-semibold text-foreground">Plantillas semanales</h2>
+            <p class="mt-1 text-sm text-muted-foreground">Crea una semana nueva reutilizando un patrón guardado desde cualquier cuadrante.</p>
+        </div>
+        <div class="divide-y divide-border">
+            @forelse ($plantillas as $plantilla)
+                <article class="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                    <div>
+                        <h3 class="font-semibold text-foreground">{{ $plantilla->nombre }}</h3>
+                        <p class="mt-1 text-sm text-muted-foreground">{{ $plantilla->jornadas_count }} tramos · {{ $plantilla->descripcion ?? 'Sin descripción' }}</p>
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <form method="POST" action="{{ route('admin.planificacion-turnos.plantillas.aplicar', $plantilla) }}" class="flex items-end gap-2">
+                            @csrf
+                            <div>
+                                <x-input-label :for="'semana_plantilla_'.$plantilla->id" value="Semana de destino" />
+                                <x-text-input :id="'semana_plantilla_'.$plantilla->id" name="semana_inicio" type="date" class="mt-1 block h-10" :value="$proximoLunes" required />
+                            </div>
+                            <button type="submit" class="admin-btn-primary h-10">Aplicar</button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.planificacion-turnos.plantillas.destroy', $plantilla) }}" onsubmit="return confirm('¿Eliminar esta plantilla?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="admin-btn-outline h-10 text-destructive">Eliminar</button>
+                        </form>
+                    </div>
+                </article>
+            @empty
+                <div class="p-8 text-center text-sm text-muted-foreground">Guarda un cuadrante como plantilla para reutilizarlo aquí.</div>
+            @endforelse
+        </div>
+    </section>
+
     <div class="mt-4">{{ $cuadrantes->links() }}</div>
 </x-app-layout>

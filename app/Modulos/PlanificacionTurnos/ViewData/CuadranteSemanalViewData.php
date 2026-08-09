@@ -29,6 +29,8 @@ class CuadranteSemanalViewData
      *     area_ids: string,
      *     areas: Collection<int, mixed>,
      *     minutos: int,
+     *     minutos_contrato: int,
+     *     desviacion_minutos: int,
      *     jornadas_por_dia: Collection<string, Collection<int, mixed>>,
      *     incidencias_por_dia: Collection<string, Collection<int, IncidenciaLaboral>>
      * }>
@@ -51,12 +53,16 @@ class CuadranteSemanalViewData
                 ->unique('id')
                 ->values();
 
+            $minutosPlanificados = $jornadas->sum(fn ($jornada): int => $jornada->minutosEfectivos());
+
             return [
                 'empleado' => $empleado,
                 'busqueda' => Str::lower(Str::ascii($empleado->nombre.' '.$empleado->rol->etiqueta())),
                 'area_ids' => $areas->pluck('id')->implode(','),
                 'areas' => $areas,
-                'minutos' => $jornadas->sum(fn ($jornada): int => $jornada->minutosEfectivos()),
+                'minutos' => $minutosPlanificados,
+                'minutos_contrato' => $empleado->minutos_contrato_semanales,
+                'desviacion_minutos' => $minutosPlanificados - $empleado->minutos_contrato_semanales,
                 'jornadas_por_dia' => $dias->mapWithKeys(
                     fn (Carbon $dia): array => [
                         $dia->toDateString() => $jornadas

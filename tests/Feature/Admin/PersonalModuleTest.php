@@ -22,6 +22,7 @@ class PersonalModuleTest extends TestCase
                 'nombre' => 'Camarero Nuevo',
                 'email' => 'camarero.nuevo@example.test',
                 'rol' => RolUsuario::Camarero->value,
+                'horas_contrato_semanales' => 30,
                 'password' => 'password',
                 'password_confirmation' => 'password',
             ])
@@ -30,6 +31,7 @@ class PersonalModuleTest extends TestCase
         $this->assertDatabaseHas('usuarios', [
             'email' => 'camarero.nuevo@example.test',
             'rol' => RolUsuario::Camarero->value,
+            'minutos_contrato_semanales' => 1800,
         ]);
 
         $this->actingAs($encargado)
@@ -38,6 +40,7 @@ class PersonalModuleTest extends TestCase
                 'nombre' => 'Encargado Ilegal',
                 'email' => 'encargado.ilegal@example.test',
                 'rol' => RolUsuario::Encargado->value,
+                'horas_contrato_semanales' => 40,
                 'password' => 'password',
                 'password_confirmation' => 'password',
             ])
@@ -56,6 +59,7 @@ class PersonalModuleTest extends TestCase
                     'nombre' => 'Usuario '.$rol->value,
                     'email' => $rol->value.'@example.test',
                     'rol' => $rol->value,
+                    'horas_contrato_semanales' => 40,
                     'password' => 'password',
                     'password_confirmation' => 'password',
                 ])
@@ -76,6 +80,7 @@ class PersonalModuleTest extends TestCase
                 'nombre' => 'Propietario Nuevo',
                 'email' => 'propietario.nuevo@example.test',
                 'rol' => RolUsuario::Propietario->value,
+                'horas_contrato_semanales' => 40,
                 'password' => 'password',
                 'password_confirmation' => 'password',
             ])
@@ -108,6 +113,7 @@ class PersonalModuleTest extends TestCase
                 'nombre' => 'Camarero Editado',
                 'email' => 'camarero.editado@example.test',
                 'rol' => RolUsuario::Encargado->value,
+                'horas_contrato_semanales' => 35,
             ])
             ->assertRedirect(route('admin.personal.usuarios.show', $camarero));
 
@@ -116,6 +122,7 @@ class PersonalModuleTest extends TestCase
             'nombre' => 'Camarero Editado',
             'email' => 'camarero.editado@example.test',
             'rol' => RolUsuario::Encargado->value,
+            'minutos_contrato_semanales' => 2100,
         ]);
 
         $this->actingAs($propietario)
@@ -142,6 +149,7 @@ class PersonalModuleTest extends TestCase
                 'nombre' => 'Cambio no permitido',
                 'email' => 'cambio.no.permitido@example.test',
                 'rol' => RolUsuario::Encargado->value,
+                'horas_contrato_semanales' => 40,
             ])
             ->assertForbidden();
     }

@@ -3,10 +3,13 @@
 namespace Tests\Feature\Admin;
 
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
+use App\Modulos\PlanificacionTurnos\Models\CoberturaMinimaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
 use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
+use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
 use Database\Seeders\PersonalDemoSeeder;
+use Database\Seeders\PlanificacionProductividadDemoSeeder;
 use Database\Seeders\PlanificacionTurnosDemoSeeder;
 use Database\Seeders\UsuarioRolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,5 +44,22 @@ class PlanificacionTurnosDemoSeederTest extends TestCase
 
         $this->assertSame(17, $usuariosPorArea[AreaTrabajo::query()->where('nombre', 'Sala y barra')->value('id')]);
         $this->assertSame(5, $usuariosPorArea[AreaTrabajo::query()->where('nombre', 'Trastienda')->value('id')]);
+    }
+
+    public function test_demo_productivity_adds_contracts_coverage_and_template(): void
+    {
+        $this->seed(UsuarioRolesSeeder::class);
+        $this->seed(PersonalDemoSeeder::class);
+        $this->seed(AreaTrabajoSeeder::class);
+        $this->seed(PlanificacionTurnosDemoSeeder::class);
+        $this->seed(PlanificacionProductividadDemoSeeder::class);
+
+        $this->assertSame(14, CoberturaMinimaLaboral::query()->count());
+        $plantilla = PlantillaCuadranteLaboral::query()->sole();
+        $this->assertSame('Semana base demo', $plantilla->nombre);
+        $this->assertSame(CuadranteLaboral::query()->sole()->jornadas()->count(), $plantilla->jornadas()->count());
+        $this->assertDatabaseHas('usuarios', ['minutos_contrato_semanales' => 1200]);
+        $this->assertDatabaseHas('usuarios', ['minutos_contrato_semanales' => 1800]);
+        $this->assertDatabaseHas('usuarios', ['minutos_contrato_semanales' => 2400]);
     }
 }

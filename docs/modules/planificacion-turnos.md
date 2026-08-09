@@ -67,6 +67,16 @@ La vista semanal utiliza una matriz con una fila estable por empleado y una colu
 
 Los periodos personales se registran una sola vez mediante fechas de inicio y fin y aparecen en todas las semanas afectadas. La cuadrícula deriva los colores del tipo guardado, muestra los festivos en la cabecera y señala los turnos incompatibles. Una baja inesperada puede registrarse aunque ya existan turnos para hacer visible el conflicto, pero el cuadrante no podrá publicarse hasta resolverlo.
 
+## Fase 2.5: productividad y control
+
+- Cada empleado dispone de minutos contratados por semana, editables desde `Personal` y comparados con sus horas efectivas planificadas.
+- Un cuadrante puede copiarse íntegramente a otra semana disponible.
+- Cualquier semana puede guardarse como plantilla y aplicarse después desde el listado de cuadrantes.
+- La asignación en bloque crea el mismo turno para varios empleados y días dentro de una única transacción: si una asignación falla, no se guarda ninguna.
+- Las reglas de cobertura definen área, día, franja y número mínimo de personas. El sistema revisa intervalos de 30 minutos, agrupa déficits consecutivos y los muestra como avisos no bloqueantes.
+
+Las incidencias no se copian ni se almacenan en plantillas porque ya viven en el calendario real de cada persona y se aplican automáticamente a la semana de destino.
+
 ## Fase 2.6: Excel automático al publicar
 
 La publicación definitiva del cuadrante deberá generar automáticamente un archivo `.xlsx` descargable. El documento reproducirá la estructura operativa del Excel de referencia —empleados por filas, horas por columnas, separación por áreas y colores para trabajo, descanso, vacaciones y bajas— usando exclusivamente los datos registrados en la aplicación.

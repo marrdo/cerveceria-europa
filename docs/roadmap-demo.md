@@ -21,15 +21,15 @@ La demo está en la **Fase 2: Planificación de turnos**. La nueva vista operati
 | 2.2. Datos realistas | Completado | 22 personas ficticias, 17 en sala/barra y 5 en trastienda |
 | 2.3. Experiencia operativa | En revisión | Matriz por empleado y día, filtros, densidad, totales y navegación fija |
 | 2.4. Incidencias laborales | Completado | Descansos, vacaciones, bajas, ausencias, festivos y conflictos |
-| 2.5. Productividad y control | Pendiente | Copiar semanas, plantillas, edición en bloque, horas contratadas y cobertura |
+| 2.5. Productividad y control | Completado | Copiar semanas, plantillas, edición en bloque, horas contratadas y cobertura |
 | 2.6. Excel de publicación | Pendiente | Generación automática de `.xlsx` al publicar el cuadrante |
 
 ## Criterios de cierre de la Fase 2
 
 - [ ] La cuadrícula resulta cómoda con al menos 22 empleados.
 - [x] Las incidencias laborales se distinguen de los turnos de trabajo.
-- [ ] Se detectan excesos, carencias y conflictos antes de publicar.
-- [ ] Copiar o reutilizar una planificación semanal requiere pocos pasos.
+- [x] Se detectan excesos, carencias y conflictos antes de publicar.
+- [x] Copiar o reutilizar una planificación semanal requiere pocos pasos.
 - [ ] Publicar bloquea la versión y genera automáticamente su Excel.
 - [ ] El archivo publicado puede descargarse después sin recalcular datos manualmente.
 - [ ] Escritorio, tableta, móvil e impresión mantienen una lectura clara.
@@ -42,4 +42,4 @@ Al reabrir un cuadrante se conservará el último archivo publicado como evidenc
 
 ## Siguiente paso
 
-Continuar con la **Fase 2.5: productividad y control**, sin cerrar la revisión visual global hasta completar todas las fases de la demo.
+Continuar con la **Fase 2.6: Excel automático de publicación**, sin cerrar la revisión visual global hasta completar todas las fases de la demo.

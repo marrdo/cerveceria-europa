@@ -36,6 +36,7 @@ class Usuario extends Authenticatable
         'email',
         'rol',
         'es_protegido',
+        'minutos_contrato_semanales',
         'password',
     ];
 
@@ -61,7 +62,16 @@ class Usuario extends Authenticatable
             'password' => 'hashed',
             'rol' => RolUsuario::class,
             'es_protegido' => 'boolean',
+            'minutos_contrato_semanales' => 'integer',
         ];
+    }
+
+    /**
+     * Horas semanales de referencia acordadas para la planificación.
+     */
+    public function horasContratoSemanales(): float
+    {
+        return round($this->minutos_contrato_semanales / 60, 2);
     }
 
     /**

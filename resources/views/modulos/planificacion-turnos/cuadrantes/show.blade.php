@@ -96,6 +96,112 @@
             </div>
         </section>
 
+        @if ($alertasCobertura->isNotEmpty())
+            <section class="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4" aria-labelledby="alertas-cobertura-heading">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="alertas-cobertura-heading" class="font-semibold text-warning">{{ $alertasCobertura->count() }} avisos de cobertura</h2>
+                        <p class="mt-1 text-xs text-muted-foreground">Son avisos operativos; puedes publicar, pero conviene revisarlos.</p>
+                    </div>
+                </div>
+                <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($alertasCobertura as $alerta)
+                        <div class="rounded-md border border-warning/20 bg-background/70 px-3 py-2 text-xs">
+                            <p class="font-semibold text-foreground">{{ $nombresDia[$alerta['fecha']->dayOfWeekIso - 1] }} · {{ $alerta['area']->nombre }}</p>
+                            <p class="mt-0.5 text-muted-foreground">{{ $alerta['hora_inicio'] }}–{{ $alerta['hora_fin'] }}: {{ $alerta['disponibles'] }} de {{ $alerta['minimo'] }} personas</p>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        <section class="mb-6 grid gap-4 lg:grid-cols-2" aria-label="Herramientas de reutilización">
+            <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.copiar', $cuadrante) }}" class="admin-card p-5">
+                @csrf
+                <h2 class="font-semibold text-foreground">Copiar esta semana</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Crea otro borrador con los mismos empleados, días relativos y horarios.</p>
+                <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <div class="flex-1">
+                        <x-input-label for="semana_copia" value="Semana de destino" />
+                        <x-text-input id="semana_copia" name="semana_inicio" type="date" class="mt-1 block h-10 w-full" :value="$proximaSemana" required />
+                    </div>
+                    <button type="submit" class="admin-btn-primary h-10 justify-center">Copiar semana</button>
+                </div>
+            </form>
+
+            <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.plantillas.store', $cuadrante) }}" class="admin-card p-5">
+                @csrf
+                <h2 class="font-semibold text-foreground">Guardar como plantilla</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Conserva este patrón para crear semanas futuras desde el listado.</p>
+                <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <div>
+                        <x-input-label for="nombre_plantilla" value="Nombre de la plantilla" />
+                        <x-text-input id="nombre_plantilla" name="nombre" class="mt-1 block h-10 w-full" placeholder="Semana habitual de invierno" maxlength="120" required />
+                    </div>
+                    <button type="submit" class="admin-btn-secondary h-10 justify-center">Guardar plantilla</button>
+                </div>
+            </form>
+        </section>
+
+        @if ($cuadrante->esBorrador())
+            <details class="admin-card mb-6 overflow-hidden">
+                <summary class="cursor-pointer px-5 py-4 font-semibold text-foreground transition hover:bg-muted/30">Asignar turnos en bloque</summary>
+                <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.jornadas.bloque', $cuadrante) }}" class="border-t border-border p-5">
+                    @csrf
+                    <input type="hidden" name="_formulario" value="bloque">
+                    <div class="grid gap-5 xl:grid-cols-[minmax(260px,1fr)_minmax(240px,.8fr)_1.2fr]">
+                        <fieldset>
+                            <legend class="text-sm font-semibold text-foreground">Empleados</legend>
+                            <div class="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
+                                @foreach ($empleados as $empleado)
+                                    <label class="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-muted/40">
+                                        <input type="checkbox" name="usuario_ids[]" value="{{ $empleado->id }}" class="rounded border-border text-primary focus:ring-primary">
+                                        <span class="truncate">{{ $empleado->nombre }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend class="text-sm font-semibold text-foreground">Días</legend>
+                            <div class="mt-2 grid grid-cols-2 gap-1 rounded-md border border-border p-2">
+                                @foreach ($dias as $indice => $dia)
+                                    <label class="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-muted/40">
+                                        <input type="checkbox" name="fechas[]" value="{{ $dia->toDateString() }}" class="rounded border-border text-primary focus:ring-primary">
+                                        {{ Str::limit($nombresDia[$indice], 3, '') }} {{ $dia->format('d/m') }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div class="sm:col-span-2">
+                                <x-input-label for="bloque_area" value="Área" />
+                                <select id="bloque_area" name="area_trabajo_id" class="admin-input mt-1 block h-10 w-full" required>
+                                    @foreach ($areas as $area)
+                                        <option value="{{ $area->id }}">{{ $area->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="bloque_inicio" value="Entrada" />
+                                <x-text-input id="bloque_inicio" name="hora_inicio" type="time" class="mt-1 block h-10 w-full" value="08:00" required />
+                            </div>
+                            <div>
+                                <x-input-label for="bloque_fin" value="Salida" />
+                                <x-text-input id="bloque_fin" name="hora_fin" type="time" class="mt-1 block h-10 w-full" value="16:00" required />
+                            </div>
+                            <div>
+                                <x-input-label for="bloque_descanso" value="Pausa (min)" />
+                                <x-text-input id="bloque_descanso" name="minutos_descanso" type="number" min="0" max="720" step="5" class="mt-1 block h-10 w-full" value="30" required />
+                            </div>
+                            <button type="submit" class="admin-btn-primary h-10 self-end justify-center">Crear asignaciones</button>
+                        </div>
+                    </div>
+                </form>
+            </details>
+        @endif
+
         @if ($cuadrante->esBorrador())
             <section class="admin-card mb-6 overflow-hidden" aria-labelledby="nuevo-turno-heading">
                 <button
@@ -427,7 +533,15 @@
 
                                 <td class="border-b border-border bg-card px-3 py-3 text-end align-top group-hover:bg-muted/10">
                                     <p class="text-sm font-black text-foreground">{{ number_format($fila['minutos'] / 60, 1, ',', '.') }} h</p>
-                                    <p class="mt-1 text-[9px] uppercase tracking-wide text-muted-foreground">semana</p>
+                                    <p class="mt-1 text-[9px] text-muted-foreground">de {{ number_format($fila['minutos_contrato'] / 60, 1, ',', '.') }} h</p>
+                                    <span @class([
+                                        'mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold',
+                                        'bg-success/10 text-success' => abs($fila['desviacion_minutos']) < 30,
+                                        'bg-warning/10 text-warning' => abs($fila['desviacion_minutos']) >= 30 && abs($fila['desviacion_minutos']) < 120,
+                                        'bg-destructive/10 text-destructive' => abs($fila['desviacion_minutos']) >= 120,
+                                    ])>
+                                        {{ $fila['desviacion_minutos'] >= 0 ? '+' : '−' }}{{ number_format(abs($fila['desviacion_minutos']) / 60, 1, ',', '.') }} h
+                                    </span>
                                 </td>
                             </tr>
                         @endforeach
@@ -438,6 +552,67 @@
             <div class="flex flex-col gap-2 border-t border-border bg-muted/20 px-5 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <p>Mostrando {{ $empleados->count() }} personas. Utiliza los filtros para reducir la tabla.</p>
                 <p>En móvil, desplaza la tabla horizontalmente; el empleado permanece visible.</p>
+            </div>
+        </section>
+
+        <section class="admin-card mt-6 overflow-hidden" aria-labelledby="cobertura-heading">
+            <div class="border-b border-border px-5 py-4">
+                <h2 id="cobertura-heading" class="font-semibold text-foreground">Cobertura mínima</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Define cuántas personas deben coincidir en cada área y franja recurrente.</p>
+            </div>
+            <div class="grid gap-5 p-5 xl:grid-cols-[1fr_1.3fr]">
+                <form method="POST" action="{{ route('admin.planificacion-turnos.coberturas.store') }}" class="grid gap-3 sm:grid-cols-2">
+                    @csrf
+                    <div>
+                        <x-input-label for="cobertura_area" value="Área" />
+                        <select id="cobertura_area" name="area_trabajo_id" class="admin-input mt-1 block h-10 w-full" required>
+                            @foreach ($areas as $area)
+                                <option value="{{ $area->id }}">{{ $area->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-input-label for="dia_semana" value="Día" />
+                        <select id="dia_semana" name="dia_semana" class="admin-input mt-1 block h-10 w-full" required>
+                            @foreach ($nombresDia as $indice => $nombreDia)
+                                <option value="{{ $indice + 1 }}">{{ $nombreDia }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-input-label for="cobertura_inicio" value="Desde" />
+                        <x-text-input id="cobertura_inicio" name="hora_inicio" type="time" class="mt-1 block h-10 w-full" value="12:00" required />
+                    </div>
+                    <div>
+                        <x-input-label for="cobertura_fin" value="Hasta" />
+                        <x-text-input id="cobertura_fin" name="hora_fin" type="time" class="mt-1 block h-10 w-full" value="16:00" required />
+                    </div>
+                    <div>
+                        <x-input-label for="minimo_personas" value="Personas mínimas" />
+                        <x-text-input id="minimo_personas" name="minimo_personas" type="number" min="1" max="50" class="mt-1 block h-10 w-full" value="2" required />
+                    </div>
+                    <button type="submit" class="admin-btn-secondary h-10 self-end justify-center">Añadir regla</button>
+                </form>
+
+                <div class="space-y-2">
+                    @forelse ($reglasCobertura as $regla)
+                        <div class="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+                            <div class="min-w-0 text-xs">
+                                <p class="font-semibold text-foreground">{{ $nombresDia[$regla->dia_semana - 1] }} · {{ $regla->areaTrabajo->nombre }}</p>
+                                <p class="mt-0.5 text-muted-foreground">{{ Str::of($regla->hora_inicio)->substr(0, 5) }}–{{ Str::of($regla->hora_fin)->substr(0, 5) }} · mínimo {{ $regla->minimo_personas }}</p>
+                            </div>
+                            <form method="POST" action="{{ route('admin.planificacion-turnos.coberturas.destroy', $regla) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="rounded p-1.5 text-destructive hover:bg-destructive/10" aria-label="Eliminar regla de cobertura">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12" /></svg>
+                                </button>
+                            </form>
+                        </div>
+                    @empty
+                        <div class="rounded-md border border-dashed border-border p-5 text-center text-xs text-muted-foreground">Todavía no hay reglas de cobertura.</div>
+                    @endforelse
+                </div>
             </div>
         </section>
 
