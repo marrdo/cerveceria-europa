@@ -5,7 +5,6 @@ namespace App\Modulos\WebPublica\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Modulos\WebPublica\Http\Requests\GuardarPostBlogRequest;
 use App\Modulos\WebPublica\Models\CategoriaBlog;
-use App\Models\Modulo;
 use App\Modulos\WebPublica\Models\PostBlog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -19,8 +18,6 @@ class PostBlogController extends Controller
      */
     public function index(): View
     {
-        $this->asegurarBlogActivo();
-
         return view('modulos.web-publica.blog.index', [
             'posts' => PostBlog::query()->with('categorias')->latest('publicado_at')->paginate(15),
         ]);
@@ -31,8 +28,6 @@ class PostBlogController extends Controller
      */
     public function create(): View
     {
-        $this->asegurarBlogActivo();
-
         return view('modulos.web-publica.blog.form', [
             'post' => new PostBlog(['publicado' => true, 'publicado_at' => now()]),
             'categorias' => $this->categoriasDisponibles(),
@@ -44,8 +39,6 @@ class PostBlogController extends Controller
      */
     public function store(GuardarPostBlogRequest $request): RedirectResponse
     {
-        $this->asegurarBlogActivo();
-
         $datos = $request->datosPost();
         $datos['slug'] = $this->slugUnico($datos['titulo']);
         $datos['imagen'] = $this->guardarImagen($request);
@@ -62,8 +55,6 @@ class PostBlogController extends Controller
      */
     public function edit(PostBlog $post): View
     {
-        $this->asegurarBlogActivo();
-
         return view('modulos.web-publica.blog.form', [
             'post' => $post->load('categorias'),
             'categorias' => $this->categoriasDisponibles(),
@@ -75,8 +66,6 @@ class PostBlogController extends Controller
      */
     public function update(GuardarPostBlogRequest $request, PostBlog $post): RedirectResponse
     {
-        $this->asegurarBlogActivo();
-
         $datos = $request->datosPost();
 
         if ($request->hasFile('imagen')) {
@@ -96,7 +85,6 @@ class PostBlogController extends Controller
      */
     public function destroy(PostBlog $post): RedirectResponse
     {
-        $this->asegurarBlogActivo();
         $this->eliminarImagen($post);
         $post->delete();
 
@@ -109,7 +97,6 @@ class PostBlogController extends Controller
      */
     public function toggle(PostBlog $post, string $campo): RedirectResponse
     {
-        $this->asegurarBlogActivo();
         abort_unless(in_array($campo, ['publicado', 'destacado'], true), 404);
 
         $post->update([
@@ -117,11 +104,6 @@ class PostBlogController extends Controller
         ]);
 
         return back()->with('status', 'Estado actualizado correctamente.');
-    }
-
-    private function asegurarBlogActivo(): void
-    {
-        abort_unless(Modulo::activo('blog'), 404);
     }
 
     private function guardarImagen(GuardarPostBlogRequest $request): ?string

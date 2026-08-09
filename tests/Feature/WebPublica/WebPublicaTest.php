@@ -217,7 +217,12 @@ class WebPublicaTest extends TestCase
         $this->get(route('web.blog'))->assertNotFound();
         $this->actingAs($usuario)
             ->get(route('admin.web-publica.blog.index'))
-            ->assertNotFound();
+            ->assertOk();
+
+        $propietario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        $this->actingAs($propietario)
+            ->get(route('admin.web-publica.blog.index'))
+            ->assertForbidden();
     }
 
     public function test_blog_posts_are_managed_in_their_own_table(): void

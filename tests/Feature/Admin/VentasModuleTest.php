@@ -3,7 +3,6 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
-use App\Models\Modulo;
 use App\Models\Usuario;
 use App\Modulos\Espacios\Models\Mesa;
 use App\Modulos\Espacios\Models\Recinto;
@@ -25,6 +24,7 @@ use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\TarifaContenidoWeb;
 use Database\Seeders\InventarioSeeder;
+use Database\Seeders\ModuloSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -580,12 +580,7 @@ class VentasModuleTest extends TestCase
     private function prepararModuloVentas(): void
     {
         $this->seed(InventarioSeeder::class);
-
-        Modulo::query()->create([
-            'clave' => 'ventas',
-            'nombre' => 'Ventas',
-            'activo' => true,
-        ]);
+        $this->seed(ModuloSeeder::class);
     }
 
     /**

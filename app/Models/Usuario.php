@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RolUsuario;
+use App\Modulos\Sistema\Modulos\GestorModulos;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -87,29 +88,7 @@ class Usuario extends Authenticatable
      */
     public function puedeAccederModulo(string $modulo): bool
     {
-        if ($this->rol === RolUsuario::Superadmin) {
-            return true;
-        }
-
-        $moduloActivo = Modulo::query()->where('clave', $modulo)->value('activo');
-
-        if ($moduloActivo !== null && ! (bool) $moduloActivo) {
-            return false;
-        }
-
-        if ($this->rol === RolUsuario::Propietario) {
-            return true;
-        }
-
-        return match ($modulo) {
-            'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
-            'web_publica' => false,
-            'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
-            'espacios' => $this->rol === RolUsuario::Encargado,
-            'personal' => in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario], true),
-            'planificacion_turnos' => $this->rol === RolUsuario::Encargado,
-            default => false,
-        };
+        return app(GestorModulos::class)->puedeAcceder($this, $modulo);
     }
 
     /**

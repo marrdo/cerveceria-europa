@@ -15,6 +15,7 @@ use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\PlantillaCuadranteLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
+use Database\Seeders\ModuloSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -520,15 +521,9 @@ class PlanificacionTurnosModuleTest extends TestCase
 
     private function activarModulo(bool $activo = true): void
     {
-        Modulo::query()->updateOrCreate(
-            ['clave' => 'planificacion_turnos'],
-            [
-                'nombre' => 'Planificacion de turnos',
-                'descripcion' => 'Cuadrantes semanales.',
-                'grupo' => 'personal',
-                'activo' => $activo,
-                'orden' => 57,
-            ],
-        );
+        $this->seed(ModuloSeeder::class);
+        Modulo::query()
+            ->where('clave', 'planificacion_turnos')
+            ->update(['activo' => $activo]);
     }
 }

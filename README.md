@@ -86,6 +86,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 DB_CHARSET=utf8mb4
 DB_COLLATION=utf8mb4_es_0900_ai_ci
+DB_ENGINE=InnoDB
 ```
 
 ## Codificacion
@@ -95,9 +96,13 @@ El proyecto se configura para UTF-8 estricto:
 ```env
 DB_CHARSET=utf8mb4
 DB_COLLATION=utf8mb4_es_0900_ai_ci
+DB_ENGINE=InnoDB
 APP_LOCALE=es
 APP_FAKER_LOCALE=es_ES
 ```
+
+`InnoDB` es obligatorio: las operaciones de caja, inventario, compras y
+planificación dependen de transacciones y claves foráneas reales.
 
 Base de datos recomendada:
 
@@ -143,6 +148,7 @@ docs/modules/ventas.md
 docs/modules/planificacion-turnos.md
 docs/modules/web-publica.md
 docs/modules/modulos.md
+docs/recorrido-demo.md
 ```
 
 ## Comandos utiles
@@ -151,6 +157,7 @@ docs/modules/modulos.md
 php artisan migrate
 php artisan migrate:fresh --seed
 php artisan db:seed --class=ModuloSeeder
+php artisan modulos:auditar
 php artisan db:seed --class=WebPublicaSeeder
 php artisan test
 php artisan test --filter=VentasModuleTest

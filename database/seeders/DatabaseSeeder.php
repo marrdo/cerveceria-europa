@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AreaTrabajoSeeder::class);
         $this->call(PlanificacionTurnosDemoSeeder::class);
         $this->call(PlanificacionProductividadDemoSeeder::class);
-        $this->call(InventarioSeeder::class);
-        $this->call(WebPublicaSeeder::class);
+        $this->call(RecorridoDemoSeeder::class);
     }
 }

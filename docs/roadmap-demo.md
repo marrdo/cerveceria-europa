@@ -1,6 +1,6 @@
 # Roadmap de la demo modular
 
-La **Fase 2: Planificación de turnos** está completada funcionalmente. La siguiente iteración es la **Fase 3: Recorrido integral de demo**; el pulido visual transversal se realizará al terminar todas las fases, tal como se acordó.
+La **Fase 4: Modularización definitiva** está completada. La siguiente iteración es la **Fase 5: Web pública productizable**; el pulido visual transversal se realizará al terminar todas las fases, tal como se acordó.
 
 ## Estado rápido
 
@@ -8,8 +8,8 @@ La **Fase 2: Planificación de turnos** está completada funcionalmente. La sigu
 |---|---|---|
 | 1. Base neutral reutilizable | Completada | Demo sin datos ni marcas de clientes reales |
 | 2. Planificación de turnos | Completada | Crear, revisar, publicar y exportar semanas completas |
-| 3. Recorrido integral de demo | Pendiente | Datos coherentes entre ventas, compras, inventario, espacios y personal |
-| 4. Modularización definitiva | Pendiente | Módulos aislados, activables y con dependencias explícitas |
+| 3. Recorrido integral de demo | Completada | Datos coherentes entre ventas, compras, inventario, espacios y personal |
+| 4. Modularización definitiva | Completada | Módulos aislados, activables y con dependencias explícitas |
 | 5. Web pública productizable | Pendiente | Identidad, contenidos y SEO configurables por negocio |
 | 6. Calidad y entrega | Pendiente | Instalación, restauración de demo, seguridad y documentación finales |
 
@@ -42,6 +42,47 @@ El Excel será un **resultado versionado del cuadrante publicado**, no una fuent
 
 Al reabrir un cuadrante se conserva el último archivo publicado como evidencia. La siguiente publicación genera una versión nueva y descargable. Los archivos viven en almacenamiento privado y pueden trasladarse de disco local a S3 mediante configuración, sin cambiar el dominio.
 
+## Fase 3 en detalle
+
+| Bloque | Estado | Alcance |
+|---|---|---|
+| 3.1. Espacios de servicio | Completado | Recinto configurable, sala/barra, terraza y ocho mesas ficticias |
+| 3.2. Jornada comercial | Completado | Cuatro comandas en estados abierta, preparación, servida y pagada |
+| 3.3. Caja e inventario | Completado | Pago asociado a caja y salidas de stock generadas al servir |
+| 3.4. Compras conectadas | Completado | Pedido pendiente, recepción parcial, entrada de stock y lote |
+| 3.5. Guía comercial | Completado | Dashboard con ocho pasos y enlaces adaptados al rol autenticado |
+
+### Criterios de cierre de la Fase 3
+
+- [x] La carta pública y las comandas comparten los mismos contenidos.
+- [x] Las comandas usan recinto, zona y mesa reales del módulo Espacios.
+- [x] Servir productos inventariables descuenta sus existencias.
+- [x] Cobrar una comanda la enlaza con el turno de caja abierto.
+- [x] Recibir un pedido incrementa stock y conserva su trazabilidad.
+- [x] El escenario puede reconstruirse sin duplicar datos.
+- [x] El Dashboard explica un recorrido completo sin memorizar URLs.
+
+## Fase 4 en detalle
+
+| Bloque | Estado | Alcance |
+|---|---|---|
+| 4.1. Catálogo único | Completado | Metadatos, roles, dependencias e integraciones versionados en una fuente única |
+| 4.2. Contratos coherentes | Completado | Activación transaccional y bloqueo de estados que romperían otros módulos |
+| 4.3. Acceso uniforme | Completado | Middleware central para administración y superficies públicas |
+| 4.4. Rutas aisladas | Completado | Un archivo de rutas por módulo y núcleo reducido |
+| 4.5. Diagnóstico | Completado | Auditoría ejecutable de catálogo, base de datos, ciclos y dependencias |
+
+### Criterios de cierre de la Fase 4
+
+- [x] Una clave ausente o desconocida no concede acceso accidentalmente.
+- [x] No puede activarse un módulo si sus dependencias no están operativas.
+- [x] No puede desactivarse una dependencia utilizada por módulos activos.
+- [x] El seeder actualiza nombres y descripciones sin cambiar el contrato existente.
+- [x] Rutas administrativas y públicas comparten la misma resolución de estado.
+- [x] El superadmin puede preparar un módulo inactivo sin publicarlo al cliente.
+- [x] El dashboard explica requisitos, integraciones y bloqueos.
+- [x] La auditoría modular confirma que la instalación es coherente.
+
 ## Siguiente paso
 
-Continuar con la **Fase 3: Recorrido integral de demo**, conectando datos y recorridos coherentes entre ventas, compras, inventario, espacios y personal.
+Continuar con la **Fase 5: Web pública productizable**, separando identidad, apariencia, contenidos y SEO configurables para reutilizar la instalación con cualquier negocio.

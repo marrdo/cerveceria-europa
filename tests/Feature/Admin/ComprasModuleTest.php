@@ -3,9 +3,10 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
+use App\Models\Usuario;
 use App\Modulos\Compras\Enums\EstadoPedidoCompra;
-use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
 use App\Modulos\Compras\Enums\TipoDocumentoCompra;
+use App\Modulos\Compras\Enums\TipoIncidenciaRecepcionCompra;
 use App\Modulos\Compras\Models\BorradorCompraDocumento;
 use App\Modulos\Compras\Models\DocumentoCompra;
 use App\Modulos\Compras\Models\EventoPedidoCompra;
@@ -17,8 +18,8 @@ use App\Modulos\Inventario\Models\Proveedor;
 use App\Modulos\Inventario\Models\StockInventario;
 use App\Modulos\Inventario\Models\UbicacionInventario;
 use App\Modulos\Inventario\Models\UnidadInventario;
-use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
+use Database\Seeders\ModuloSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -28,6 +29,13 @@ use Tests\TestCase;
 class ComprasModuleTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(ModuloSeeder::class);
+    }
 
     public function test_purchase_order_list_can_be_rendered(): void
     {
@@ -1038,7 +1046,7 @@ class ComprasModuleTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $sobrescribir
+     * @param  array<string, mixed>  $sobrescribir
      */
     private function crearProductoPrueba(array $sobrescribir = []): Producto
     {
