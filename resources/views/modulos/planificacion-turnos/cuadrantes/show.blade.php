@@ -32,7 +32,8 @@
 
     <div
         x-data="{
-            formularioAbierto: {{ $errors->any() ? 'true' : 'false' }},
+            formularioAbierto: {{ old('_formulario') === 'turno' ? 'true' : 'false' }},
+            incidenciaAbierta: {{ old('_formulario') === 'incidencia' ? 'true' : 'false' }},
             busqueda: '',
             area: 'todas',
             detallada: false,
@@ -59,6 +60,13 @@
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if ($conflictosLaborales->isNotEmpty())
+            <div class="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive" role="alert">
+                <p class="font-semibold">Hay {{ $conflictosLaborales->count() }} {{ Str::plural('turno incompatible', $conflictosLaborales->count()) }} con una incidencia laboral.</p>
+                <p class="mt-1 text-xs">Elimina o reasigna esos turnos antes de publicar el cuadrante.</p>
             </div>
         @endif
 
@@ -107,6 +115,7 @@
                 <div id="formulario-turno" x-show="formularioAbierto" x-cloak class="border-t border-border">
                     <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.jornadas.store', $cuadrante) }}" class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-8 xl:items-end">
                         @csrf
+                        <input type="hidden" name="_formulario" value="turno">
 
                         <div class="xl:col-span-2">
                             <x-input-label for="usuario_id" value="Empleado" />
@@ -167,6 +176,77 @@
             </section>
         @endif
 
+        <section class="admin-card mb-6 overflow-hidden" aria-labelledby="nueva-incidencia-heading">
+            <button
+                type="button"
+                class="flex w-full items-center justify-between gap-4 px-5 py-4 text-start transition hover:bg-muted/30"
+                x-on:click="incidenciaAbierta = ! incidenciaAbierta"
+                x-bind:aria-expanded="incidenciaAbierta"
+                aria-controls="formulario-incidencia"
+            >
+                <span>
+                    <span id="nueva-incidencia-heading" class="block font-semibold text-foreground">Registrar descanso, vacaciones o incidencia</span>
+                    <span class="mt-1 block text-sm text-muted-foreground">Estos periodos pueden abarcar varias semanas y se aplican automáticamente a cada cuadrante.</span>
+                </span>
+                <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xl font-medium text-primary" x-text="incidenciaAbierta ? '−' : '+'" aria-hidden="true"></span>
+            </button>
+
+            <div id="formulario-incidencia" x-show="incidenciaAbierta" x-cloak class="border-t border-border">
+                <form
+                    method="POST"
+                    action="{{ route('admin.planificacion-turnos.cuadrantes.incidencias.store', $cuadrante) }}"
+                    class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-6 xl:items-end"
+                    x-data="{ tipoIncidencia: '{{ old('tipo', 'descanso') }}' }"
+                >
+                    @csrf
+                    <input type="hidden" name="_formulario" value="incidencia">
+
+                    <div>
+                        <x-input-label for="tipo" value="Tipo" />
+                        <select id="tipo" name="tipo" x-model="tipoIncidencia" class="admin-input mt-1 block h-10 w-full" required>
+                            @foreach ($tiposIncidencia as $tipoIncidencia)
+                                <option value="{{ $tipoIncidencia->value }}" @selected(old('tipo', 'descanso') === $tipoIncidencia->value)>{{ $tipoIncidencia->etiqueta() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="xl:col-span-2">
+                        <x-input-label for="incidencia_usuario_id" value="Empleado" />
+                        <select
+                            id="incidencia_usuario_id"
+                            name="usuario_id"
+                            class="admin-input mt-1 block h-10 w-full disabled:cursor-not-allowed disabled:opacity-60"
+                            x-bind:disabled="tipoIncidencia === 'festivo'"
+                            x-bind:required="tipoIncidencia !== 'festivo'"
+                        >
+                            <option value="">Selecciona...</option>
+                            @foreach ($empleados as $empleado)
+                                <option value="{{ $empleado->id }}" @selected(old('usuario_id') === $empleado->id)>{{ $empleado->nombre }} · {{ $empleado->rol->etiqueta() }}</option>
+                            @endforeach
+                        </select>
+                        <p x-show="tipoIncidencia === 'festivo'" class="mt-1 text-[10px] text-muted-foreground">El festivo se aplica a todo el calendario.</p>
+                    </div>
+
+                    <div>
+                        <x-input-label for="fecha_inicio" value="Desde" />
+                        <x-text-input id="fecha_inicio" name="fecha_inicio" type="date" class="mt-1 block h-10 w-full" :value="old('fecha_inicio', $cuadrante->semana_inicio->toDateString())" required />
+                    </div>
+
+                    <div>
+                        <x-input-label for="fecha_fin" value="Hasta" />
+                        <x-text-input id="fecha_fin" name="fecha_fin" type="date" class="mt-1 block h-10 w-full" :value="old('fecha_fin', $cuadrante->semana_inicio->toDateString())" required />
+                    </div>
+
+                    <button type="submit" class="admin-btn-primary h-10 justify-center">Registrar</button>
+
+                    <div class="md:col-span-2 xl:col-span-6">
+                        <x-input-label for="incidencia_notas" value="Notas" />
+                        <x-text-input id="incidencia_notas" name="notas" class="mt-1 block h-10 w-full" :value="old('notas')" maxlength="500" placeholder="Motivo o información útil para la planificación" />
+                    </div>
+                </form>
+            </div>
+        </section>
+
         <section class="admin-card overflow-hidden" aria-labelledby="semana-heading">
             <div class="border-b border-border px-5 py-4">
                 <div class="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
@@ -225,6 +305,18 @@
                                     <span class="block text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{{ $nombresDia[$indice] }}</span>
                                     <span class="mt-0.5 block text-base font-black text-foreground">{{ $dia->format('d/m') }}</span>
                                     <span class="mt-0.5 block text-[10px] font-medium text-muted-foreground">{{ number_format($jornadasDia->sum(fn ($jornada) => $jornada->minutosEfectivos()) / 60, 1, ',', '.') }} h</span>
+                                    @foreach ($festivosPorDia[$dia->toDateString()] as $festivo)
+                                        <div class="mt-1 flex max-w-full items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold text-white" style="background-color: {{ $festivo->tipo->color() }}" title="{{ $festivo->notas ?? $festivo->tipo->etiqueta() }}">
+                                            <span class="min-w-0 flex-1 truncate">{{ $festivo->tipo->etiqueta() }}@if ($festivo->notas): {{ $festivo->notas }}@endif</span>
+                                            <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.incidencias.destroy', [$cuadrante, $festivo]) }}" class="shrink-0" onsubmit="return confirm('¿Eliminar este festivo?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="rounded text-white/75 hover:text-white" aria-label="Eliminar festivo">
+                                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18 18 6M6 6l12 12" /></svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endforeach
                                 </th>
                             @endforeach
                             <th scope="col" class="w-28 border-b border-border bg-muted/95 px-3 py-3 text-end">
@@ -262,15 +354,42 @@
                                 @foreach ($dias as $dia)
                                     @php
                                         $jornadasCelda = $fila['jornadas_por_dia'][$dia->toDateString()];
+                                        $incidenciasCelda = $fila['incidencias_por_dia'][$dia->toDateString()];
                                     @endphp
                                     <td class="border-b border-e border-border bg-card p-2 align-top group-hover:bg-muted/10">
-                                        @if ($jornadasCelda->isEmpty())
+                                        @if ($jornadasCelda->isEmpty() && $incidenciasCelda->isEmpty())
                                             <div class="flex min-h-10 items-center justify-center rounded-md border border-dashed border-border/70 text-[11px] text-muted-foreground/70">
                                                 <span x-show="detallada">Sin turno</span>
                                                 <span x-show="! detallada" aria-hidden="true">—</span>
                                             </div>
                                         @else
                                             <div class="space-y-1.5">
+                                                @foreach ($incidenciasCelda as $incidencia)
+                                                    <article class="relative rounded-md px-2.5 py-2 text-white shadow-sm" style="background-color: {{ $incidencia->tipo->color() }}">
+                                                        <div @class(['pe-5' => true])>
+                                                            <p class="text-[10px] font-black uppercase tracking-wide">{{ $incidencia->tipo->etiqueta() }}</p>
+                                                            <p x-show="detallada" class="mt-0.5 text-[9px] text-white/85">
+                                                                {{ $incidencia->fecha_inicio->format('d/m') }}–{{ $incidencia->fecha_fin->format('d/m') }}
+                                                                @if ($incidencia->notas)
+                                                                    · {{ $incidencia->notas }}
+                                                                @endif
+                                                            </p>
+                                                        </div>
+
+                                                        <form method="POST" action="{{ route('admin.planificacion-turnos.cuadrantes.incidencias.destroy', [$cuadrante, $incidencia]) }}" class="absolute end-1.5 top-1.5" onsubmit="return confirm('¿Eliminar esta incidencia laboral?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="rounded p-0.5 text-white/70 transition hover:bg-black/15 hover:text-white focus:bg-black/15 focus:text-white" aria-label="Eliminar {{ mb_strtolower($incidencia->tipo->etiqueta()) }} de {{ $fila['empleado']->nombre }}">
+                                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M6 18 18 6M6 6l12 12" /></svg>
+                                                            </button>
+                                                        </form>
+                                                    </article>
+                                                @endforeach
+
+                                                @if ($incidenciasCelda->isNotEmpty() && $jornadasCelda->isNotEmpty())
+                                                    <p class="rounded bg-destructive/10 px-2 py-1 text-[9px] font-bold text-destructive">Conflicto: turno durante incidencia</p>
+                                                @endif
+
                                                 @foreach ($jornadasCelda as $jornada)
                                                     <article class="relative rounded-md border border-border bg-background px-2.5 py-2 shadow-sm" style="border-left: 4px solid {{ $jornada->areaTrabajo?->color ?? '#64748B' }}">
                                                         <div @class(['flex items-start justify-between gap-1', 'pe-5' => $cuadrante->esBorrador()])>

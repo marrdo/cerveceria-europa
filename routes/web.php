@@ -98,6 +98,8 @@ Route::middleware('auth')->group(function () {
             Route::get('cuadrantes/{cuadrante}', [CuadranteLaboralController::class, 'show'])->name('cuadrantes.show');
             Route::post('cuadrantes/{cuadrante}/jornadas', [CuadranteLaboralController::class, 'storeJornada'])->name('cuadrantes.jornadas.store');
             Route::delete('cuadrantes/{cuadrante}/jornadas/{jornada}', [CuadranteLaboralController::class, 'destroyJornada'])->name('cuadrantes.jornadas.destroy');
+            Route::post('cuadrantes/{cuadrante}/incidencias', [CuadranteLaboralController::class, 'storeIncidencia'])->name('cuadrantes.incidencias.store');
+            Route::delete('cuadrantes/{cuadrante}/incidencias/{incidencia}', [CuadranteLaboralController::class, 'destroyIncidencia'])->name('cuadrantes.incidencias.destroy');
             Route::patch('cuadrantes/{cuadrante}/publicar', [CuadranteLaboralController::class, 'publicar'])->name('cuadrantes.publicar');
             Route::patch('cuadrantes/{cuadrante}/reabrir', [CuadranteLaboralController::class, 'reabrir'])->name('cuadrantes.reabrir');
         });

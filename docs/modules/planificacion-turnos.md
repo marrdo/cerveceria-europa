@@ -29,6 +29,10 @@ Representa una responsabilidad operativa. Es independiente de los recintos, zona
 
 Representa un tramo continuo de trabajo. Un turno partido se guarda como dos jornadas para el mismo empleado y fecha. Esta decisión evita columnas horarias rígidas y permite calcular, validar y reutilizar los datos.
 
+### `IncidenciaLaboral`
+
+Representa un periodo de `descanso`, `vacaciones`, `baja`, `ausencia` o `festivo`. No pertenece a un cuadrante concreto porque puede atravesar varias semanas. Las incidencias personales bloquean nuevas asignaciones de trabajo; los festivos son globales y permiten mantener turnos cuando el negocio abre ese día.
+
 ## Acceso y activación
 
 - El módulo se registra con la clave `planificacion_turnos` y nace desactivado.
@@ -42,19 +46,26 @@ Representa un tramo continuo de trabajo. Un turno partido se guarda como dos jor
 - El área seleccionada debe estar activa.
 - La pausa no puede consumir toda la duración del tramo.
 - Dos jornadas del mismo empleado no pueden solaparse, incluidas las que cruzan medianoche.
+- Las incidencias personales no pueden solaparse entre sí.
+- Un turno nuevo no puede coincidir con un descanso, vacaciones, baja o ausencia.
+- Un cuadrante con conflictos entre turnos e incidencias no puede publicarse.
 - Un cuadrante publicado no admite altas ni eliminaciones hasta que se reabre.
 
 ## Evolución prevista
 
-La siguiente iteración debe añadir ausencias explícitas (`descanso`, `vacaciones`, `baja` y otras incidencias), avisos de cobertura mínima y una vista por empleado con el total de horas semanales. Los colores serán una ayuda visual derivada de los datos, nunca la fuente de verdad.
+La siguiente iteración debe añadir utilidades de productividad: copia de semanas, plantillas, horas contratadas, edición en bloque y avisos de cobertura mínima.
 
 ## Escenario de demostración
 
-`DatabaseSeeder` crea un equipo completamente ficticio de 22 personas operativas, sin copiar ningún dato personal del Excel de referencia. El cuadrante de la semana actual distribuye 17 personas en `Sala y barra` y 5 en `Trastienda`, asigna cinco días de trabajo a cada una y mezcla jornadas continuas con turnos partidos para facilitar las pruebas del panel.
+`DatabaseSeeder` crea un equipo completamente ficticio de 22 personas operativas, sin copiar ningún dato personal del Excel de referencia. El cuadrante de la semana actual distribuye 17 personas en `Sala y barra` y 5 en `Trastienda`, mezcla jornadas continuas y partidas e incluye descansos, vacaciones, una baja, una ausencia y un festivo para revisar todos los estados visuales.
 
 ## Fase 2.3: experiencia operativa
 
 La vista semanal utiliza una matriz con una fila estable por empleado y una columna por día. Incluye búsqueda por nombre, filtro por área, modos compacto y detallado, totales semanales y cabecera y columna de empleado fijas durante el desplazamiento. También muestra a las personas sin turnos para que una ausencia de planificación no pase desapercibida.
+
+## Fase 2.4: incidencias laborales
+
+Los periodos personales se registran una sola vez mediante fechas de inicio y fin y aparecen en todas las semanas afectadas. La cuadrícula deriva los colores del tipo guardado, muestra los festivos en la cabecera y señala los turnos incompatibles. Una baja inesperada puede registrarse aunque ya existan turnos para hacer visible el conflicto, pero el cuadrante no podrá publicarse hasta resolverlo.
 
 ## Fase 2.6: Excel automático al publicar
 

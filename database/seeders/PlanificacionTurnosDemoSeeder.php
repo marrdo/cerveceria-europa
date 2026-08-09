@@ -5,8 +5,10 @@ namespace Database\Seeders;
 use App\Enums\RolUsuario;
 use App\Models\Usuario;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -34,12 +36,43 @@ class PlanificacionTurnosDemoSeeder extends Seeder
         $usuarios = $this->personalOperativo();
         $areas = AreaTrabajo::query()->get()->keyBy('nombre');
 
+        IncidenciaLaboral::query()
+            ->where('notas', 'like', 'Demo:%')
+            ->delete();
+
+        $this->crearFestivoDemo($lunes);
+
         foreach ($usuarios->values() as $indice => $usuario) {
             $area = $indice < 17 ? $areas['Sala y barra'] : $areas['Trastienda'];
             $diasDescanso = [$indice % 7, ($indice + 3) % 7];
+            $incidenciasEspeciales = $this->incidenciasEspeciales($indice);
+
+            foreach ($diasDescanso as $diaDescanso) {
+                $this->crearIncidencia(
+                    $usuario,
+                    TipoIncidenciaLaboral::Descanso,
+                    $lunes->addDays($diaDescanso),
+                    $lunes->addDays($diaDescanso),
+                    'Demo: descanso semanal.',
+                );
+            }
+
+            foreach ($incidenciasEspeciales as $incidencia) {
+                $this->crearIncidencia(
+                    $usuario,
+                    $incidencia['tipo'],
+                    $lunes->addDays($incidencia['desde']),
+                    $lunes->addDays($incidencia['hasta']),
+                    $incidencia['notas'],
+                );
+            }
 
             foreach (range(0, 6) as $dia) {
-                if (in_array($dia, $diasDescanso, true)) {
+                $diaConIncidenciaEspecial = collect($incidenciasEspeciales)->contains(
+                    fn (array $incidencia): bool => $dia >= $incidencia['desde'] && $dia <= $incidencia['hasta'],
+                );
+
+                if (in_array($dia, $diasDescanso, true) || $diaConIncidenciaEspecial) {
                     continue;
                 }
 
@@ -57,6 +90,65 @@ class PlanificacionTurnosDemoSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function crearFestivoDemo(CarbonImmutable $lunes): void
+    {
+        IncidenciaLaboral::query()->create([
+            'usuario_id' => null,
+            'tipo' => TipoIncidenciaLaboral::Festivo,
+            'fecha_inicio' => $lunes->addDays(5)->toDateString(),
+            'fecha_fin' => $lunes->addDays(5)->toDateString(),
+            'notas' => 'Demo: festivo local.',
+            'creado_por_id' => null,
+        ]);
+    }
+
+    /**
+     * Introduce ejemplos que permitan revisar todos los estados visuales.
+     *
+     * @return array<int, array{tipo: TipoIncidenciaLaboral, desde: int, hasta: int, notas: string}>
+     */
+    private function incidenciasEspeciales(int $indicePersona): array
+    {
+        return match ($indicePersona) {
+            3 => [[
+                'tipo' => TipoIncidenciaLaboral::Vacaciones,
+                'desde' => 1,
+                'hasta' => 2,
+                'notas' => 'Demo: vacaciones aprobadas.',
+            ]],
+            7 => [[
+                'tipo' => TipoIncidenciaLaboral::Baja,
+                'desde' => 1,
+                'hasta' => 1,
+                'notas' => 'Demo: baja laboral.',
+            ]],
+            11 => [[
+                'tipo' => TipoIncidenciaLaboral::Ausencia,
+                'desde' => 2,
+                'hasta' => 2,
+                'notas' => 'Demo: ausencia justificada.',
+            ]],
+            default => [],
+        };
+    }
+
+    private function crearIncidencia(
+        Usuario $usuario,
+        TipoIncidenciaLaboral $tipo,
+        CarbonImmutable $inicio,
+        CarbonImmutable $fin,
+        string $notas,
+    ): void {
+        IncidenciaLaboral::query()->create([
+            'usuario_id' => $usuario->id,
+            'tipo' => $tipo,
+            'fecha_inicio' => $inicio->toDateString(),
+            'fecha_fin' => $fin->toDateString(),
+            'notas' => $notas,
+            'creado_por_id' => null,
+        ]);
     }
 
     /**

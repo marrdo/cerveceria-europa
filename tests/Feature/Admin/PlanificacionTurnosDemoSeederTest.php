@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
 use Database\Seeders\PersonalDemoSeeder;
 use Database\Seeders\PlanificacionTurnosDemoSeeder;
@@ -15,7 +16,7 @@ class PlanificacionTurnosDemoSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_demo_schedule_assigns_five_days_to_all_22_operational_users(): void
+    public function test_demo_schedule_covers_the_week_for_all_22_operational_users(): void
     {
         $this->seed(UsuarioRolesSeeder::class);
         $this->seed(PersonalDemoSeeder::class);
@@ -26,12 +27,13 @@ class PlanificacionTurnosDemoSeederTest extends TestCase
         $jornadas = $cuadrante->jornadas()->get();
 
         $this->assertSame(22, $jornadas->pluck('usuario_id')->unique()->count());
-        $this->assertTrue(
-            $jornadas->groupBy('usuario_id')->every(
-                static fn ($tramos): bool => $tramos->pluck('fecha')->unique()->count() === 5,
-            ),
-        );
         $this->assertGreaterThan(110, $jornadas->count());
+        $this->assertSame(48, IncidenciaLaboral::query()->count());
+        $this->assertDatabaseHas('incidencias_laborales', ['tipo' => 'descanso']);
+        $this->assertDatabaseHas('incidencias_laborales', ['tipo' => 'vacaciones']);
+        $this->assertDatabaseHas('incidencias_laborales', ['tipo' => 'baja']);
+        $this->assertDatabaseHas('incidencias_laborales', ['tipo' => 'ausencia']);
+        $this->assertDatabaseHas('incidencias_laborales', ['tipo' => 'festivo', 'usuario_id' => null]);
 
         $usuariosPorArea = $jornadas
             ->groupBy('area_trabajo_id')

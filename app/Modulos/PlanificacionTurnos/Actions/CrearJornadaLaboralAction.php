@@ -3,6 +3,7 @@
 namespace App\Modulos\PlanificacionTurnos\Actions;
 
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -48,6 +49,26 @@ class CrearJornadaLaboralAction
         if ($solapada) {
             throw ValidationException::withMessages([
                 'hora_inicio' => 'Este tramo se solapa con otra jornada del empleado.',
+            ]);
+        }
+
+        $incidencia = IncidenciaLaboral::query()
+            ->where('usuario_id', $datos['usuario_id'])
+            ->coincideConPeriodo($inicio->copy()->startOfDay(), $fin->copy()->endOfDay())
+            ->get()
+            ->first(function (IncidenciaLaboral $incidencia) use ($inicio, $fin): bool {
+                $inicioIncidencia = $incidencia->fecha_inicio->copy()->startOfDay();
+                $finIncidencia = $incidencia->fecha_fin->copy()->addDay()->startOfDay();
+
+                return $inicio->lt($finIncidencia) && $fin->gt($inicioIncidencia);
+            });
+
+        if ($incidencia !== null) {
+            throw ValidationException::withMessages([
+                'fecha' => sprintf(
+                    'No puedes asignar trabajo: el empleado tiene %s en ese periodo.',
+                    mb_strtolower($incidencia->tipo->etiqueta()),
+                ),
             ]);
         }
 

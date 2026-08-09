@@ -4,6 +4,7 @@ namespace App\Modulos\PlanificacionTurnos\ViewData;
 
 use App\Models\Usuario;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -21,24 +22,29 @@ class CuadranteSemanalViewData
      *
      * @param  Collection<int, Usuario>  $empleados
      * @param  Collection<int, Carbon>  $dias
+     * @param  Collection<int, IncidenciaLaboral>  $incidencias
      * @return Collection<int, array{
      *     empleado: Usuario,
      *     busqueda: string,
      *     area_ids: string,
      *     areas: Collection<int, mixed>,
      *     minutos: int,
-     *     jornadas_por_dia: Collection<string, Collection<int, mixed>>
+     *     jornadas_por_dia: Collection<string, Collection<int, mixed>>,
+     *     incidencias_por_dia: Collection<string, Collection<int, IncidenciaLaboral>>
      * }>
      */
     public function construir(
         CuadranteLaboral $cuadrante,
         Collection $empleados,
         Collection $dias,
+        Collection $incidencias,
     ): Collection {
         $jornadasPorEmpleado = $cuadrante->jornadas->groupBy('usuario_id');
+        $incidenciasPorEmpleado = $incidencias->whereNotNull('usuario_id')->groupBy('usuario_id');
 
-        return $empleados->map(function (Usuario $empleado) use ($dias, $jornadasPorEmpleado): array {
+        return $empleados->map(function (Usuario $empleado) use ($dias, $incidenciasPorEmpleado, $jornadasPorEmpleado): array {
             $jornadas = $jornadasPorEmpleado->get($empleado->id, collect());
+            $incidenciasEmpleado = $incidenciasPorEmpleado->get($empleado->id, collect());
             $areas = $jornadas
                 ->pluck('areaTrabajo')
                 ->filter()
@@ -55,6 +61,13 @@ class CuadranteSemanalViewData
                     fn (Carbon $dia): array => [
                         $dia->toDateString() => $jornadas
                             ->filter(fn ($jornada): bool => $jornada->fecha->isSameDay($dia))
+                            ->values(),
+                    ],
+                ),
+                'incidencias_por_dia' => $dias->mapWithKeys(
+                    fn (Carbon $dia): array => [
+                        $dia->toDateString() => $incidenciasEmpleado
+                            ->filter(fn (IncidenciaLaboral $incidencia): bool => $incidencia->afectaFecha($dia))
                             ->values(),
                     ],
                 ),

@@ -6,8 +6,10 @@ use App\Enums\RolUsuario;
 use App\Models\Modulo;
 use App\Models\Usuario;
 use App\Modulos\PlanificacionTurnos\Enums\EstadoCuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Enums\TipoIncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\AreaTrabajo;
 use App\Modulos\PlanificacionTurnos\Models\CuadranteLaboral;
+use App\Modulos\PlanificacionTurnos\Models\IncidenciaLaboral;
 use App\Modulos\PlanificacionTurnos\Models\JornadaLaboral;
 use Database\Seeders\AreaTrabajoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -154,6 +156,113 @@ class PlanificacionTurnosModuleTest extends TestCase
         )->assertUnprocessable();
     }
 
+    public function test_puede_registrar_vacaciones_que_atraviesan_varios_dias(): void
+    {
+        [$encargado, $empleado, , $cuadrante] = $this->escenarioPlanificacion();
+
+        $this->actingAs($encargado)
+            ->post(
+                route('admin.planificacion-turnos.cuadrantes.incidencias.store', $cuadrante),
+                $this->datosIncidencia($empleado, TipoIncidenciaLaboral::Vacaciones, '2026-08-10', '2026-08-14'),
+            )
+            ->assertRedirect();
+
+        $incidencia = IncidenciaLaboral::query()->sole();
+
+        $this->assertSame($empleado->id, $incidencia->usuario_id);
+        $this->assertSame(TipoIncidenciaLaboral::Vacaciones, $incidencia->tipo);
+        $this->assertSame('2026-08-10', $incidencia->fecha_inicio->toDateString());
+        $this->assertSame('2026-08-14', $incidencia->fecha_fin->toDateString());
+        $this->assertSame($encargado->id, $incidencia->creado_por_id);
+    }
+
+    public function test_festivo_se_registra_sin_empleado_y_se_muestra_en_el_calendario(): void
+    {
+        [$encargado, , , $cuadrante] = $this->escenarioPlanificacion();
+
+        $this->actingAs($encargado)
+            ->post(
+                route('admin.planificacion-turnos.cuadrantes.incidencias.store', $cuadrante),
+                [
+                    'tipo' => TipoIncidenciaLaboral::Festivo->value,
+                    'usuario_id' => null,
+                    'fecha_inicio' => '2026-08-15',
+                    'fecha_fin' => '2026-08-15',
+                    'notas' => 'Festivo local',
+                ],
+            )
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('incidencias_laborales', [
+            'usuario_id' => null,
+            'tipo' => TipoIncidenciaLaboral::Festivo->value,
+            'notas' => 'Festivo local',
+        ]);
+
+        $this->actingAs($encargado)
+            ->get(route('admin.planificacion-turnos.cuadrantes.show', $cuadrante))
+            ->assertOk()
+            ->assertSee('Festivo local');
+    }
+
+    public function test_no_permite_incidencias_personales_solapadas(): void
+    {
+        [$encargado, $empleado, , $cuadrante] = $this->escenarioPlanificacion();
+
+        IncidenciaLaboral::query()->create([
+            ...$this->datosIncidencia($empleado, TipoIncidenciaLaboral::Vacaciones, '2026-08-10', '2026-08-12'),
+            'creado_por_id' => $encargado->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->post(
+                route('admin.planificacion-turnos.cuadrantes.incidencias.store', $cuadrante),
+                $this->datosIncidencia($empleado, TipoIncidenciaLaboral::Baja, '2026-08-12', '2026-08-14'),
+            )
+            ->assertSessionHasErrors('fecha_inicio');
+
+        $this->assertSame(1, IncidenciaLaboral::query()->count());
+    }
+
+    public function test_no_permite_asignar_turno_durante_una_incidencia(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+
+        IncidenciaLaboral::query()->create([
+            ...$this->datosIncidencia($empleado, TipoIncidenciaLaboral::Descanso, '2026-08-10', '2026-08-10'),
+            'creado_por_id' => $encargado->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->post(
+                route('admin.planificacion-turnos.cuadrantes.jornadas.store', $cuadrante),
+                $this->datosJornada($empleado, $area, '08:00', '16:00'),
+            )
+            ->assertSessionHasErrors('fecha');
+
+        $this->assertSame(0, JornadaLaboral::query()->count());
+    }
+
+    public function test_no_permite_publicar_si_un_turno_coincide_con_una_baja(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+        ]);
+        IncidenciaLaboral::query()->create([
+            ...$this->datosIncidencia($empleado, TipoIncidenciaLaboral::Baja, '2026-08-10', '2026-08-10'),
+            'creado_por_id' => $encargado->id,
+        ]);
+
+        $this->actingAs($encargado)
+            ->patch(route('admin.planificacion-turnos.cuadrantes.publicar', $cuadrante))
+            ->assertSessionHasErrors('cuadrante');
+
+        $this->assertSame(EstadoCuadranteLaboral::Borrador, $cuadrante->refresh()->estado);
+    }
+
     public function test_vista_semanal_organiza_todo_el_personal_por_filas_y_dias(): void
     {
         [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
@@ -213,6 +322,24 @@ class PlanificacionTurnosModuleTest extends TestCase
             'hora_fin' => $fin,
             'termina_dia_siguiente' => false,
             'minutos_descanso' => 0,
+            'notas' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function datosIncidencia(
+        Usuario $empleado,
+        TipoIncidenciaLaboral $tipo,
+        string $inicio,
+        string $fin,
+    ): array {
+        return [
+            'tipo' => $tipo->value,
+            'usuario_id' => $empleado->id,
+            'fecha_inicio' => $inicio,
+            'fecha_fin' => $fin,
             'notas' => null,
         ];
     }
