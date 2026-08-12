@@ -6,6 +6,7 @@ use App\Enums\RolUsuario;
 use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UsuarioRolesSeeder extends Seeder
 {
@@ -18,16 +19,27 @@ class UsuarioRolesSeeder extends Seeder
     public function run(): void
     {
         foreach ($this->usuarios() as $usuario) {
-            Usuario::query()->updateOrCreate(
-                ['email' => $usuario['email']],
-                [
-                    'nombre' => $usuario['nombre'],
-                    'rol' => $usuario['rol'],
-                    'es_protegido' => false,
-                    'password' => Hash::make($usuario['password']),
-                    'email_verified_at' => now(),
-                ],
-            );
+            $emailLocal = $usuario['email'];
+            $email = app()->isProduction()
+                ? str_replace('@demo.local', '@demo.invalid', $emailLocal)
+                : $emailLocal;
+
+            $modelo = Usuario::withTrashed()
+                ->whereIn('email', [$emailLocal, $email])
+                ->first() ?? new Usuario(['email' => $email]);
+
+            $modelo->forceFill([
+                'nombre' => $usuario['nombre'],
+                'email' => $email,
+                'rol' => $usuario['rol'],
+                'es_protegido' => false,
+                'password' => Hash::make(
+                    app()->isProduction() ? Str::random(64) : $usuario['password'],
+                ),
+                'email_verified_at' => now(),
+                'remember_token' => null,
+                'deleted_at' => null,
+            ])->save();
         }
     }
 

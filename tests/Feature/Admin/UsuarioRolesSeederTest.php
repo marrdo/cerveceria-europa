@@ -8,6 +8,7 @@ use Database\Seeders\PersonalDemoSeeder;
 use Database\Seeders\UsuarioAdministradorSeeder;
 use Database\Seeders\UsuarioRolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UsuarioRolesSeederTest extends TestCase
@@ -56,5 +57,27 @@ class UsuarioRolesSeederTest extends TestCase
 
         $this->assertSame(22, Usuario::query()->count());
         $this->assertSame(19, Usuario::query()->where('email', 'like', 'equipo%@demo.local')->count());
+    }
+
+    public function test_production_seeders_disable_known_demo_credentials(): void
+    {
+        $this->seed(UsuarioRolesSeeder::class);
+        $this->app->detectEnvironment(static fn (): string => 'production');
+
+        app(UsuarioRolesSeeder::class)->run();
+        app(PersonalDemoSeeder::class)->run();
+
+        $usuarios = Usuario::query()->get();
+
+        $this->assertSame(22, $usuarios->count());
+        $this->assertSame(0, $usuarios->filter(
+            static fn (Usuario $usuario): bool => str_ends_with($usuario->email, '@demo.local'),
+        )->count());
+        $this->assertSame(22, $usuarios->filter(
+            static fn (Usuario $usuario): bool => str_ends_with($usuario->email, '@demo.invalid'),
+        )->count());
+        $this->assertSame(0, $usuarios->filter(
+            static fn (Usuario $usuario): bool => Hash::check('password', $usuario->password),
+        )->count());
     }
 }
