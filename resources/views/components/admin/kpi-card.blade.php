@@ -10,7 +10,7 @@
 
     $iconClass = [
         'default' => 'bg-primary/10 text-primary',
-        'warning' => 'bg-warning/20 text-warning-foreground',
+        'warning' => 'bg-warning/15 text-warning',
         'success' => 'bg-success/20 text-success',
         'danger' => 'bg-destructive/20 text-destructive',
     ][$variant] ?? 'bg-primary/10 text-primary';

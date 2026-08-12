@@ -48,6 +48,20 @@ class CalidadEntregaTest extends TestCase
             ->assertSee('Inventario');
     }
 
+    public function test_layout_del_panel_encierra_el_scroll_en_el_contenido_principal(): void
+    {
+        $this->seed(ModuloSeeder::class);
+        $usuario = Usuario::factory()->create(['rol' => RolUsuario::Superadmin]);
+
+        $this->actingAs($usuario)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('class="h-full overflow-hidden bg-background"', false)
+            ->assertSee('class="h-full overflow-hidden bg-background font-admin"', false)
+            ->assertSee('class="fixed inset-0 flex min-h-0 overflow-hidden bg-background"', false)
+            ->assertSee('min-h-0 flex-1 overflow-y-auto overscroll-contain', false);
+    }
+
     public function test_produccion_https_activa_hsts(): void
     {
         $this->forzarProduccion();

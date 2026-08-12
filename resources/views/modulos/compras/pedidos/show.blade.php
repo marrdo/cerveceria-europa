@@ -48,9 +48,9 @@
                                         <div class="font-medium text-foreground">{{ $linea->descripcion }}</div>
                                         <div class="text-xs text-muted-foreground">{{ $linea->producto?->sku ?? 'Sin SKU' }}</div>
                                     </td>
-                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidad) ?? $linea->cantidad }} {{ $linea->producto?->codigoUnidad() }}</td>
-                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadRecibida()) ?? $linea->cantidadRecibida() }} {{ $linea->producto?->codigoUnidad() }}</td>
-                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadDevuelta()) ?? $linea->cantidadDevuelta() }} {{ $linea->producto?->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidad) ?? \App\Support\Formato\FormateadorCantidad::formatear($linea->cantidad) }} {{ $linea->producto?->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadRecibida()) ?? \App\Support\Formato\FormateadorCantidad::formatear($linea->cantidadRecibida()) }} {{ $linea->producto?->codigoUnidad() }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ $linea->producto?->formatearCantidad($linea->cantidadDevuelta()) ?? \App\Support\Formato\FormateadorCantidad::formatear($linea->cantidadDevuelta()) }} {{ $linea->producto?->codigoUnidad() }}</td>
                                     <td class="px-4 py-3 text-right text-foreground">{{ number_format((float) $linea->coste_unitario, 2, ',', '.') }} EUR</td>
                                     <td class="px-4 py-3 text-right text-muted-foreground">{{ number_format((float) $linea->iva_porcentaje, 2, ',', '.') }}%</td>
                                     <td class="px-4 py-3 text-right font-medium text-foreground">{{ number_format((float) $linea->total, 2, ',', '.') }} EUR</td>
@@ -82,7 +82,7 @@
                                     <td class="px-4 py-3 text-muted-foreground">{{ $recepcion->fecha_recepcion->format('d/m/Y') }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">
                                         @foreach ($recepcion->lineas as $lineaRecepcion)
-                                            <div>{{ $lineaRecepcion->producto?->nombre }} - {{ $lineaRecepcion->producto?->formatearCantidad($lineaRecepcion->cantidad) ?? $lineaRecepcion->cantidad }} {{ $lineaRecepcion->producto?->codigoUnidad() }} en {{ $lineaRecepcion->ubicacion?->nombre }}</div>
+                                            <div>{{ $lineaRecepcion->producto?->nombre }} - {{ $lineaRecepcion->producto?->formatearCantidad($lineaRecepcion->cantidad) ?? \App\Support\Formato\FormateadorCantidad::formatear($lineaRecepcion->cantidad) }} {{ $lineaRecepcion->producto?->codigoUnidad() }} en {{ $lineaRecepcion->ubicacion?->nombre }}</div>
                                         @endforeach
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $recepcion->receptor?->nombre ?? 'Sin usuario' }}</td>
@@ -121,7 +121,7 @@
                                     <td class="px-4 py-3 text-muted-foreground">{{ $devolucion->motivo }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">
                                         @foreach ($devolucion->lineas as $lineaDevolucion)
-                                            <div>{{ $lineaDevolucion->producto?->nombre }} - {{ $lineaDevolucion->producto?->formatearCantidad($lineaDevolucion->cantidad) ?? $lineaDevolucion->cantidad }} {{ $lineaDevolucion->producto?->codigoUnidad() }} desde {{ $lineaDevolucion->ubicacion?->nombre }}</div>
+                                            <div>{{ $lineaDevolucion->producto?->nombre }} - {{ $lineaDevolucion->producto?->formatearCantidad($lineaDevolucion->cantidad) ?? \App\Support\Formato\FormateadorCantidad::formatear($lineaDevolucion->cantidad) }} {{ $lineaDevolucion->producto?->codigoUnidad() }} desde {{ $lineaDevolucion->ubicacion?->nombre }}</div>
                                         @endforeach
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ $devolucion->registrador?->nombre ?? 'Sin usuario' }}</td>
@@ -159,7 +159,7 @@
                                     <td class="px-4 py-3 text-muted-foreground">{{ $incidencia->lineaPedido?->descripcion ?? 'Pedido general' }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">
                                         @if ($incidencia->cantidad_afectada)
-                                            {{ $incidencia->lineaPedido?->producto?->formatearCantidad($incidencia->cantidad_afectada) ?? $incidencia->cantidad_afectada }} {{ $incidencia->lineaPedido?->producto?->codigoUnidad() }}
+                                            {{ $incidencia->lineaPedido?->producto?->formatearCantidad($incidencia->cantidad_afectada) ?? \App\Support\Formato\FormateadorCantidad::formatear($incidencia->cantidad_afectada) }} {{ $incidencia->lineaPedido?->producto?->codigoUnidad() }}
                                         @else
                                             -
                                         @endif
@@ -246,7 +246,7 @@
                         <select id="devolucion_linea_pedido_compra_id" name="linea_pedido_compra_id" class="admin-input mt-1 block h-10 w-full" required>
                             <option value="">Selecciona linea</option>
                             @foreach ($lineasDevolvibles as $linea)
-                                <option value="{{ $linea->id }}" @selected(old('linea_pedido_compra_id') === $linea->id)>{{ $linea->descripcion }} - disponible {{ $linea->producto?->formatearCantidad($linea->cantidadDisponibleDevolucion()) ?? $linea->cantidadDisponibleDevolucion() }} {{ $linea->producto?->codigoUnidad() }}</option>
+                                <option value="{{ $linea->id }}" @selected(old('linea_pedido_compra_id') === $linea->id)>{{ $linea->descripcion }} - disponible {{ $linea->producto?->formatearCantidad($linea->cantidadDisponibleDevolucion()) ?? \App\Support\Formato\FormateadorCantidad::formatear($linea->cantidadDisponibleDevolucion()) }} {{ $linea->producto?->codigoUnidad() }}</option>
                             @endforeach
                         </select>
                         <p class="mt-1 text-xs text-muted-foreground">Solo aparecen productos recibidos y no devueltos por completo.</p>

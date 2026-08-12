@@ -633,7 +633,7 @@
                             <p class="mt-1 text-xs text-muted-foreground">{{ $ubicacionTexto }} &middot; {{ $movimiento->motivo ?: 'Sin motivo' }}</p>
                         </div>
                         <p class="text-sm font-bold text-foreground">
-                            {{ $movimiento->producto?->formatearCantidadConUnidad($movimiento->cantidad) ?? $movimiento->cantidad }}
+                            {{ $movimiento->producto?->formatearCantidadConUnidad($movimiento->cantidad) ?? \App\Support\Formato\FormateadorCantidad::formatear($movimiento->cantidad) }}
                         </p>
                     </div>
                 @empty

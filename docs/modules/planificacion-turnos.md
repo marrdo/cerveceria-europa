@@ -14,6 +14,8 @@ Sustituir los cuadrantes mantenidos mediante colores en Excel por una planificac
 - Impedir solapamientos para un mismo empleado.
 - Publicar el cuadrante para bloquear su edición y reabrirlo cuando sea necesario corregirlo.
 - Mostrar una vista semanal adaptable a escritorio, tableta y móvil.
+- Buscar empleados por nombre antes de asignar turnos, incidencias o bloques.
+- Ofrecer a cada persona una vista privada con sus semanas publicadas.
 
 ## Modelo de dominio
 
@@ -35,10 +37,10 @@ Representa un periodo de `descanso`, `vacaciones`, `baja`, `ausencia` o `festivo
 
 ## Acceso y activación
 
-- El módulo se registra con la clave `planificacion_turnos` y nace desactivado.
+- El módulo se registra con la clave `planificacion_turnos` y depende de `personal`.
 - Solo `superadmin` puede activarlo o desactivarlo.
 - `encargado`, `propietario` y `superadmin` pueden gestionar cuadrantes cuando está activo.
-- `camarero` no puede acceder a la gestión.
+- `camarero` no puede acceder a la gestión, pero sí a `Mis turnos` para consultar exclusivamente sus jornadas de cuadrantes publicados.
 
 ## Reglas importantes
 
@@ -83,9 +85,16 @@ Cada versión registra nombre, ruta privada, disco, tamaño, fecha, autor y huel
 
 La hoja se prepara en horizontal, ajustada al ancho de impresión, con cabeceras por día y área, horarios exactos visibles junto al empleado y soporte para turnos partidos y nocturnos.
 
+## Consulta personal y búsqueda de empleados
+
+Los formularios de turno, incidencia y asignación masiva incorporan búsqueda normalizada por nombre y rol sin sustituir los controles HTML nativos. De este modo siguen funcionando la validación del navegador, el teclado y los lectores de pantalla, pero una plantilla con decenas de personas no obliga a recorrer una lista interminable.
+
+La ruta privada `admin/mis-turnos` solo recupera cuadrantes en estado `publicado` que contengan jornadas del usuario autenticado. El selector semanal tampoco expone semanas ajenas ni borradores. Si un cuadrante se reabre para corregirlo, desaparece temporalmente de esta vista hasta su siguiente publicación.
+
 ## Verificación
 
 ```powershell
 php artisan test --filter=PlanificacionTurnosModuleTest
+php artisan test tests/Unit/Support/FormateadorCantidadTest.php
 npm.cmd run build
 ```

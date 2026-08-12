@@ -213,13 +213,25 @@
                     @csrf
                     <input type="hidden" name="_formulario" value="bloque">
                     <div class="grid gap-5 xl:grid-cols-[minmax(260px,1fr)_minmax(240px,.8fr)_1.2fr]">
-                        <fieldset>
+                        <fieldset x-data="{ buscarEmpleado: '' }">
                             <legend class="text-sm font-semibold text-foreground">Empleados</legend>
+                            <div class="relative mt-2">
+                                <svg class="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                                </svg>
+                                <input type="search" x-model.debounce.150ms="buscarEmpleado" class="admin-input block h-11 w-full ps-9" placeholder="Buscar empleado..." aria-label="Buscar empleados para asignar en bloque">
+                            </div>
                             <div class="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
                                 @foreach ($empleados as $empleado)
-                                    <label class="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-muted/40">
+                                    <label
+                                        class="flex min-h-10 items-center gap-2 rounded px-2 py-1.5 text-xs text-foreground hover:bg-muted/40"
+                                        x-show="@js(mb_strtolower(\Illuminate\Support\Str::ascii($empleado->nombre.' '.$empleado->rol->etiqueta()))).includes(buscarEmpleado.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim())"
+                                    >
                                         <input type="checkbox" name="usuario_ids[]" value="{{ $empleado->id }}" class="rounded border-border text-primary focus:ring-primary">
-                                        <span class="truncate">{{ $empleado->nombre }}</span>
+                                        <span class="min-w-0">
+                                            <span class="block truncate font-semibold">{{ $empleado->nombre }}</span>
+                                            <span class="block text-[10px] text-muted-foreground">{{ $empleado->rol->etiqueta() }}</span>
+                                        </span>
                                     </label>
                                 @endforeach
                             </div>
@@ -288,12 +300,15 @@
 
                         <div class="xl:col-span-2">
                             <x-input-label for="usuario_id" value="Empleado" />
-                            <select id="usuario_id" name="usuario_id" class="admin-input mt-1 block h-10 w-full" required>
-                                <option value="">Selecciona...</option>
-                                @foreach ($empleados as $empleado)
-                                    <option value="{{ $empleado->id }}" @selected(old('usuario_id') === $empleado->id)>{{ $empleado->nombre }} · {{ $empleado->rol->etiqueta() }}</option>
-                                @endforeach
-                            </select>
+                            <x-admin.searchable-select
+                                id="usuario_id"
+                                name="usuario_id"
+                                class="mt-1"
+                                :options="$empleados->mapWithKeys(fn ($empleado) => [$empleado->id => $empleado->nombre.' · '.$empleado->rol->etiqueta()])->all()"
+                                :selected="old('usuario_id')"
+                                search-placeholder="Buscar empleado para el turno..."
+                                required
+                            />
                         </div>
 
                         <div>
@@ -381,18 +396,18 @@
 
                     <div class="xl:col-span-2">
                         <x-input-label for="incidencia_usuario_id" value="Empleado" />
-                        <select
-                            id="incidencia_usuario_id"
-                            name="usuario_id"
-                            class="admin-input mt-1 block h-10 w-full disabled:cursor-not-allowed disabled:opacity-60"
-                            x-bind:disabled="tipoIncidencia === 'festivo'"
-                            x-bind:required="tipoIncidencia !== 'festivo'"
-                        >
-                            <option value="">Selecciona...</option>
-                            @foreach ($empleados as $empleado)
-                                <option value="{{ $empleado->id }}" @selected(old('usuario_id') === $empleado->id)>{{ $empleado->nombre }} · {{ $empleado->rol->etiqueta() }}</option>
-                            @endforeach
-                        </select>
+                        <div x-show="tipoIncidencia !== 'festivo'">
+                            <x-admin.searchable-select
+                                id="incidencia_usuario_id"
+                                name="usuario_id"
+                                class="mt-1 disabled:cursor-not-allowed disabled:opacity-60"
+                                :options="$empleados->mapWithKeys(fn ($empleado) => [$empleado->id => $empleado->nombre.' · '.$empleado->rol->etiqueta()])->all()"
+                                :selected="old('usuario_id')"
+                                search-placeholder="Buscar empleado para la incidencia..."
+                                x-bind:disabled="tipoIncidencia === 'festivo'"
+                                x-bind:required="tipoIncidencia !== 'festivo'"
+                            />
+                        </div>
                         <p x-show="tipoIncidencia === 'festivo'" class="mt-1 text-[10px] text-muted-foreground">El festivo se aplica a todo el calendario.</p>
                     </div>
 

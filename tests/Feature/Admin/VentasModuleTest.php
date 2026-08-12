@@ -440,7 +440,9 @@ class VentasModuleTest extends TestCase
             ->assertSee('7,00 EUR')
             ->assertSee('Cerveza Leffe')
             ->assertSee('Cervezas')
-            ->assertSee($usuario->nombre);
+            ->assertSee($usuario->nombre)
+            ->assertSee('>2</td>', false)
+            ->assertDontSee('2,000');
     }
 
     public function test_waiter_cannot_view_sales_reports(): void

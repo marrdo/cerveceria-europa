@@ -3,6 +3,7 @@
 namespace App\Modulos\Inventario\Models;
 
 use App\Modulos\Inventario\Enums\EstadoStockProducto;
+use App\Support\Formato\FormateadorCantidad;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -117,9 +118,8 @@ class Producto extends Model
     public function formatearCantidad(float|string|null $cantidad): string
     {
         $decimales = $this->unidad?->permite_decimal ? 3 : 0;
-        $formateada = number_format((float) ($cantidad ?? 0), $decimales, ',', '.');
 
-        return $decimales === 0 ? $formateada : rtrim(rtrim($formateada, '0'), ',');
+        return FormateadorCantidad::formatear($cantidad, $decimales);
     }
 
     /**

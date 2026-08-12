@@ -111,7 +111,7 @@
                             <x-admin.status-badge :variant="$variant">{{ $movimiento->tipo->etiqueta() }}</x-admin.status-badge>
                         </td>
                         <td class="px-4 py-3 text-foreground">
-                            {{ $movimiento->producto?->formatearCantidad($movimiento->cantidad) ?? $movimiento->cantidad }}
+                            {{ $movimiento->producto?->formatearCantidad($movimiento->cantidad) ?? \App\Support\Formato\FormateadorCantidad::formatear($movimiento->cantidad) }}
                             {{ $movimiento->producto?->nombreUnidadParaCantidad($movimiento->cantidad) }}
                         </td>
                         <td class="hidden px-4 py-3 text-muted-foreground lg:table-cell">{{ $ubicacionTexto }}</td>

@@ -124,7 +124,7 @@
                                     <div class="text-xs text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? \App\Support\Formato\FormateadorCantidad::formatear($lote->cantidad_disponible) }}</td>
                                 <td class="px-4 py-3"><x-admin.status-badge variant="danger">{{ $lote->caduca_el?->format('d/m/Y') }}</x-admin.status-badge></td>
                             </tr>
                         @empty
@@ -161,7 +161,7 @@
                                     <div class="text-xs text-muted-foreground">{{ $lote->ubicacion?->nombre ?? 'Sin ubicacion' }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-muted-foreground">{{ $lote->codigo_lote ?: 'Sin lote' }}</td>
-                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? $lote->cantidad_disponible }}</td>
+                                <td class="px-4 py-3 text-foreground">{{ $lote->producto?->formatearCantidadConUnidad($lote->cantidad_disponible) ?? \App\Support\Formato\FormateadorCantidad::formatear($lote->cantidad_disponible) }}</td>
                                 <td class="px-4 py-3"><x-admin.status-badge variant="warning">{{ $lote->caduca_el?->format('d/m/Y') }}</x-admin.status-badge></td>
                             </tr>
                         @empty

@@ -459,6 +459,68 @@ class PlanificacionTurnosModuleTest extends TestCase
             ->assertSee('de 20,0 h');
     }
 
+    public function test_formularios_de_planificacion_permiten_buscar_empleados_por_nombre(): void
+    {
+        [$encargado, , , $cuadrante] = $this->escenarioPlanificacion();
+
+        $this->actingAs($encargado)
+            ->get(route('admin.planificacion-turnos.cuadrantes.show', $cuadrante))
+            ->assertOk()
+            ->assertSee('Buscar empleado para el turno...')
+            ->assertSee('Buscar empleado para la incidencia...')
+            ->assertSee('Buscar empleados para asignar en bloque');
+    }
+
+    public function test_camarero_consulta_solo_sus_turnos_de_semanas_publicadas(): void
+    {
+        [$encargado, $empleado, $area, $cuadrante] = $this->escenarioPlanificacion();
+        $otroEmpleado = $this->usuario(RolUsuario::Camarero);
+
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '08:00', '16:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+            'notas' => 'Preparar apertura de terraza',
+        ]);
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($otroEmpleado, $area, '16:00', '23:00'),
+            'cuadrante_laboral_id' => $cuadrante->id,
+            'notas' => 'Nota privada de otra persona',
+        ]);
+        $cuadrante->update([
+            'estado' => EstadoCuadranteLaboral::Publicado,
+            'publicado_at' => now(),
+            'publicado_por_id' => $encargado->id,
+        ]);
+
+        $borrador = CuadranteLaboral::query()->create(['semana_inicio' => '2026-08-17']);
+        JornadaLaboral::query()->create([
+            ...$this->datosJornada($empleado, $area, '09:00', '15:00'),
+            'cuadrante_laboral_id' => $borrador->id,
+            'fecha' => '2026-08-17',
+            'notas' => 'Turno todavía sin publicar',
+        ]);
+
+        $this->actingAs($empleado)
+            ->get(route('admin.mis-turnos.index'))
+            ->assertOk()
+            ->assertSee('Mis turnos')
+            ->assertSee('Preparar apertura de terraza')
+            ->assertSee('08:00–16:00')
+            ->assertDontSee('Nota privada de otra persona')
+            ->assertDontSee('Turno todavía sin publicar')
+            ->assertDontSee('17/08/2026');
+    }
+
+    public function test_mis_turnos_desaparece_si_el_modulo_no_esta_operativo(): void
+    {
+        $this->activarModulo(false);
+        $empleado = $this->usuario(RolUsuario::Camarero);
+
+        $this->actingAs($empleado)
+            ->get(route('admin.mis-turnos.index'))
+            ->assertNotFound();
+    }
+
     /**
      * @return array{Usuario, Usuario, AreaTrabajo, CuadranteLaboral}
      */

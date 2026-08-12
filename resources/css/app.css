@@ -5,33 +5,33 @@
 @layer base {
     :root {
         /* ============================================================
-           Admin (light) — tokens existentes, sin cambios
+           Panel — Campana Noche (modo claro)
            ============================================================ */
-        --color-background: 244 240 232;
-        --color-foreground: 43 36 30;
-        --color-card: 255 248 237;
-        --color-card-foreground: 43 36 30;
-        --color-primary: 208 138 36;
-        --color-primary-foreground: 39 27 16;
-        --color-secondary: 232 222 207;
-        --color-secondary-foreground: 58 47 38;
-        --color-muted: 232 222 207;
-        --color-muted-foreground: 117 104 88;
-        --color-accent: 31 91 69;
-        --color-accent-foreground: 255 255 255;
-        --color-destructive: 155 74 47;
+        --color-background: 244 246 249;
+        --color-foreground: 24 34 53;
+        --color-card: 255 255 255;
+        --color-card-foreground: 24 34 53;
+        --color-primary: 36 91 145;
+        --color-primary-foreground: 255 255 255;
+        --color-secondary: 231 237 245;
+        --color-secondary-foreground: 39 56 78;
+        --color-muted: 236 240 245;
+        --color-muted-foreground: 100 116 139;
+        --color-accent: 197 155 87;
+        --color-accent-foreground: 24 34 53;
+        --color-destructive: 181 71 71;
         --color-destructive-foreground: 255 255 255;
-        --color-border: 216 201 180;
-        --color-input: 216 201 180;
-        --color-ring: 208 138 36;
-        --color-warning: 211 152 49;
-        --color-warning-foreground: 46 31 15;
-        --color-success: 31 91 69;
+        --color-border: 215 222 232;
+        --color-input: 174 188 205;
+        --color-ring: 36 91 145;
+        --color-warning: 154 100 31;
+        --color-warning-foreground: 255 255 255;
+        --color-success: 46 125 98;
         --color-success-foreground: 255 255 255;
-        --color-sidebar: 43 36 30;
-        --color-sidebar-foreground: 244 235 221;
-        --color-sidebar-accent: 73 55 43;
-        --color-sidebar-border: 100 75 58;
+        --color-sidebar: 13 35 64;
+        --color-sidebar-foreground: 244 247 251;
+        --color-sidebar-accent: 23 56 95;
+        --color-sidebar-border: 42 74 112;
         --color-public-background: 241 235 224;
         --color-public-foreground: 42 33 25;
         --color-public-surface: 255 249 238;
@@ -56,32 +56,32 @@
     }
 
     .dark {
-        /* existentes — sin cambios */
-        --color-background: 24 21 18;
-        --color-foreground: 240 231 216;
-        --color-card: 36 31 26;
-        --color-card-foreground: 240 231 216;
-        --color-primary: 227 161 58;
-        --color-primary-foreground: 31 22 12;
-        --color-secondary: 55 46 38;
-        --color-secondary-foreground: 240 231 216;
-        --color-muted: 55 46 38;
-        --color-muted-foreground: 184 169 146;
-        --color-accent: 47 138 103;
-        --color-accent-foreground: 255 255 255;
-        --color-destructive: 179 92 62;
-        --color-destructive-foreground: 255 255 255;
-        --color-border: 58 48 40;
-        --color-input: 58 48 40;
-        --color-ring: 227 161 58;
-        --color-warning: 232 181 70;
-        --color-warning-foreground: 31 22 12;
-        --color-success: 64 155 112;
-        --color-success-foreground: 255 255 255;
-        --color-sidebar: 18 16 14;
-        --color-sidebar-foreground: 240 231 216;
-        --color-sidebar-accent: 45 37 31;
-        --color-sidebar-border: 58 48 40;
+        /* Campana Noche mantiene el marino como base y suaviza el azul activo. */
+        --color-background: 8 18 31;
+        --color-foreground: 231 237 245;
+        --color-card: 16 29 46;
+        --color-card-foreground: 231 237 245;
+        --color-primary: 120 166 209;
+        --color-primary-foreground: 8 18 31;
+        --color-secondary: 25 42 63;
+        --color-secondary-foreground: 231 237 245;
+        --color-muted: 24 40 58;
+        --color-muted-foreground: 156 172 191;
+        --color-accent: 212 175 106;
+        --color-accent-foreground: 8 18 31;
+        --color-destructive: 225 132 132;
+        --color-destructive-foreground: 8 18 31;
+        --color-border: 42 58 78;
+        --color-input: 83 102 124;
+        --color-ring: 120 166 209;
+        --color-warning: 212 175 106;
+        --color-warning-foreground: 8 18 31;
+        --color-success: 103 181 147;
+        --color-success-foreground: 8 18 31;
+        --color-sidebar: 7 17 31;
+        --color-sidebar-foreground: 231 237 245;
+        --color-sidebar-accent: 20 42 69;
+        --color-sidebar-border: 36 58 84;
         --color-public-background: 24 19 15;
         --color-public-foreground: 248 239 224;
         --color-public-surface: 36 28 22;
@@ -96,21 +96,24 @@
     /* La pública v2 es siempre dark. El <body> de cada layout lleva su clase. */
     body { @apply antialiased; }
 
+    button, a, input, select, textarea { @apply focus-visible:outline-none; }
+
     [x-cloak] { display: none !important; }
 
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { @apply rounded-full; background: var(--v2-line-2); }
+    ::-webkit-scrollbar-thumb { @apply rounded-full bg-border; }
 }
 
 @layer components {
     /* ============================================================
-       Admin (existentes) — sin cambios
+       Panel de administración
        ============================================================ */
-    .admin-card { @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm shadow-primary/5; }
-    .admin-input { @apply rounded-md border-input bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring; }
-    .admin-btn-primary { @apply inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background; }
-    .admin-btn-outline { @apply inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background; }
+    .admin-card { @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm shadow-slate-900/5 dark:shadow-black/20; }
+    .admin-input { @apply rounded-lg border-input bg-card text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-ring; }
+    .admin-btn-primary { @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-transparent bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm shadow-primary/20 transition hover:-translate-y-px hover:bg-primary/90 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60; }
+    .admin-btn-outline { @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background; }
+    .admin-btn-secondary { @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground shadow-sm transition hover:-translate-y-px hover:border-primary/30 hover:bg-muted focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background; }
     .theme-toggle-button { @apply rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:border-primary/60 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40; }
     .theme-toggle-icon { cursor: pointer; }
     .theme-toggle-icon .sun-core { fill: rgb(var(--color-primary)); transition: fill 0.5s ease; }

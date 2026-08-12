@@ -17,6 +17,7 @@ export default {
                 /* v2: Bebas Neue para display, Inter para body, JetBrains Mono para precios */
                 display: ['"Bebas Neue"', ...defaultTheme.fontFamily.serif],
                 sans:    ['Inter', ...defaultTheme.fontFamily.sans],
+                admin:   ['Manrope', ...defaultTheme.fontFamily.sans],
                 mono:    ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
             },
             colors: {

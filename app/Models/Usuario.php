@@ -109,6 +109,14 @@ class Usuario extends Authenticatable
     }
 
     /**
+     * Indica si el usuario puede consultar sus propios turnos publicados.
+     */
+    public function puedeConsultarTurnosPublicados(): bool
+    {
+        return app(GestorModulos::class)->estaOperativo('planificacion_turnos');
+    }
+
+    /**
      * Indica si el usuario puede modificar la identidad de la instalacion.
      */
     public function puedeConfigurarNegocio(): bool

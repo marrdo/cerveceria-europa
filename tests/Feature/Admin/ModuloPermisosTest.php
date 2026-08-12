@@ -95,14 +95,14 @@ class ModuloPermisosTest extends TestCase
         $this->actingAs($usuario)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertDontSee('Web publica');
+            ->assertDontSee('Web pública');
 
         Modulo::query()->where('clave', 'web_publica')->update(['activo' => true]);
 
         $this->actingAs($usuario)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Web publica');
+            ->assertSee('Web pública');
     }
 
     public function test_superadmin_sees_contract_module_controls_on_dashboard(): void

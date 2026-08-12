@@ -1,7 +1,12 @@
 <?php
 
 use App\Modulos\PlanificacionTurnos\Http\Controllers\Admin\CuadranteLaboralController;
+use App\Modulos\PlanificacionTurnos\Http\Controllers\Empleado\MisTurnosController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/admin/mis-turnos', MisTurnosController::class)
+    ->middleware(['auth', 'modulo.publico:planificacion_turnos'])
+    ->name('admin.mis-turnos.index');
 
 Route::middleware(['auth', 'modulo:planificacion_turnos'])
     ->prefix('admin/planificacion-turnos')
