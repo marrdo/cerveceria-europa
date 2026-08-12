@@ -2,7 +2,7 @@
     'num'   => '01',
     'titulo'=> '',
     'desc'  => '',
-    'icono' => 'beer',  // 'beer' | 'hops' | 'star' | null
+    'icono' => 'servicio',
 ])
 
 <article class="v2-stripe">
@@ -12,8 +12,8 @@
 
     <div class="v2-stripe-ico">
         @switch($icono)
-            @case('beer')
-                <x-brand.beer-icon class="h-full w-full" />
+            @case('servicio')
+                <x-brand.hospitality-icon class="h-full w-full" />
                 @break
             @case('hops')
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-full w-full">

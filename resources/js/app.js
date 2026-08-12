@@ -4,7 +4,7 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-const THEME_STORAGE_KEY = 'cerveceria-theme-preference';
+const THEME_STORAGE_KEY = 'panel-theme-preference';
 
 const getStoredThemePreference = () => {
     const storedPreference = window.localStorage.getItem(THEME_STORAGE_KEY);

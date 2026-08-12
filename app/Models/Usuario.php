@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Enums\RolUsuario;
-use App\Models\Modulo;
+use App\Modulos\Sistema\Modulos\GestorModulos;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,7 +15,7 @@ use Illuminate\Support\Collection;
 
 class Usuario extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UsuarioFactory> */
+    /** @use HasFactory<UsuarioFactory> */
     use HasFactory, HasUuids, Notifiable, SoftDeletes;
 
     /**
@@ -36,6 +37,7 @@ class Usuario extends Authenticatable
         'email',
         'rol',
         'es_protegido',
+        'minutos_contrato_semanales',
         'password',
     ];
 
@@ -61,7 +63,16 @@ class Usuario extends Authenticatable
             'password' => 'hashed',
             'rol' => RolUsuario::class,
             'es_protegido' => 'boolean',
+            'minutos_contrato_semanales' => 'integer',
         ];
+    }
+
+    /**
+     * Horas semanales de referencia acordadas para la planificación.
+     */
+    public function horasContratoSemanales(): float
+    {
+        return round($this->minutos_contrato_semanales / 60, 2);
     }
 
     /**
@@ -77,28 +88,7 @@ class Usuario extends Authenticatable
      */
     public function puedeAccederModulo(string $modulo): bool
     {
-        if ($this->rol === RolUsuario::Superadmin) {
-            return true;
-        }
-
-        $moduloActivo = Modulo::query()->where('clave', $modulo)->value('activo');
-
-        if ($moduloActivo !== null && ! (bool) $moduloActivo) {
-            return false;
-        }
-
-        if ($this->rol === RolUsuario::Propietario) {
-            return true;
-        }
-
-        return match ($modulo) {
-            'inventario', 'compras' => $this->rol === RolUsuario::Encargado,
-            'web_publica' => false,
-            'ventas' => in_array($this->rol, [RolUsuario::Camarero, RolUsuario::Encargado], true),
-            'espacios' => $this->rol === RolUsuario::Encargado,
-            'personal' => in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario], true),
-            default => false,
-        };
+        return app(GestorModulos::class)->puedeAcceder($this, $modulo);
     }
 
     /**
@@ -107,6 +97,31 @@ class Usuario extends Authenticatable
     public function puedeGestionarPersonal(): bool
     {
         return $this->rolesGestionables()->isNotEmpty();
+    }
+
+    /**
+     * Indica si el usuario puede crear y publicar cuadrantes laborales.
+     */
+    public function puedeGestionarPlanificacionTurnos(): bool
+    {
+        return in_array($this->rol, [RolUsuario::Encargado, RolUsuario::Propietario, RolUsuario::Superadmin], true)
+            && $this->puedeAccederModulo('planificacion_turnos');
+    }
+
+    /**
+     * Indica si el usuario puede consultar sus propios turnos publicados.
+     */
+    public function puedeConsultarTurnosPublicados(): bool
+    {
+        return app(GestorModulos::class)->estaOperativo('planificacion_turnos');
+    }
+
+    /**
+     * Indica si el usuario puede modificar la identidad de la instalacion.
+     */
+    public function puedeConfigurarNegocio(): bool
+    {
+        return in_array($this->rol, [RolUsuario::Propietario, RolUsuario::Superadmin], true);
     }
 
     /**

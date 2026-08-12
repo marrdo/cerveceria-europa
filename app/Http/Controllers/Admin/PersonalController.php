@@ -56,6 +56,7 @@ class PersonalController extends Controller
             'email' => $datos['email'],
             'rol' => $datos['rol'],
             'es_protegido' => false,
+            'minutos_contrato_semanales' => $datos['minutos_contrato_semanales'],
             'password' => Hash::make((string) $datos['password']),
             'email_verified_at' => now(),
         ]);

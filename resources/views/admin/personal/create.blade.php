@@ -36,6 +36,11 @@
             </select>
         </div>
 
+        <div>
+            <x-input-label for="horas_contrato_semanales" value="Horas contratadas por semana" />
+            <x-text-input id="horas_contrato_semanales" name="horas_contrato_semanales" type="number" min="1" max="60" step="0.5" class="mt-1 block h-10 w-full" :value="old('horas_contrato_semanales', 40)" required />
+        </div>
+
         <div class="grid gap-4 md:grid-cols-2">
             <div>
                 <x-input-label for="password" value="Contrasena" />

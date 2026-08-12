@@ -56,7 +56,7 @@
                     'entrada' => 'border-success/30 bg-success/10 text-success hover:bg-success/15',
                     'salida' => 'border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15',
                     'ajuste' => 'border-warning/40 bg-warning/15 text-warning-foreground hover:bg-warning/25',
-                    'transferencia' => 'border-accent/40 bg-accent/10 text-accent hover:bg-accent/15',
+                                        'transferencia' => 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15',
                     default => 'border-border bg-muted/30 text-foreground hover:bg-muted/50',
                 };
             @endphp

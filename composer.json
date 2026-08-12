@@ -1,14 +1,15 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "cerveceria-europa/panel",
+    "name": "hosteleria/panel-modular",
     "type": "project",
-    "description": "Panel administrativo Laravel 12 para inventario y compras de Cerveceria Europa.",
-    "keywords": ["laravel", "inventario", "compras", "bar"],
+    "description": "Panel modular Laravel 12 para la gestion de negocios de hosteleria.",
+    "keywords": ["laravel", "hosteleria", "inventario", "compras", "bar"],
     "license": "MIT",
     "require": {
         "php": "^8.4",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "phpoffice/phpspreadsheet": "^5.9.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

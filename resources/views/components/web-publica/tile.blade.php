@@ -17,7 +17,7 @@
         $descripcion = $descripcion ?? $contenido->descripcion_corta;
         $precio      = $precio      ?? $contenido->precioFormateado();
         $imagen      = $imagen      ?? $contenido->urlImagen();
-        $cat         = $cat         ?? optional($contenido->categoria)->nombre;
+        $cat         = $cat         ?? optional($contenido->categoriaCarta)->nombre;
     }
 @endphp
 

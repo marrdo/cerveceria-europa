@@ -1,6 +1,6 @@
-# Cerveceria Europa
+# Panel modular de hosteleria
 
-Panel administrativo Laravel 12 para Cerveceria Europa, un bar de Sevilla especializado en cervezas de importacion, artesanas y cocina de bar.
+Base reutilizable en Laravel 12 para paneles administrativos de bares, cafeterias y otros negocios de hosteleria. Cada despliegue representa inicialmente un unico negocio y permite activar solo los modulos necesarios.
 
 El proyecto cubre:
 
@@ -10,6 +10,7 @@ El proyecto cubre:
 - Documentos de compra con trazabilidad.
 - Ventas y comandas conectadas con carta e inventario.
 - Gestion de personal operativo.
+- Planificacion semanal de turnos por areas y tramos de trabajo.
 - Web publica gestionable opcional.
 - Carta publica editable por categorias, productos y tarifas.
 - Blog opcional como submodulo vendible.
@@ -28,7 +29,7 @@ El panel privado vive en `/admin`. La web publica vive en `/` cuando el modulo `
 
 ## Arranque rapido
 
-Desde `C:\Proyectos\cerveceria-europa`:
+Desde la carpeta en la que hayas clonado el panel, por ejemplo `C:\Proyectos\panel-hosteleria`:
 
 ```powershell
 composer install
@@ -47,6 +48,21 @@ http://127.0.0.1:8000
 http://127.0.0.1:8000/admin
 ```
 
+## Datos de demostracion
+
+`php artisan migrate --seed` crea una empresa completamente ficticia llamada `La Plaza Demo`, una carta sin imagenes ni datos de terceros y los siguientes perfiles:
+
+| Rol | Correo | Contrasena |
+|---|---|---|
+| Superadmin | `superadmin@demo.local` | `password` |
+| Propietario | `propietario@demo.local` | `password` |
+| Encargado | `encargado@demo.local` | `password` |
+| Camarero | `camarero@demo.local` | `password` |
+
+Ademas, `PersonalDemoSeeder` genera 19 perfiles ficticios mediante la factoria de usuarios. La demo queda asi con 22 personas operativas —la misma cantidad que el cuadrante de referencia— mas el superadmin tecnico. El cuadrante semanal reparte 17 personas en `Sala y barra` y 5 en `Trastienda`, con cinco dias de trabajo, descansos rotativos y algunos turnos partidos.
+
+Estos datos son solo para desarrollo local y deben sustituirse antes de publicar una instalacion real.
+
 Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema de permisos de `esbuild`/Vite en el entorno. Ejecutarlo desde terminal normal de Windows o con permisos adecuados suele resolverlo.
 
 ## Variables importantes
@@ -54,7 +70,7 @@ Si `npm.cmd run build` falla en Windows con `spawn EPERM`, suele ser un problema
 Base recomendada para `.env` local:
 
 ```env
-APP_NAME="Cerveceria Europa"
+APP_NAME="Panel de Hosteleria"
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://127.0.0.1:8000
@@ -65,11 +81,12 @@ APP_FAKER_LOCALE=es_ES
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=cerveceria_europa
+DB_DATABASE=panel_hosteleria_demo
 DB_USERNAME=root
 DB_PASSWORD=
 DB_CHARSET=utf8mb4
 DB_COLLATION=utf8mb4_es_0900_ai_ci
+DB_ENGINE=InnoDB
 ```
 
 ## Codificacion
@@ -79,14 +96,18 @@ El proyecto se configura para UTF-8 estricto:
 ```env
 DB_CHARSET=utf8mb4
 DB_COLLATION=utf8mb4_es_0900_ai_ci
+DB_ENGINE=InnoDB
 APP_LOCALE=es
 APP_FAKER_LOCALE=es_ES
 ```
 
+`InnoDB` es obligatorio: las operaciones de caja, inventario, compras y
+planificación dependen de transacciones y claves foráneas reales.
+
 Base de datos recomendada:
 
 ```sql
-CREATE DATABASE cerveceria_europa
+CREATE DATABASE panel_hosteleria_demo
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_es_0900_ai_ci;
 ```
@@ -115,6 +136,7 @@ COLLATE utf8mb4_es_0900_ai_ci;
 - `Compras`: proveedores, pedidos, recepciones y entradas reales en inventario.
 - `Ventas`: comandas de sala/barra tomadas desde la carta publicada.
 - `Personal`: alta de usuarios operativos segun permisos de rol.
+- `PlanificacionTurnos`: cuadrantes semanales, turnos partidos, incidencias, cobertura y Excel privado versionado al publicar.
 - `LecturasDocumentos`: futuro modulo para lectura asistida de albaranes/facturas mediante OCR o IA.
 
 Documentacion por modulos:
@@ -123,8 +145,10 @@ Documentacion por modulos:
 docs/modules/inventario.md
 docs/modules/compras.md
 docs/modules/ventas.md
+docs/modules/planificacion-turnos.md
 docs/modules/web-publica.md
 docs/modules/modulos.md
+docs/recorrido-demo.md
 ```
 
 ## Comandos utiles
@@ -133,6 +157,7 @@ docs/modules/modulos.md
 php artisan migrate
 php artisan migrate:fresh --seed
 php artisan db:seed --class=ModuloSeeder
+php artisan modulos:auditar
 php artisan db:seed --class=WebPublicaSeeder
 php artisan test
 php artisan test --filter=VentasModuleTest
@@ -151,16 +176,16 @@ php artisan serve
 Usuario superadmin:
 
 ```text
-admin@cerveceria-europa.local
+admin@panel-hosteleria.local
 password
 ```
 
 Usuarios demo por rol:
 
 ```text
-camarero@cerveceria-europa.local / password
-encargado@cerveceria-europa.local / password
-propietario@cerveceria-europa.local / password
+camarero@demo.local / password
+encargado@demo.local / password
+propietario@demo.local / password
 ```
 
 ## Modulos contratables
@@ -235,6 +260,13 @@ tests/Feature
 - Las funcionalidades vendibles deben modelarse como modulos activables.
 
 ## Roadmap por fases
+
+Comprobaciones de cierre y despliegue: [`docs/entrega-y-despliegue.md`](docs/entrega-y-despliegue.md).
+
+```powershell
+php artisan app:auditar-entrega
+php artisan demo:restaurar
+```
 
 ### FASE 1.0 - Base admin e inventario inicial
 
@@ -633,7 +665,7 @@ Alcance:
 - Sidebar.
 - Topbar.
 - Modo claro/oscuro.
-- Login adaptado a la marca Cerveceria Europa.
+- Login conectado con la identidad configurable del negocio.
 - Dashboard visual.
 - Tablas.
 - Formularios.
@@ -650,21 +682,21 @@ Reglas:
 
 ### FASE 5.0 - Web publica gestionable
 
-Estado: iniciada.
+Estado: implementada.
 
 Objetivo:
-Crear la web publica de Cerveceria Europa dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
+Crear una web publica configurable dentro del mismo proyecto Laravel, manteniendo el panel en `/admin` y permitiendo editar contenido desde administracion.
 
 Idea de rutas:
 
 ```text
-cerveceriaEuropa.com
-cerveceriaEuropa.com/carta
-cerveceriaEuropa.com/cervezas
-cerveceriaEuropa.com/recomendaciones
-cerveceriaEuropa.com/blog
-cerveceriaEuropa.com/contacto
-cerveceriaEuropa.com/admin
+demo-hosteleria.local
+demo-hosteleria.local/carta
+demo-hosteleria.local/cervezas
+demo-hosteleria.local/recomendaciones
+demo-hosteleria.local/blog
+demo-hosteleria.local/contacto
+demo-hosteleria.local/admin
 ```
 
 Contenido gestionable desde el panel:
@@ -698,6 +730,11 @@ Implementado:
   - contenidos/productos publicados.
 - Tarifas multiples por contenido para formatos tipo `Tapa`, `Plato`, `25cl`, `50cl`, `Copa` o `Botella`.
 - Vinculacion opcional con productos de inventario.
+- Logo, favicon, imagen social y paleta configurables desde el panel.
+- Portada y contacto estructurados en secciones editables, activables y con imagen propia.
+- SEO dinámico con canonical, robots, Open Graph, Twitter Cards y JSON-LD `Restaurant`.
+- Manifest, `robots.txt` y `sitemap.xml` generados desde la configuración real.
+- Documentación operativa en `docs/web-publica-productizable.md`.
 - Ocultacion automatica de contenidos vinculados a productos sin stock.
 - Modulos activables desde `modulos`, incluyendo `web_publica` y `blog`.
 - Modulo principal `web_publica` activable/desactivable por `superadmin`.
@@ -708,3 +745,18 @@ Implementado:
 - Categorias de blog con tabla `categorias_blog`.
 - Secciones editables con tabla `secciones_web`, empezando por contacto.
 - Seeder inicial con ejemplos de platos, cervezas y recomendaciones.
+
+### FASE 6.0 - Calidad y entrega
+
+Estado: implementada.
+
+Incluye:
+
+- cabeceras HTTP seguras y sesiones autenticadas sin caché;
+- limitación de intentos en acceso y recuperación de contraseña;
+- comando protegido `php artisan demo:restaurar`;
+- auditoría reproducible con `php artisan app:auditar-entrega`;
+- plantilla `.env.production.example`;
+- ejemplos de Nginx, Supervisor y cron en `deploy/`;
+- revisión visual y responsive de los módulos principales;
+- estrategia de despliegue y rollback en `docs/entrega-y-despliegue.md`.

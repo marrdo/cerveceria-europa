@@ -4,7 +4,7 @@
 
 Fase 2 del dashboard de inventario completada.
 
-Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicicletas, pero traducida al dominio de Cerveceria Europa y con nombres de codigo en espanol sin `n` con tilde.
+Esta fase adapta la base operativa del modulo `Inventory` al dominio reutilizable de hosteleria y mantiene nombres de codigo en espanol sin `n` con tilde.
 
 ## Implementado
 
@@ -40,7 +40,7 @@ Esta fase replica la base operativa del modulo `Inventory` del proyecto de bicic
 - Filtro temporal del dashboard para periodos de 7, 14, 30 y 90 dias.
 - Soft deletes en entidades principales.
 - Seeders iniciales orientados a un bar.
-- Seeder demo de cervezas reales importadas desde `Cartasdesdenumier.txt`.
+- Seeder de inventario ficticio con productos genéricos de bebidas, cocina y limpieza.
 - Stock demo repartido entre Almacen, Camara fria y Barra, con productos con stock, bajo minimo y sin stock.
 - Movimientos demo de entrada, salida, ajuste y transferencia para validar graficas.
 - Acciones de productos con iconos reutilizables y `title` accesible.

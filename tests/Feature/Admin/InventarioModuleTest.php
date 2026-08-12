@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
+use App\Models\Usuario;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\LoteInventario;
 use App\Modulos\Inventario\Models\MovimientoInventario;
@@ -16,14 +17,21 @@ use App\Modulos\Ventas\Enums\EstadoLineaComanda;
 use App\Modulos\Ventas\Models\Comanda;
 use App\Modulos\WebPublica\Enums\TipoContenidoWeb;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
-use App\Models\Usuario;
 use Database\Seeders\InventarioSeeder;
+use Database\Seeders\ModuloSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InventarioModuleTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(ModuloSeeder::class);
+    }
 
     public function test_inventory_product_list_can_be_rendered(): void
     {
@@ -700,7 +708,7 @@ class InventarioModuleTest extends TestCase
         $this->seed(InventarioSeeder::class);
         $usuario = Usuario::factory()->create([
             'nombre' => 'Encargado Movimientos',
-            'email' => 'encargado.movimientos@cerveceria-europa.local',
+            'email' => 'encargado.movimientos@demo.local',
             'rol' => RolUsuario::Encargado,
         ]);
         $ubicacion = UbicacionInventario::query()->where('codigo', 'ALMACEN')->firstOrFail();
@@ -720,7 +728,7 @@ class InventarioModuleTest extends TestCase
             ->assertOk()
             ->assertSee('Entrada con usuario registrado')
             ->assertSee('Encargado Movimientos')
-            ->assertSee('encargado.movimientos@cerveceria-europa.local');
+            ->assertSee('encargado.movimientos@demo.local');
     }
 
     public function test_products_can_be_exported_as_utf8_csv(): void
@@ -1005,7 +1013,7 @@ class InventarioModuleTest extends TestCase
     /**
      * Crea un producto de prueba con valores por defecto solidos para inventario.
      *
-     * @param array<string, mixed> $sobrescribir
+     * @param  array<string, mixed>  $sobrescribir
      */
     private function crearProductoPrueba(array $sobrescribir = []): Producto
     {
@@ -1022,5 +1030,4 @@ class InventarioModuleTest extends TestCase
             'activo' => true,
         ], $sobrescribir));
     }
-
 }

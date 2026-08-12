@@ -67,7 +67,7 @@ class CartaPublicaController extends Controller
     private function contenidos()
     {
         return ContenidoWeb::query()
-            ->with(['producto.stock', 'tarifas'])
+            ->with(['producto.stock', 'tarifas', 'categoriaCarta'])
             ->publicado()
             ->orderBy('orden')
             ->latest('created_at');

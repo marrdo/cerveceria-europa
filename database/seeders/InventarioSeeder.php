@@ -36,7 +36,7 @@ class InventarioSeeder extends Seeder
             ['nombre' => 'Proveedor generico', 'telefono' => null, 'email' => null, 'activo' => true],
         );
 
-        $this->call(InventarioCervezasDemoSeeder::class);
+        $this->call(InventarioDemoSeeder::class);
     }
 
     /**
@@ -57,7 +57,7 @@ class InventarioSeeder extends Seeder
     }
 
     /**
-     * Ubicaciones iniciales para Cerveceria Europa.
+     * Ubicaciones iniciales reutilizables para negocios de hosteleria.
      *
      * @return array<int, array<string, mixed>>
      */

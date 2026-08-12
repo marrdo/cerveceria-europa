@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modulos\Sistema\Modulos\GestorModulos;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,8 +34,6 @@ class Modulo extends Model
      */
     public static function activo(string $clave): bool
     {
-        return (bool) self::query()
-            ->where('clave', $clave)
-            ->value('activo');
+        return app(GestorModulos::class)->estaOperativo($clave);
     }
 }

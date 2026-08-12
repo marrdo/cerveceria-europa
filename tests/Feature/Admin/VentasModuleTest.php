@@ -3,7 +3,6 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\RolUsuario;
-use App\Models\Modulo;
 use App\Models\Usuario;
 use App\Modulos\Espacios\Models\Mesa;
 use App\Modulos\Espacios\Models\Recinto;
@@ -25,6 +24,7 @@ use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\TarifaContenidoWeb;
 use Database\Seeders\InventarioSeeder;
+use Database\Seeders\ModuloSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -134,7 +134,7 @@ class VentasModuleTest extends TestCase
         [$contenido, $tarifa, $ubicacion] = $this->crearContenidoVendibleConStock(8);
 
         $recinto = Recinto::query()->create([
-            'nombre_comercial' => 'Cerveceria Europa',
+            'nombre_comercial' => 'La Plaza Demo',
             'activo' => true,
         ]);
         $zona = Zona::query()->create([
@@ -440,7 +440,9 @@ class VentasModuleTest extends TestCase
             ->assertSee('7,00 EUR')
             ->assertSee('Cerveza Leffe')
             ->assertSee('Cervezas')
-            ->assertSee($usuario->nombre);
+            ->assertSee($usuario->nombre)
+            ->assertSee('>2</td>', false)
+            ->assertDontSee('2,000');
     }
 
     public function test_waiter_cannot_view_sales_reports(): void
@@ -580,12 +582,7 @@ class VentasModuleTest extends TestCase
     private function prepararModuloVentas(): void
     {
         $this->seed(InventarioSeeder::class);
-
-        Modulo::query()->create([
-            'clave' => 'ventas',
-            'nombre' => 'Ventas',
-            'activo' => true,
-        ]);
+        $this->seed(ModuloSeeder::class);
     }
 
     /**

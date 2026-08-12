@@ -14,8 +14,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(UsuarioAdministradorSeeder::class);
         $this->call(UsuarioRolesSeeder::class);
+        $this->call(PersonalDemoSeeder::class);
         $this->call(ModuloSeeder::class);
-        $this->call(InventarioSeeder::class);
-        $this->call(WebPublicaSeeder::class);
+        $this->call(ConfiguracionNegocioSeeder::class);
+        $this->call(AreaTrabajoSeeder::class);
+        $this->call(PlanificacionTurnosDemoSeeder::class);
+        $this->call(PlanificacionProductividadDemoSeeder::class);
+        $this->call(RecorridoDemoSeeder::class);
     }
 }

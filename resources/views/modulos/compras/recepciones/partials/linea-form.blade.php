@@ -4,7 +4,7 @@
             <option value="">Seleccionar</option>
             @foreach ($pedido->lineas as $lineaPedido)
                 <option value="{{ $lineaPedido->id }}" @selected(($lineaFormulario['linea_pedido_compra_id'] ?? '') === $lineaPedido->id)>
-                    {{ $lineaPedido->descripcion }} - pendiente {{ $lineaPedido->producto?->formatearCantidad($lineaPedido->cantidadPendiente()) ?? $lineaPedido->cantidadPendiente() }} {{ $lineaPedido->producto?->codigoUnidad() }}
+                    {{ $lineaPedido->descripcion }} - pendiente {{ $lineaPedido->producto?->formatearCantidad($lineaPedido->cantidadPendiente()) ?? \App\Support\Formato\FormateadorCantidad::formatear($lineaPedido->cantidadPendiente()) }} {{ $lineaPedido->producto?->codigoUnidad() }}
                 </option>
             @endforeach
         </select>

@@ -3,6 +3,9 @@
 namespace Tests\Feature\WebPublica;
 
 use App\Enums\RolUsuario;
+use App\Models\Modulo;
+use App\Models\Usuario;
+use App\Modulos\Configuracion\Models\ConfiguracionNegocio;
 use App\Modulos\Inventario\Models\CategoriaProducto;
 use App\Modulos\Inventario\Models\Producto;
 use App\Modulos\Inventario\Models\StockInventario;
@@ -14,8 +17,6 @@ use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\PostBlog;
 use App\Modulos\WebPublica\Models\SeccionWeb;
-use App\Models\Modulo;
-use App\Models\Usuario;
 use Database\Seeders\WebPublicaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -43,8 +44,91 @@ class WebPublicaTest extends TestCase
 
         $this->get(route('web.inicio'))
             ->assertOk()
-            ->assertSee('Cerveceria Europa')
-            ->assertSee('FOUNDERS KBS IMPERIAL STOUT');
+            ->assertSee('La Plaza Demo')
+            ->assertSee('Patatas bravas de la casa');
+    }
+
+    public function test_public_identity_palette_and_seo_are_generated_from_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+        ConfiguracionNegocio::query()->where('clave', ConfiguracionNegocio::CLAVE_PRINCIPAL)->update([
+            'nombre_comercial' => 'Casa Prueba',
+            'web_url' => 'https://casa-prueba.test',
+            'color_primario' => '#112233',
+            'seo_titulo' => 'Casa Prueba · Cocina local',
+            'seo_descripcion' => 'Descripción SEO totalmente configurable.',
+            'seo_indexar' => false,
+        ]);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('<title>Casa Prueba · Cocina local</title>', false)
+            ->assertSee('content="noindex, nofollow"', false)
+            ->assertSee('href="https://casa-prueba.test"', false)
+            ->assertSee('--color-amber-bright: 17 34 51', false)
+            ->assertSee('"@type":"Restaurant"', false);
+    }
+
+    public function test_home_sections_are_editable_and_escape_html(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+        SeccionWeb::query()->where('clave', 'inicio_hero')->update([
+            'titulo' => '<script>alert(1)</script> Portada propia',
+        ]);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt; Portada propia', false)
+            ->assertDontSee('<script>alert(1)</script>', false);
+    }
+
+    public function test_manifest_robots_and_sitemap_follow_public_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+
+        $this->get(route('web.manifest'))
+            ->assertOk()
+            ->assertJsonPath('name', 'La Plaza Demo');
+        $this->get(route('web.robots'))
+            ->assertOk()
+            ->assertSee('Disallow: /');
+        $this->get(route('web.sitemap'))
+            ->assertOk()
+            ->assertSee(route('web.contacto'));
+    }
+
+    public function test_owner_can_replace_an_editable_section_image(): void
+    {
+        Storage::fake('public');
+        $this->seed(WebPublicaSeeder::class);
+        $propietario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        $seccion = SeccionWeb::query()->where('clave', 'inicio_hero')->firstOrFail();
+
+        $this->actingAs($propietario)->put(route('admin.web-publica.secciones.update', $seccion), [
+            'titulo' => 'Portada',
+            'imagen' => UploadedFile::fake()->image('portada.jpg', 1200, 800),
+            'activo' => '1',
+        ])->assertRedirect(route('admin.web-publica.secciones.index'));
+
+        $seccion->refresh();
+        Storage::disk('public')->assertExists($seccion->imagen_path);
+    }
+
+    public function test_public_and_access_branding_follow_business_configuration(): void
+    {
+        $this->seed(WebPublicaSeeder::class);
+
+        ConfiguracionNegocio::query()
+            ->where('clave', ConfiguracionNegocio::CLAVE_PRINCIPAL)
+            ->update(['nombre_comercial' => 'Cafetería Campana Demo']);
+
+        $this->get(route('web.inicio'))
+            ->assertOk()
+            ->assertSee('Cafetería Campana Demo');
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('Cafetería Campana Demo');
     }
 
     public function test_public_web_hides_unpublished_content(): void
@@ -199,7 +283,12 @@ class WebPublicaTest extends TestCase
         $this->get(route('web.blog'))->assertNotFound();
         $this->actingAs($usuario)
             ->get(route('admin.web-publica.blog.index'))
-            ->assertNotFound();
+            ->assertOk();
+
+        $propietario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        $this->actingAs($propietario)
+            ->get(route('admin.web-publica.blog.index'))
+            ->assertForbidden();
     }
 
     public function test_blog_posts_are_managed_in_their_own_table(): void
@@ -224,7 +313,7 @@ class WebPublicaTest extends TestCase
                 'categorias' => [$categoria->id],
                 'resumen' => 'Esta semana entra una nueva referencia.',
                 'contenido' => 'Contenido completo del post.',
-                'autor' => 'Cerveceria Europa',
+                'autor' => 'Equipo Demo',
                 'publicado' => '1',
                 'destacado' => '1',
                 'publicado_at' => now()->format('Y-m-d\TH:i'),
@@ -285,13 +374,23 @@ class WebPublicaTest extends TestCase
             ->assertDontSee('Post de comida');
     }
 
-    public function test_contact_section_is_editable_from_admin(): void
+    public function test_contact_combines_editorial_section_and_business_configuration(): void
     {
         $usuario = Usuario::factory()->create(['rol' => RolUsuario::Propietario]);
+        ConfiguracionNegocio::query()->create([
+            'clave' => ConfiguracionNegocio::CLAVE_PRINCIPAL,
+            'nombre_comercial' => 'Bar de prueba',
+            'direccion' => 'Calle Betis 10',
+            'localidad' => 'Sevilla',
+            'horario' => 'Lunes a domingo de 12:00 a 00:00',
+            'pais' => 'Espana',
+            'zona_horaria' => 'Europe/Madrid',
+            'moneda' => 'EUR',
+        ]);
         $seccion = SeccionWeb::query()->create([
             'clave' => 'contacto',
             'nombre' => 'Contacto',
-            'titulo' => 'Ven a Cerveceria Europa',
+            'titulo' => 'Ven a La Plaza Demo',
             'activo' => true,
         ]);
 
@@ -300,9 +399,7 @@ class WebPublicaTest extends TestCase
                 'titulo' => 'Estamos en Triana',
                 'subtitulo' => 'Cerveza fria y cocina para compartir.',
                 'contenido' => 'Texto editable por el bar.',
-                'ubicacion' => 'Calle Betis, Sevilla',
                 'reservas' => 'WhatsApp 600 000 000',
-                'horario' => 'Lunes a domingo de 12:00 a 00:00',
                 'activo' => '1',
             ])
             ->assertRedirect(route('admin.web-publica.secciones.index'));
@@ -310,6 +407,7 @@ class WebPublicaTest extends TestCase
         $this->get(route('web.contacto'))
             ->assertOk()
             ->assertSee('Estamos en Triana')
+            ->assertSee('Calle Betis 10')
             ->assertSee('WhatsApp 600 000 000')
             ->assertSee('Lunes a domingo de 12:00 a 00:00');
     }

@@ -20,6 +20,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('Cerveceria Europa');
+        $response->assertSee('La Plaza Demo');
     }
 }

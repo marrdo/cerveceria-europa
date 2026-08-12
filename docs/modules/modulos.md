@@ -1,97 +1,91 @@
-# Modulo Sistema: Modulos Contratados
+# Sistema de módulos contratados
 
 ## Objetivo
 
-Centralizar que funcionalidades estan activas en el proyecto.
+Activar o desactivar funcionalidades vendibles sin duplicar reglas entre la
+base de datos, los permisos, las rutas y la interfaz.
 
-Esto permite vender el panel por partes sin crear columnas nuevas cada vez que aparezca un modulo.
+La configuración modular no elimina tablas ni datos. Decide qué superficies
+están operativas para cada perfil y conserva la información si un contrato se
+desactiva temporalmente.
 
-## Tabla
+## Arquitectura
+
+| Pieza | Responsabilidad |
+|---|---|
+| `CatalogoModulos` | Fuente única de claves, nombres, roles y relaciones |
+| `GestorModulos` | Acceso, estados operativos y cambios transaccionales |
+| `AuditorModulos` | Detecta catálogo, base o dependencias incoherentes |
+| `ModuloSeeder` | Sincroniza metadatos sin reiniciar el contrato |
+| `modulo:{clave}` | Protege rutas administrativas según usuario y contrato |
+| `modulo.publico:{clave}` | Devuelve 404 si una superficie pública está inactiva |
+
+La tabla `modulos` conserva únicamente el estado contractual y los metadatos
+consultables. Las dependencias viven en código para que puedan revisarse,
+probarse y versionarse junto a la funcionalidad.
+
+## Dependencias obligatorias
+
+| Módulo | Requiere | Motivo |
+|---|---|---|
+| Compras | Inventario | Productos, proveedores, entradas y devoluciones |
+| Ventas | Inventario y Web pública | Carta vendible y trazabilidad de consumos |
+| Blog | Web pública | Superficie editorial pública |
+| Planificación de turnos | Personal | Empleados y permisos laborales |
+| Reservas | Web pública y Espacios | Captación pública y asignación física |
+| Lectura de documentos | Compras | Generación asistida de pedidos |
+
+`Ventas` puede integrarse con `Espacios`, pero la mesa es opcional y por eso no
+se considera una dependencia obligatoria.
+
+## Reglas de cambio
+
+- No puede activarse un módulo si falta alguna dependencia.
+- No puede desactivarse un módulo que necesite otro módulo activo.
+- Una clave desconocida o una fila ausente falla de forma cerrada.
+- Los perfiles operativos solo acceden a módulos activos permitidos por su rol.
+- `superadmin` puede entrar en administración aunque el contrato esté inactivo,
+  para preparar datos antes de activarlo.
+- Las rutas públicas siempre quedan ocultas con 404 cuando el módulo no opera.
+
+El dashboard explica qué requiere cada módulo, sus integraciones y el motivo
+por el que un botón de activación o desactivación está bloqueado.
+
+## Rutas aisladas
+
+Cada módulo registra sus rutas en su propio archivo:
 
 ```text
-modulos
+routes/modulos/personal.php
+routes/modulos/planificacion-turnos.php
+routes/modulos/inventario.php
+routes/modulos/compras.php
+routes/modulos/ventas.php
+routes/modulos/espacios.php
+routes/modulos/web-publica.php
 ```
 
-## Modelo
+`routes/web.php` queda reservado para dashboard, perfil, configuración y carga
+explícita de los módulos.
 
-```text
-App\Models\Modulo
-```
+## Añadir un módulo
 
-## Campos
+1. Añadir su `DefinicionModulo` en `CatalogoModulos`.
+2. Declarar roles, dependencias e integraciones reales.
+3. Crear `routes/modulos/{clave}.php` con su middleware.
+4. Añadir controladores, Requests, Actions, Policies o servicios de dominio.
+5. Ejecutar el seeder sin alterar estados contratados existentes.
+6. Añadir pruebas de acceso activo, inactivo y dependencias.
+7. Ejecutar la auditoría modular.
 
-```text
-id
-clave
-nombre
-descripcion
-grupo
-activo
-orden
-created_at
-updated_at
-```
-
-## Regla de diseno
-
-No se deben crear columnas tipo:
-
-```text
-web_publica_activo
-blog_activo
-reservas_activo
-```
-
-La forma correcta es una fila por modulo:
-
-```text
-web_publica
-blog
-reservas
-ventas
-personal
-lectura_documentos
-```
-
-## Modulos actuales
-
-```text
-inventario
-compras
-web_publica
-blog
-ventas
-personal
-reservas
-lectura_documentos
-```
-
-## Permisos
-
-- `superadmin`: puede ver y cambiar todos los modulos desde el dashboard.
-- `propietario`: ve los modulos activos que le correspondan.
-- `encargado`: accede a operativa interna permitida por rol, incluyendo ventas y alta de camareros.
-- `camarero`: accede al modulo de ventas cuando esta activo.
-
-## Comandos utiles
+## Comprobación
 
 ```powershell
 php artisan db:seed --class=ModuloSeeder
+php artisan modulos:auditar
+php artisan route:list --except-vendor
+php artisan test --filter=ModuloPermisosTest
 ```
 
-## Flujo comercial
-
-```text
-Cliente compra modulo
--> superadmin lo activa en dashboard
--> aparece en navegacion/permisos
--> rutas y pantallas quedan disponibles
-```
-
-## Notas
-
-- `web_publica` desactivado hace que la web publica responda 404.
-- `blog` desactivado oculta rutas y administracion del blog.
-- `ventas` desactivado oculta comandas y bloquea el acceso operativo a camareros y encargados.
-- `personal` desactivado oculta el alta de usuarios operativos.
-- Nuevos modulos deben registrarse en `ModuloSeeder`.
+La auditoría devuelve código distinto de cero si detecta módulos ausentes,
+claves desconocidas, ciclos o dependencias activas incoherentes.

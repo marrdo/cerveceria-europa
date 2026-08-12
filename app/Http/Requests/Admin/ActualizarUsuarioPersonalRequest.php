@@ -34,6 +34,7 @@ class ActualizarUsuarioPersonalRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:255'],
             'email' => [...ReglasValidacion::email(nullable: false), Rule::unique(Usuario::class, 'email')->ignore($usuario->id)],
             'rol' => ['required', 'string', Rule::in($this->rolesPermitidos())],
+            'horas_contrato_semanales' => ['required', 'numeric', 'min:1', 'max:60'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
         ];
     }
@@ -49,6 +50,8 @@ class ActualizarUsuarioPersonalRequest extends FormRequest
             'email.unique' => 'Ya existe un usuario con este email.',
             'rol.required' => 'El rol es obligatorio.',
             'rol.in' => 'No puedes asignar ese rol.',
+            'horas_contrato_semanales.required' => 'Indica las horas contratadas por semana.',
+            'horas_contrato_semanales.max' => 'Las horas contratadas no pueden superar 60 por semana.',
             'password.confirmed' => 'La confirmacion de contrasena no coincide.',
         ];
     }
@@ -64,6 +67,7 @@ class ActualizarUsuarioPersonalRequest extends FormRequest
             'nombre' => trim((string) $this->input('nombre')),
             'email' => mb_strtolower(trim((string) $this->input('email'))),
             'rol' => RolUsuario::from((string) $this->input('rol')),
+            'minutos_contrato_semanales' => (int) round((float) $this->input('horas_contrato_semanales') * 60),
         ];
 
         if ($this->filled('password')) {

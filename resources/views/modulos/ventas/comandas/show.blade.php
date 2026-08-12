@@ -47,7 +47,7 @@
                                 <x-admin.status-badge :variant="$linea->estado->variante()">{{ $linea->estado->etiqueta() }}</x-admin.status-badge>
                             </div>
                             <p class="mt-1 text-sm text-muted-foreground">
-                                {{ number_format((float) $linea->cantidad, 3, ',', '.') }} x {{ number_format((float) $linea->precio_unitario, 2, ',', '.') }} EUR
+                                {{ \App\Support\Formato\FormateadorCantidad::formatear($linea->cantidad) }} x {{ number_format((float) $linea->precio_unitario, 2, ',', '.') }} EUR
                                 @if ($linea->producto)
                                     - Stock: {{ $linea->producto->nombre }}
                                 @else

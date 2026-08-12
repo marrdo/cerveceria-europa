@@ -1,4 +1,4 @@
-<x-publico-layout :title="$titulo . ' | Cerveceria Europa'" :description="$descripcion">
+<x-publico-layout :title="$titulo" :description="$descripcion">
     {{-- Page header rompedor --}}
     <section class="relative overflow-hidden border-b px-8 pb-14 pt-20" style="border-color: var(--v2-line);">
         <div class="mx-auto max-w-[1440px]">

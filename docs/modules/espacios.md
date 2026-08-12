@@ -4,7 +4,7 @@
 
 Gestionar la estructura fisica y operativa del negocio sin mezclarla con inventario.
 
-Este modulo debe servir para bares, restaurantes, cafeterias o negocios similares, no solo para Cerveceria Europa.
+Este modulo debe servir para bares, restaurantes, cafeterias o negocios similares.
 
 ## Idea base
 
@@ -22,7 +22,7 @@ Representa el local o unidad operativa donde se presta el servicio.
 Ejemplo:
 
 ```text
-Cerveceria Europa
+La Plaza Demo
 ```
 
 Campos recomendados:

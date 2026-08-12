@@ -36,6 +36,7 @@ class UsuarioFactory extends Factory
             'nombre' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'rol' => RolUsuario::Camarero,
+            'minutos_contrato_semanales' => 2400,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

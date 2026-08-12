@@ -3,8 +3,8 @@
 @php
     $buttonSize = [
         'sm' => 'h-9 w-9',
-        'md' => 'h-10 w-10',
-    ][$size] ?? 'h-10 w-10';
+        'md' => 'h-11 w-11',
+    ][$size] ?? 'h-11 w-11';
 
     $iconSize = [
         'sm' => 30,

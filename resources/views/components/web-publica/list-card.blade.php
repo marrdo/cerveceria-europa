@@ -10,8 +10,8 @@
     $tags      = [];
     if ($contenido->destacado)    $tags[] = ['label' => 'Destacado', 'tone' => 'hops'];
     if ($contenido->fuera_carta)  $tags[] = ['label' => 'Fuera de carta', 'tone' => 'amber'];
-    if (optional($contenido->categoria)->nombre) {
-        $tags[] = ['label' => $contenido->categoria->nombre, 'tone' => ''];
+    if (optional($contenido->categoriaCarta)->nombre) {
+        $tags[] = ['label' => $contenido->categoriaCarta->nombre, 'tone' => ''];
     }
 @endphp
 
@@ -19,7 +19,7 @@
     <div class="v2-card-img {{ $imagen ? '' : 'empty' }}" @if ($imagen) style="background-image: url('{{ $imagen }}');" @endif>
         @if (! $imagen)
             <div class="flex h-full w-full items-center justify-center">
-                <x-brand.beer-icon class="h-12 w-12 text-amber-bright" />
+                <x-brand.hospitality-icon class="h-12 w-12 text-amber-bright" />
             </div>
         @endif
     </div>

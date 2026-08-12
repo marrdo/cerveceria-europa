@@ -37,6 +37,11 @@
             </select>
         </div>
 
+        <div>
+            <x-input-label for="horas_contrato_semanales" value="Horas contratadas por semana" />
+            <x-text-input id="horas_contrato_semanales" name="horas_contrato_semanales" type="number" min="1" max="60" step="0.5" class="mt-1 block h-10 w-full" :value="old('horas_contrato_semanales', $usuario->horasContratoSemanales())" required />
+        </div>
+
         <div class="rounded-md border border-border bg-muted/30 p-4">
             <p class="text-sm font-medium text-foreground">Cambiar contrasena</p>
             <p class="mt-1 text-sm text-muted-foreground">Deja estos campos vacios para mantener la contrasena actual.</p>

@@ -1,7 +1,7 @@
 @props([
     'num'     => null,   // '01 / Hoy en barra'
     'eyebrow' => null,   // 'Fuera de carta · rotacion diaria'
-    'titulo'  => '',     // string o HTML
+    'titulo'  => '',     // texto plano; nunca se interpreta como HTML
     'accion'  => null,   // ['label' => 'Ver todo', 'href' => route(...)]
 ])
 
@@ -14,7 +14,7 @@
             <p class="mt-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-ink-mute">{{ $eyebrow }}</p>
         @endif
     </div>
-    <h2 class="m-0 font-display font-normal leading-[0.95] tracking-[0.005em] text-ink" style="font-size: clamp(2.6rem, 6vw, 5rem); text-wrap: balance;">{!! $titulo !!}</h2>
+    <h2 class="m-0 font-display font-normal leading-[0.95] tracking-[0.005em] text-ink" style="font-size: clamp(2.6rem, 6vw, 5rem); text-wrap: balance;">{{ $titulo }}</h2>
     @if ($accion)
         <a href="{{ $accion['href'] }}" class="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.08em] text-amber-bright hover:text-ink transition-colors">
             {{ $accion['label'] }}

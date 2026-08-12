@@ -118,7 +118,7 @@
                         @forelse ($productosMasVendidos as $producto)
                             <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
                                 <td class="px-4 py-3 text-foreground">{{ $producto->nombre }}</td>
-                                <td class="px-4 py-3 text-right text-muted-foreground">{{ number_format((float) $producto->cantidad, 3, ',', '.') }}</td>
+                                <td class="px-4 py-3 text-right text-muted-foreground">{{ \App\Support\Formato\FormateadorCantidad::formatear($producto->cantidad) }}</td>
                                 <td class="px-4 py-3 text-right font-semibold text-foreground">{{ number_format((float) $producto->total, 2, ',', '.') }} EUR</td>
                             </tr>
                         @empty
@@ -146,7 +146,7 @@
                         @forelse ($ventasPorCategoria as $categoria)
                             <tr class="border-b border-border last:border-0 odd:bg-card even:bg-muted/20">
                                 <td class="px-4 py-3 text-foreground">{{ $categoria->categoria }}</td>
-                                <td class="px-4 py-3 text-right text-muted-foreground">{{ number_format((float) $categoria->cantidad, 3, ',', '.') }}</td>
+                                <td class="px-4 py-3 text-right text-muted-foreground">{{ \App\Support\Formato\FormateadorCantidad::formatear($categoria->cantidad) }}</td>
                                 <td class="px-4 py-3 text-right font-semibold text-foreground">{{ number_format((float) $categoria->total, 2, ',', '.') }} EUR</td>
                             </tr>
                         @empty

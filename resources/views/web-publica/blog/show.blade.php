@@ -1,4 +1,4 @@
-<x-publico-layout :title="$post->titulo.' | Cerveceria Europa'" :description="$post->resumen">
+<x-publico-layout :title="$post->titulo" :description="$post->resumen">
     <article class="bg-public-background">
         @if ($post->urlImagen())
             <figure class="h-[45vh] min-h-80">
@@ -14,7 +14,7 @@
                         <time datetime="{{ $post->publicado_at->toDateString() }}">{{ $post->publicado_at->format('d/m/Y') }}</time>
                         <span aria-hidden="true">&middot;</span>
                     @endif
-                    <span>{{ $post->autor ?: 'Cerveceria Europa' }}</span>
+                    <span>{{ $post->autor ?: $negocio->nombre_comercial }}</span>
                 </p>
                 <h1 class="mt-4 text-4xl font-black text-public-foreground sm:text-5xl">{{ $post->titulo }}</h1>
             </header>

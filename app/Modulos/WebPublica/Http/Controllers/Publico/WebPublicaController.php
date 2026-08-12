@@ -4,6 +4,7 @@ namespace App\Modulos\WebPublica\Http\Controllers\Publico;
 
 use App\Http\Controllers\Controller;
 use App\Modulos\WebPublica\Enums\TipoContenidoWeb;
+use App\Modulos\WebPublica\Models\CategoriaCarta;
 use App\Modulos\WebPublica\Models\ContenidoWeb;
 use App\Modulos\WebPublica\Models\SeccionWeb;
 use Illuminate\View\View;
@@ -11,18 +12,30 @@ use Illuminate\View\View;
 class WebPublicaController extends Controller
 {
     /**
-     * Portada publica de Cerveceria Europa.
+     * Portada publica del negocio configurado.
      */
     public function inicio(): View
     {
+        $destacados = $this->contenidos()->where('destacado', true)->take(6)->get();
+        $fueraCarta = $this->contenidos()->where('fuera_carta', true)->take(6)->get();
+
         return view('web-publica.inicio', [
-            'destacados' => $this->contenidos()->where('destacado', true)->take(6)->get(),
-            'fueraCarta' => $this->contenidos()->where('fuera_carta', true)->take(6)->get(),
+            'destacados' => $destacados,
+            'fueraCarta' => $fueraCarta,
             'cervezas' => $this->contenidos()->where('tipo', TipoContenidoWeb::Cerveza)->take(4)->get(),
             'recomendaciones' => $this->contenidos()
                 ->whereIn('tipo', [TipoContenidoWeb::RecomendacionChef, TipoContenidoWeb::RecomendacionCerveza])
                 ->take(4)
                 ->get(),
+            'secciones' => collect(['hero', 'sugerencias', 'destacados', 'valores'])
+                ->mapWithKeys(fn (string $clave): array => [
+                    $clave => SeccionWeb::porClave('inicio_'.$clave),
+                ]),
+            'metricas' => [
+                ['n' => $this->contenidos()->count(), 'l' => 'Referencias publicadas'],
+                ['n' => CategoriaCarta::query()->where('activo', true)->count(), 'l' => 'Secciones de carta'],
+                ['n' => $fueraCarta->count(), 'l' => 'Sugerencias activas'],
+            ],
         ]);
     }
 
@@ -56,7 +69,7 @@ class WebPublicaController extends Controller
     private function contenidos()
     {
         return ContenidoWeb::query()
-            ->with('producto.stock')
+            ->with(['producto.stock', 'categoriaCarta'])
             ->publicado()
             ->orderBy('orden')
             ->latest('created_at');
