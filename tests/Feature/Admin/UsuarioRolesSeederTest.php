@@ -63,13 +63,16 @@ class UsuarioRolesSeederTest extends TestCase
     {
         $this->seed(UsuarioRolesSeeder::class);
         $this->app->detectEnvironment(static fn (): string => 'production');
+        config([
+            'demo.superadmin.email' => 'admin@demo.danomdev.com',
+            'demo.superadmin.password' => 'clave-aleatoria-de-produccion-no-conocida',
+        ]);
 
-        app(UsuarioRolesSeeder::class)->run();
-        app(PersonalDemoSeeder::class)->run();
+        $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
 
         $usuarios = Usuario::query()->get();
 
-        $this->assertSame(22, $usuarios->count());
+        $this->assertSame(23, $usuarios->count());
         $this->assertSame(0, $usuarios->filter(
             static fn (Usuario $usuario): bool => str_ends_with($usuario->email, '@demo.local'),
         )->count());

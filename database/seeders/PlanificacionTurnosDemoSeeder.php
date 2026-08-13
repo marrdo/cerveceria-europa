@@ -158,12 +158,13 @@ class PlanificacionTurnosDemoSeeder extends Seeder
      */
     private function personalOperativo(): Collection
     {
+        $dominio = app()->isProduction() ? 'demo.invalid' : 'demo.local';
         $orden = collect([
-            'encargado@demo.local',
-            'propietario@demo.local',
-            'camarero@demo.local',
+            "encargado@{$dominio}",
+            "propietario@{$dominio}",
+            "camarero@{$dominio}",
             ...array_map(
-                static fn (int $indice): string => sprintf('equipo%02d@demo.local', $indice),
+                static fn (int $indice): string => sprintf('equipo%02d@%s', $indice, $dominio),
                 range(1, PersonalDemoSeeder::TOTAL_PERSONAL_GENERADO),
             ),
         ])->flip();

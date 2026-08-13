@@ -65,10 +65,12 @@ class RecorridoDemoSeeder extends Seeder
      */
     private function usuariosDemo(): array
     {
+        $dominio = app()->isProduction() ? 'demo.invalid' : 'demo.local';
+
         return [
-            'camarero' => Usuario::query()->where('email', 'camarero@demo.local')->firstOrFail(),
-            'encargado' => Usuario::query()->where('email', 'encargado@demo.local')->firstOrFail(),
-            'propietario' => Usuario::query()->where('email', 'propietario@demo.local')->firstOrFail(),
+            'camarero' => Usuario::query()->where('email', "camarero@{$dominio}")->firstOrFail(),
+            'encargado' => Usuario::query()->where('email', "encargado@{$dominio}")->firstOrFail(),
+            'propietario' => Usuario::query()->where('email', "propietario@{$dominio}")->firstOrFail(),
         ];
     }
 
